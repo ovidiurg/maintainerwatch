@@ -35,7 +35,10 @@ consecutive releases. Links below the configured `min_identity_confidence`
 (default `medium`) are ignored. Automation identities (npm OIDC trusted
 publishing such as `npm-oidc-no-reply@github.com`, release bots, `+oss-bot`
 aliases) are skipped, because a transition to automation is a security
-improvement, not a takeover.
+improvement, not a takeover. For PyPI, crates.io and Maven, where a per-release
+publisher is not available, the signal falls back to comparing current
+maintainers with the oldest snapshot at least 180 days old; it stays not
+applicable until such a snapshot exists.
 
 ## Signals
 
@@ -45,7 +48,7 @@ improvement, not a takeover.
 | `bus_factor` | 20 | Share of repository contributions held by the top author (12 months). |
 | `account_age` | 15 | Age of the repository owner account; younger is riskier. |
 | `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. |
-| `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. |
+| `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, or non-SPDX license metadata. This is a metadata signal, not a legal audit. |
 
@@ -72,11 +75,16 @@ evidence and model version, so a score can be verified.
 
 ## Limitations
 
-- PyPI does not expose a per-release publisher in its JSON API. Maintainer
-  snapshots are recorded during ingest for future comparison, but
-  `publisher_change` currently relies on per-release publisher fields, so PyPI
-  ownership changes are not detected until snapshot comparison is implemented
-  (see `docs/roadmap.md`).
+- PyPI does not expose a per-release publisher in its JSON API.
+  `publisher_change` falls back to the oldest maintainer snapshot at least 180
+  days old; until such a snapshot exists, the signal is not applicable and
+  PyPI scores use the remaining signals.
+- `signing_gap` is not applicable for crates.io/Maven (no signing data) or PyPI
+  when no recent release is signed, to avoid penalising ecosystems that do not
+  use signatures.
+- License metadata prefers PyPI `license_expression` (PEP 639), but
+  registry-vs-classifier and declared-vs-repository comparisons are still
+  pending (see roadmap).
 - npm exposes `_npmUser` per version, which gives a strong publisher history.
 - GitHub commit-email matching depends on public commits and `.mailmap`
   coverage; many maintainers use noreply addresses.

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from mw import db
 from mw.ingest.maven import _parse_pom
-from mw.ingest.pypi import _requirement_name
+from mw.ingest.pypi import _license, _requirement_name
 from mw.models import SignalEvidence
 from mw.score import compute_score
 from mw.signals import (
@@ -58,6 +59,15 @@ def _add_repo(conn, created_days_ago, share, contributors, system="npm", name="p
               contributors_12m, top_author_share)
            VALUES (?, ?, 'https://github.com/o/r', 'o', ?, ?, ?)""",
         (system, name, _iso(created_days_ago), contributors, share),
+    )
+
+
+def _add_maintainer(conn, identity, system="pypi", name="pkg"):
+    conn.execute(
+        """INSERT OR REPLACE INTO maintainers
+             (system, name, identity, role, source)
+           VALUES (?, ?, ?, 'maintainer', ?)""",
+        (system, name, identity, system),
     )
 
 
@@ -113,6 +123,26 @@ def test_signing_gap_pypi_signed(conn):
     )
     ev = signing_gap.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.value == 0.0
+
+
+def test_signing_gap_pypi_unsigned_not_applicable(conn):
+    _add_package(conn, system="pypi")
+    conn.execute(
+        """INSERT INTO versions (system, name, version, published_at)
+           VALUES ('pypi', 'pkg', '1.0.0', '2020-01-01T00:00:00+00:00')"""
+    )
+    ev = signing_gap.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_signing_gap_crates_not_applicable(conn):
+    _add_package(conn, system="crates")
+    conn.execute(
+        """INSERT INTO versions (system, name, version, published_at)
+           VALUES ('crates', 'pkg', '1.0.0', '2020-01-01T00:00:00+00:00')"""
+    )
+    ev = signing_gap.compute(Context(conn=conn, system="crates", name="pkg"))
+    assert ev.applicable is False
 
 
 def test_account_age_young(conn):
@@ -184,6 +214,55 @@ def test_publisher_change_skips_bot_between_people(conn):
     assert ev.value == 0.5
 
 
+def test_pypi_snapshot_detects_added_maintainer(conn):
+    _add_package(conn, system="pypi")
+    _add_versions(conn, [("1.0.0", _iso(600), "alice"),
+                         ("1.1.0", _iso(300), "alice")], system="pypi")
+    _add_maintainer(conn, "alice")
+    _add_maintainer(conn, "bob")
+    db.record_snapshot(conn, "pypi", "pkg", _iso(400),
+                       json.dumps(["alice"]), "hash-old")
+    ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is True
+    assert ev.value == 0.5
+    assert ev.evidence["source"] == "snapshot"
+    assert ev.evidence["added"] == ["bob"]
+    assert ev.evidence["removed"] == []
+
+
+def test_pypi_snapshot_unchanged(conn):
+    _add_package(conn, system="pypi")
+    _add_versions(conn, [("1.0.0", _iso(600), "alice"),
+                         ("1.1.0", _iso(300), "alice")], system="pypi")
+    _add_maintainer(conn, "alice")
+    db.record_snapshot(conn, "pypi", "pkg", _iso(400),
+                       json.dumps(["alice"]), "hash-old")
+    ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is True
+    assert ev.value == 0.0
+    assert ev.evidence["added"] == []
+
+
+def test_pypi_without_snapshot_not_applicable(conn):
+    _add_package(conn, system="pypi")
+    _add_versions(conn, [("1.0.0", _iso(600), "alice"),
+                         ("1.1.0", _iso(300), "alice")], system="pypi")
+    _add_maintainer(conn, "alice")
+    ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_pypi_recent_snapshot_is_ignored(conn):
+    _add_package(conn, system="pypi")
+    _add_versions(conn, [("1.0.0", _iso(600), "alice"),
+                         ("1.1.0", _iso(300), "alice")], system="pypi")
+    _add_maintainer(conn, "alice")
+    db.record_snapshot(conn, "pypi", "pkg", _iso(30),
+                       json.dumps(["bob"]), "hash-recent")
+    ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is False
+
+
 def test_score_is_reproducible():
     signals = {
         "publisher_change": SignalEvidence(value=0.5, evidence={"n_recent": 1}),
@@ -250,6 +329,20 @@ def test_pypi_requirement_name():
     assert _requirement_name("foo[bar]==1.0") == "foo"
     assert _requirement_name("zope.interface (>=5)") == "zope-interface"
     assert _requirement_name("name @ https://example.org/x.whl") == "name"
+
+
+def test_pypi_license_prefers_expression():
+    assert _license(
+        {"license_expression": "BSD-3-Clause", "license": None, "classifiers": []}
+    ) == "BSD-3-Clause"
+    assert _license({"license": "MIT", "classifiers": []}) == "MIT"
+    assert _license(
+        {
+            "license": None,
+            "classifiers": ["License :: OSI Approved :: MIT License"],
+        }
+    ) == "MIT License"
+    assert _license({"license": "Unknown", "classifiers": []}) is None
 
 
 def test_parse_maven_pom():

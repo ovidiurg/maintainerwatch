@@ -272,6 +272,27 @@ def get_dependencies(conn: sqlite3.Connection, system: str, name: str) -> list[s
     ).fetchall()
 
 
+def get_snapshot_before(
+    conn: sqlite3.Connection, system: str, name: str, cutoff_iso: str
+) -> sqlite3.Row | None:
+    return conn.execute(
+        """SELECT * FROM snapshots
+           WHERE system=? AND name=? AND captured_at <= ?
+           ORDER BY captured_at ASC LIMIT 1""",
+        (system, name, cutoff_iso),
+    ).fetchone()
+
+
+def get_latest_snapshot(
+    conn: sqlite3.Connection, system: str, name: str
+) -> sqlite3.Row | None:
+    return conn.execute(
+        """SELECT * FROM snapshots WHERE system=? AND name=?
+           ORDER BY captured_at DESC LIMIT 1""",
+        (system, name),
+    ).fetchone()
+
+
 def record_signal(
     conn: sqlite3.Connection,
     system: str,

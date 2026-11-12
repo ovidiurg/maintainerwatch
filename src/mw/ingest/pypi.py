@@ -65,9 +65,12 @@ def _repo_url(info: dict) -> str | None:
 
 
 def _license(info: dict) -> str | None:
-    lic = info.get("license")
-    if lic and len(lic) < 200:
-        return lic.strip()
+    expression = (info.get("license_expression") or "").strip()
+    if expression:
+        return expression
+    lic = (info.get("license") or "").strip()
+    if lic and len(lic) < 200 and lic.upper() not in {"UNKNOWN", "NOASSERTION"}:
+        return lic
     for c in info.get("classifiers") or []:
         if c.startswith("License ::"):
             return c.split("::")[-1].strip()
