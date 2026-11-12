@@ -68,6 +68,9 @@ def fetch_repo_stats(
             top = max(top, contributions)
             n_contrib += 1
     share = (top / total) if total else 0.0
+    repo_license = (meta.get("license") or {}).get("spdx_id")
+    if repo_license == "NOASSERTION":
+        repo_license = None
 
     return RepoStats(
         system=system,
@@ -79,7 +82,29 @@ def fetch_repo_stats(
         top_author_share=round(share, 4),
         last_commit_at=meta.get("pushed_at") or meta.get("updated_at"),
         scorecard_score=None,
+        license=repo_license,
     )
+
+
+def fetch_repo_license(
+    client: CachedClient,
+    repo_url: str | None,
+    token: str | None,
+    use_cache: bool = True,
+) -> str | None:
+    parsed = parse_github_repo(repo_url)
+    if not parsed:
+        return None
+    owner, repo = parsed
+    meta = client.get_json(
+        f"{API}/repos/{owner}/{repo}",
+        headers=_headers(token),
+        use_cache=use_cache,
+    )
+    if not meta:
+        return None
+    license_id = (meta.get("license") or {}).get("spdx_id")
+    return None if license_id in (None, "NOASSERTION") else license_id
 
 
 def fetch_commit_emails(

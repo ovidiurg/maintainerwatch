@@ -4,11 +4,12 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 from . import db
 from .config import Config
 from .ingest import crates, downloads, github_repo, maven, npm, osv, pypi
-from .ingest.github import fetch_repo_stats
+from .ingest.github import fetch_repo_license, fetch_repo_stats
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
 from .models import Maintainer, Version
@@ -221,6 +222,49 @@ def backfill_dependencies(
     return {"packages": len(rows), "dependency_rows": dependency_rows}
 
 
+def backfill_licenses(
+    cfg: Config,
+    system: str | None = None,
+    limit: int | None = None,
+    refresh: bool = False,
+) -> dict:
+    conn = _open(cfg)
+    rows = db.list_packages(conn)
+    if system:
+        rows = [r for r in rows if r["system"] == system]
+    if limit:
+        rows = rows[:limit]
+
+    updated = 0
+    with make_client(cfg) as client:
+        for r in rows:
+            system_name, name = r["system"], r["name"]
+            classifier = None
+            if system_name == "pypi":
+                doc = client.get_json(
+                    f"https://pypi.org/pypi/{quote(name, safe='')}/json"
+                )
+                if doc:
+                    classifier = pypi._classifier(doc.get("info") or {})
+            repo_license = (
+                fetch_repo_license(
+                    client, r["repo_url"], cfg.github_token,
+                    use_cache=not refresh,
+                )
+                if r["repo_url"]
+                else None
+            )
+            if classifier is not None or repo_license is not None:
+                db.update_license_sources(
+                    conn, system_name, name,
+                    classifier=classifier, repo_license=repo_license,
+                )
+                updated += 1
+
+    conn.close()
+    return {"packages": len(rows), "updated": updated}
+
+
 def resolve_all(cfg: Config, limit: int | None = None) -> dict:
     conn = _open(cfg)
     rows = db.list_packages(conn)
@@ -256,6 +300,7 @@ def score_all(cfg: Config) -> dict:
         system, name = r["system"], r["name"]
         if system not in top_cache:
             top_cache[system] = db.top_names(conn, system, 5000)
+        repo = db.get_repo_stats(conn, system, name)
 
         ctx = Context(
             conn=conn,
@@ -264,6 +309,8 @@ def score_all(cfg: Config) -> dict:
             downloads_weekly=int(r["downloads_weekly"] or 0),
             top_names=top_cache[system],
             license=r["license"],
+            license_classifier=r["license_classifier"],
+            license_repo=repo["license"] if repo else None,
             identity_mapping=identity_map(
                 conn, system, name, cfg.min_identity_confidence
             ),
@@ -354,6 +401,8 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "osv_count": int(pkg["osv_count"] or 0) if pkg else 0,
             "repo_url": pkg["repo_url"] if pkg else None,
             "license": pkg["license"] if pkg else None,
+            "license_classifier": pkg["license_classifier"] if pkg else None,
+            "license_repo": repo["license"] if repo else None,
             "dependencies_count": int(pkg["dependencies_count"] or 0) if pkg else 0,
             "fan_in": int(pkg["fan_in"] or 0) if pkg else 0,
             "scorecard_score": repo["scorecard_score"] if repo else None,

@@ -10,7 +10,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS packages (
   system TEXT NOT NULL, name TEXT NOT NULL, normalized TEXT,
   downloads_weekly INTEGER DEFAULT 0, osv_count INTEGER DEFAULT 0,
-  repo_url TEXT, license TEXT, first_seen TEXT,
+  repo_url TEXT, license TEXT, license_classifier TEXT, first_seen TEXT,
   PRIMARY KEY (system, name)
 );
 
@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS repo_stats (
   system TEXT NOT NULL, name TEXT NOT NULL, repo_url TEXT,
   owner TEXT, owner_created_at TEXT, contributors_12m INTEGER DEFAULT 0,
   top_author_share REAL DEFAULT 0, last_commit_at TEXT, scorecard_score REAL,
+  license TEXT,
   PRIMARY KEY (system, name)
 );
 
@@ -91,6 +92,8 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     _ensure_column(conn, "packages", "dependencies_count", "INTEGER DEFAULT 0")
     _ensure_column(conn, "packages", "fan_in", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "packages", "license_classifier", "TEXT")
+    _ensure_column(conn, "repo_stats", "license", "TEXT")
     conn.commit()
 
 
@@ -106,20 +109,21 @@ def connect(path: str | Path) -> sqlite3.Connection:
 def upsert_packages(conn: sqlite3.Connection, packages: Iterable[Package]) -> None:
     rows = [
         (p.system, p.name, p.normalized or p.name.lower(), p.downloads_weekly,
-         p.osv_count, p.repo_url, p.license, p.first_seen)
+         p.osv_count, p.repo_url, p.license, p.license_classifier, p.first_seen)
         for p in packages
     ]
     conn.executemany(
         """INSERT INTO packages
              (system, name, normalized, downloads_weekly, osv_count,
-              repo_url, license, first_seen)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              repo_url, license, license_classifier, first_seen)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(system, name) DO UPDATE SET
              normalized=excluded.normalized,
              downloads_weekly=excluded.downloads_weekly,
              osv_count=excluded.osv_count,
              repo_url=COALESCE(excluded.repo_url, packages.repo_url),
              license=COALESCE(excluded.license, packages.license),
+             license_classifier=COALESCE(excluded.license_classifier, packages.license_classifier),
              first_seen=COALESCE(excluded.first_seen, packages.first_seen)""",
         rows,
     )
@@ -172,14 +176,16 @@ def upsert_maintainers(conn: sqlite3.Connection, maintainers: Iterable[Maintaine
 def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> None:
     rows = [
         (s.system, s.name, s.repo_url, s.owner, s.owner_created_at,
-         s.contributors_12m, s.top_author_share, s.last_commit_at, s.scorecard_score)
+         s.contributors_12m, s.top_author_share, s.last_commit_at,
+         s.scorecard_score, s.license)
         for s in stats
     ]
     conn.executemany(
         """INSERT INTO repo_stats
              (system, name, repo_url, owner, owner_created_at,
-              contributors_12m, top_author_share, last_commit_at, scorecard_score)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              contributors_12m, top_author_share, last_commit_at,
+              scorecard_score, license)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(system, name) DO UPDATE SET
              repo_url=COALESCE(excluded.repo_url, repo_stats.repo_url),
              owner=COALESCE(excluded.owner, repo_stats.owner),
@@ -187,7 +193,8 @@ def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> N
              contributors_12m=excluded.contributors_12m,
              top_author_share=excluded.top_author_share,
              last_commit_at=COALESCE(excluded.last_commit_at, repo_stats.last_commit_at),
-             scorecard_score=COALESCE(excluded.scorecard_score, repo_stats.scorecard_score)""",
+             scorecard_score=COALESCE(excluded.scorecard_score, repo_stats.scorecard_score),
+             license=COALESCE(excluded.license, repo_stats.license)""",
         rows,
     )
     conn.commit()
@@ -216,6 +223,28 @@ def update_osv_counts(conn: sqlite3.Connection, counts: dict[tuple[str, str], in
         "UPDATE packages SET osv_count=? WHERE system=? AND name=?",
         [(count, system, name) for (system, name), count in counts.items()],
     )
+    conn.commit()
+
+
+def update_license_sources(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    *,
+    classifier: str | None = None,
+    repo_license: str | None = None,
+) -> None:
+    if classifier is not None:
+        conn.execute(
+            "UPDATE packages SET license_classifier=? WHERE system=? AND name=?",
+            (classifier, system, name),
+        )
+    if repo_license is not None:
+        conn.execute(
+            """INSERT INTO repo_stats (system, name, license) VALUES (?, ?, ?)
+               ON CONFLICT(system, name) DO UPDATE SET license=excluded.license""",
+            (system, name, repo_license),
+        )
     conn.commit()
 
 

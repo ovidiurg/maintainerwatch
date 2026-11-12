@@ -38,7 +38,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.2.1"
+model_version: "0.2.2"
 
 osint:
   # Minimal, passive, role-related sources only.

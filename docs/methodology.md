@@ -51,7 +51,18 @@ applicable until such a snapshot exists.
 | `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
-| `license_inconsistency` | 5 | Missing, unknown, or non-SPDX license metadata. This is a metadata signal, not a legal audit. |
+| `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
+
+## License sources
+
+License metadata is cross-checked across sources: the registry license
+(PyPI `license_expression`/`license` or the package field) against the PyPI
+Trove classifier, and the declared license against the GitHub repository
+license. Tokens are normalised to SPDX-like identifiers; compound licenses such
+as `MIT OR Apache-2.0` are compatible when the other source matches any option.
+Repository URLs are chosen from `project_urls`, excluding conduct, docs, issue
+and wiki links and requiring a code-forge host; this prevents a "Code of
+Conduct" URL from being mistaken for the source repository.
 
 ## Context
 
@@ -86,9 +97,9 @@ evidence and model version, so a score can be verified.
 - `release_anomaly` is not applicable for Maven: its release cadence (frequent
   batched releases, then long gaps) is not comparable to npm/PyPI and produced
   misleading anomalies.
-- License metadata prefers PyPI `license_expression` (PEP 639), but
-  registry-vs-classifier and declared-vs-repository comparisons are still
-  pending (see roadmap).
+- License metadata is cross-checked across registry, classifier and GitHub
+  repository sources. Repository licenses come from GitHub's detection, which
+  can differ from an individual package's license in a monorepo.
 - npm exposes `_npmUser` per version, which gives a strong publisher history.
 - GitHub commit-email matching depends on public commits and `.mailmap`
   coverage; many maintainers use noreply addresses.

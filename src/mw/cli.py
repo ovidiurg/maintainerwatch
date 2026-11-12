@@ -75,10 +75,28 @@ def backfill_deps(
     typer.echo(json.dumps(pipeline.backfill_dependencies(cfg, system=system, limit=limit)))
 
 
+@app.command("backfill-licenses")
+def backfill_licenses(
+    system: Optional[str] = typer.Option(None, help="npm, pypi, crates, maven or github."),
+    limit: Optional[int] = typer.Option(None, help="Limit packages."),
+    refresh: bool = typer.Option(False, help="Bypass the HTTP cache for repo licenses."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Backfill license classifiers and repository licenses."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.backfill_licenses(
+            cfg, system=system, limit=limit, refresh=refresh
+        )
+    ))
+
+
 @app.command()
 def scan(
     name: str = typer.Argument(..., help="Package name."),
-    system: str = typer.Option("npm", "--system", "-s", help="npm or pypi."),
+    system: str = typer.Option(
+        "npm", "--system", "-s", help="npm, pypi, crates, maven or github."
+    ),
     config: Optional[str] = typer.Option(None, help="Config file path."),
 ) -> None:
     """Print the score and evidence for one package."""

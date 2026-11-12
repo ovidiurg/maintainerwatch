@@ -7,7 +7,7 @@ import pytest
 
 from mw import db
 from mw.ingest.maven import _bom_imports, _metadata_latest, _parse_pom
-from mw.ingest.pypi import _license, _requirement_name
+from mw.ingest.pypi import _license, _repo_url, _requirement_name
 from mw.models import SignalEvidence
 from mw.score import compute_score
 from mw.signals import (
@@ -334,6 +334,63 @@ def test_license_custom(conn):
     assert ev.value == 0.5
 
 
+def test_license_classifier_conflict(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="pypi", name="pkg",
+                license="MIT", license_classifier="Apache-2.0")
+    )
+    assert ev.value == 1.0
+    assert "classifier" in ev.evidence["conflicts"]
+
+
+def test_license_classifier_alias(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="pypi", name="pkg",
+                license="MIT", license_classifier="Apache Software License")
+    )
+    assert ev.value == 1.0
+    assert "classifier" in ev.evidence["conflicts"]
+
+
+def test_license_classifier_compatible(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="pypi", name="pkg",
+                license="MIT", license_classifier="MIT License")
+    )
+    assert ev.value == 0.0
+    assert ev.evidence["conflicts"] == []
+
+
+def test_license_repo_conflict(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg",
+                license="Apache-2.0", license_repo="MIT")
+    )
+    assert ev.value == 1.0
+    assert "repository" in ev.evidence["conflicts"]
+
+
+def test_license_compound_matches_repo(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg",
+                license="MIT OR Apache-2.0", license_repo="Apache-2.0")
+    )
+    assert ev.value == 0.0
+
+
+def test_license_missing_repo_is_not_a_conflict(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg", license="MIT")
+    )
+    assert ev.value == 0.0
+
+
 def test_pypi_requirement_name():
     assert _requirement_name("requests>=2; python_version>='3.8'") == "requests"
     assert _requirement_name("foo[bar]==1.0") == "foo"
@@ -353,6 +410,25 @@ def test_pypi_license_prefers_expression():
         }
     ) == "MIT License"
     assert _license({"license": "Unknown", "classifiers": []}) is None
+
+
+def test_pypi_repo_url_prefers_repo_over_conduct():
+    info = {
+        "project_urls": {
+            "Code of Conduct": "https://github.com/org/.github/blob/master/CODE_OF_CONDUCT.md",
+            "GitHub: repo": "https://github.com/org/project",
+        },
+        "home_page": None,
+    }
+    assert _repo_url(info) == "https://github.com/org/project"
+
+
+def test_pypi_repo_url_ignores_docs():
+    info = {
+        "project_urls": {"Documentation": "https://docs.example.org"},
+        "home_page": "https://github.com/org/project",
+    }
+    assert _repo_url(info) == "https://github.com/org/project"
 
 
 def test_parse_maven_pom():

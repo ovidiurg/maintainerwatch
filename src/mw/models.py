@@ -14,6 +14,7 @@ class Package(BaseModel):
     osv_count: int = 0
     repo_url: str | None = None
     license: str | None = None
+    license_classifier: str | None = None
     first_seen: str | None = None
     dependencies_count: int = 0
     fan_in: int = 0
@@ -52,6 +53,7 @@ class RepoStats(BaseModel):
     top_author_share: float = 0.0
     last_commit_at: str | None = None
     scorecard_score: float | None = None
+    license: str | None = None
 
 
 class IdentityLink(BaseModel):

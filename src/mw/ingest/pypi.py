@@ -52,16 +52,68 @@ def fetch_top(client: CachedClient, top_n: int, seed_file: str | None = None) ->
     return names[:top_n]
 
 
+def _looks_like_repo(url: str | None) -> bool:
+    if not url:
+        return False
+    lowered = url.lower()
+    if any(
+        bad in lowered
+        for bad in ("/blob/", "/tree/", "/issues", "/discussions", "/wiki", "/.github/")
+    ):
+        return False
+    return (
+        any(
+            host in lowered
+            for host in ("github.com", "gitlab.com", "bitbucket.org", "codeberg.org")
+        )
+        or lowered.endswith(".git")
+    )
+
+
 def _repo_url(info: dict) -> str | None:
     urls = info.get("project_urls") or {}
+    candidates: list[tuple[str, str]] = []
     if isinstance(urls, dict):
-        for key in ("Source", "Source Code", "Repository", "Code", "GitHub",
-                    "Homepage", "Home"):
-            for k, v in urls.items():
-                if k and key.lower() in k.lower() and v:
-                    return v
-    hp = info.get("home_page")
-    return hp or None
+        for key, value in urls.items():
+            if not key or not value:
+                continue
+            lowered = key.lower()
+            if any(
+                bad in lowered
+                for bad in (
+                    "conduct", "issue", "changelog", "documentation", "docs",
+                    "wiki", "funding", "sponsor", "chat", "discord", "slack",
+                    "twitter", "mastodon", "blog",
+                )
+            ):
+                continue
+            candidates.append((lowered, value))
+
+    def score(item: tuple[str, str]) -> int:
+        key, value = item
+        points = 0
+        if "repo" in key or "source" in key:
+            points += 3
+        if any(host in key for host in ("github", "gitlab", "codeberg")):
+            points += 3
+        if "code" in key:
+            points += 1
+        if any(
+            host in value.lower()
+            for host in ("github.com", "gitlab.com", "bitbucket.org", "codeberg.org")
+        ):
+            points += 2
+        if not _looks_like_repo(value):
+            points -= 5
+        return points
+
+    candidates.sort(key=score, reverse=True)
+    for candidate in candidates:
+        if score(candidate) > 0 and _looks_like_repo(candidate[1]):
+            return candidate[1]
+
+    home = info.get("home_page")
+    return home if _looks_like_repo(home) else None
 
 
 def _license(info: dict) -> str | None:
@@ -71,9 +123,13 @@ def _license(info: dict) -> str | None:
     lic = (info.get("license") or "").strip()
     if lic and len(lic) < 200 and lic.upper() not in {"UNKNOWN", "NOASSERTION"}:
         return lic
-    for c in info.get("classifiers") or []:
-        if c.startswith("License ::"):
-            return c.split("::")[-1].strip()
+    return _classifier(info)
+
+
+def _classifier(info: dict) -> str | None:
+    for classifier in info.get("classifiers") or []:
+        if classifier.startswith("License ::"):
+            return classifier.split("::")[-1].strip()
     return None
 
 
@@ -127,6 +183,7 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
         normalized=normalize_name(name),
         repo_url=_repo_url(info),
         license=_license(info),
+        license_classifier=_classifier(info),
         first_seen=min((v.published_at for v in versions if v.published_at), default=None),
     )
     return pkg, versions, maintainers
