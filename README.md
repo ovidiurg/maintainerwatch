@@ -89,7 +89,9 @@ See [docs/nlnet-proposal.md](docs/nlnet-proposal.md) and
 
 A weighted sum of applicable signals, normalised to 0–100, with an
 `inputs_hash` for reproducibility. Every signal stores its evidence.
-See [docs/methodology.md](docs/methodology.md).
+See [docs/methodology.md](docs/methodology.md) and
+[docs/roadmap.md](docs/roadmap.md) for the model and remaining broader-scope
+work.
 
 ## Ethics and privacy
 

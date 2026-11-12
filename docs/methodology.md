@@ -72,9 +72,11 @@ evidence and model version, so a score can be verified.
 
 ## Limitations
 
-- PyPI does not expose a per-release publisher in its JSON API. For PyPI,
-  `publisher_change` relies on maintainer snapshots captured over time; the
-  first run has no history.
+- PyPI does not expose a per-release publisher in its JSON API. Maintainer
+  snapshots are recorded during ingest for future comparison, but
+  `publisher_change` currently relies on per-release publisher fields, so PyPI
+  ownership changes are not detected until snapshot comparison is implemented
+  (see `docs/roadmap.md`).
 - npm exposes `_npmUser` per version, which gives a strong publisher history.
 - GitHub commit-email matching depends on public commits and `.mailmap`
   coverage; many maintainers use noreply addresses.
