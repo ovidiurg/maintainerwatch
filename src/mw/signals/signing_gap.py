@@ -13,16 +13,9 @@ def compute(ctx: Context) -> SignalEvidence:
             evidence={"reason": "no non-yanked versions"},
         )
 
-    if ctx.system in ("crates", "maven"):
-        return SignalEvidence(
-            value=0.0,
-            applicable=False,
-            evidence={"reason": f"no signing data for {ctx.system}"},
-        )
-
     if ctx.system == "npm":
         covered = sum(1 for v in versions if v["has_provenance"]) / len(versions)
-    else:
+    elif ctx.system == "pypi":
         signed = [v for v in versions if v["has_sig"] or v["has_provenance"]]
         if not signed:
             return SignalEvidence(
@@ -34,6 +27,12 @@ def compute(ctx: Context) -> SignalEvidence:
                 },
             )
         covered = len(signed) / len(versions)
+    else:
+        return SignalEvidence(
+            value=0.0,
+            applicable=False,
+            evidence={"reason": f"no signing data for {ctx.system}"},
+        )
 
     return SignalEvidence(
         value=clamp(1.0 - covered),

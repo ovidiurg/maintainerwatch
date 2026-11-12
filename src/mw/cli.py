@@ -30,7 +30,7 @@ def init(config: Optional[str] = typer.Option(None, help="Config file path.")) -
 @app.command()
 def ingest(
     system: Optional[str] = typer.Option(
-        None, help="npm, pypi, crates or maven (default: all)."
+        None, help="npm, pypi, crates, maven or github (default: all)."
     ),
     top: Optional[int] = typer.Option(None, help="Number of top packages."),
     seed_file: Optional[str] = typer.Option(None, help="Newline-separated package list."),

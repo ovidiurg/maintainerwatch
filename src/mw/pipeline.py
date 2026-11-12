@@ -7,7 +7,7 @@ from pathlib import Path
 
 from . import db
 from .config import Config
-from .ingest import crates, downloads, maven, npm, osv, pypi
+from .ingest import crates, downloads, github_repo, maven, npm, osv, pypi
 from .ingest.github import fetch_repo_stats
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
@@ -44,7 +44,13 @@ def ingest_system(
     conn = _open(cfg)
     top_n = top_n or cfg.top_n
 
-    modules = {"npm": npm, "pypi": pypi, "crates": crates, "maven": maven}
+    modules = {
+        "npm": npm,
+        "pypi": pypi,
+        "crates": crates,
+        "maven": maven,
+        "github": github_repo,
+    }
     module = modules.get(system)
     if module is None:
         raise ValueError(f"unsupported system: {system}")
@@ -61,7 +67,10 @@ def ingest_system(
         names = fetch_top(client, top_n, seed_file)
 
         for name in names:
-            result = fetch_package(client, name)
+            if system == "github":
+                result = fetch_package(client, name, token=cfg.github_token)
+            else:
+                result = fetch_package(client, name)
             if not result:
                 continue
             pkg, pkg_versions, pkg_maintainers = result
@@ -177,7 +186,13 @@ def backfill_dependencies(
     if limit:
         rows = rows[:limit]
 
-    modules = {"npm": npm, "pypi": pypi, "crates": crates, "maven": maven}
+    modules = {
+        "npm": npm,
+        "pypi": pypi,
+        "crates": crates,
+        "maven": maven,
+        "github": github_repo,
+    }
     dependency_rows = 0
     with make_client(cfg) as client:
         for r in rows:

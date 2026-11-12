@@ -23,7 +23,10 @@ def fetch_vulns(
 ) -> dict[tuple[str, str], list[tuple[str, str | None, str | None]]]:
     """Return (system, name) -> [(vuln_id, severity, published_at)]."""
     out: dict[tuple[str, str], list[tuple[str, str | None, str | None]]] = {}
-    for batch in _chunks(packages, 500):
+    supported = [(s, n) for s, n in packages if s in ECOSYSTEM]
+    for s, n in packages:
+        out[(s, n)] = []
+    for batch in _chunks(supported, 500):
         queries = [
             {"package": {"name": name, "ecosystem": ECOSYSTEM.get(system, system)}}
             for system, name in batch

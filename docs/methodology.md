@@ -16,6 +16,7 @@ be recomputed from stored signal values and evidence.
 | pypistats.org | weekly downloads |
 | OSV (`api.osv.dev`) | vulnerability context |
 | GitHub REST API | repo owner, owner account age, contributor share, commit emails |
+| GitHub releases API | release timeline for non-package projects such as xz |
 | OpenSSF Scorecard | repository security score (context) |
 | Keybase public API | self-declared identity proofs |
 
@@ -104,6 +105,10 @@ evidence and model version, so a score can be verified.
 ## Validation
 
 The MVP replays known incidents (event-stream, ua-parser-js, colors, node-ipc,
-PyPI `ctx`) against the data available before each incident and reports which
-signals would have fired, together with false-positive rates on a sample of
-popular packages.
+xz-utils) using data available before each incident.
+`scripts/incident_check.py` writes `docs/incident-validation.md` with a
+precision/recall table against a 27-package benign sample. The benign label is a
+proxy, not ground truth. At threshold 40 the replay gives precision 0.222,
+recall 0.400 and a false-positive rate of 0.259. The release-only replay misses
+ua-parser-js (account hijack without a publisher change) and xz-utils
+(commit-level takeover rather than a release anomaly).
