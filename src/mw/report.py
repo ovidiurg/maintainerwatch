@@ -50,7 +50,7 @@ TEMPLATE = """<!doctype html>
 
 <h2>Top risk</h2>
 <table>
-  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Downloads/wk</th><th>OSV</th><th>Repo</th></tr>
+  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Scorecard</th><th>Repo</th></tr>
   {% for r in top %}
   <tr>
     <td>{{ r.system }}</td>
@@ -59,6 +59,8 @@ TEMPLATE = """<!doctype html>
     <td class="{{ r.band }}">{{ r.band }}</td>
     <td>{{ r.downloads_weekly or 0 }}</td>
     <td>{{ r.osv_count or 0 }}</td>
+    <td>{{ r.fan_in or 0 }}</td>
+    <td>{{ "%.1f"|format(r.scorecard_score) if r.scorecard_score is not none else "-" }}</td>
     <td>{% if r.repo_url %}<a href="{{ r.repo_url }}">source</a>{% endif %}</td>
   </tr>
   {% endfor %}
@@ -91,10 +93,15 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
     db.init_db(conn)
     rows = conn.execute(
         """SELECT s.system, s.name, s.score, s.band,
-                  p.downloads_weekly, p.osv_count, p.repo_url
+                  p.downloads_weekly, p.osv_count, p.repo_url,
+                  p.fan_in, p.dependencies_count, p.license,
+                  r.scorecard_score
            FROM scores s
            LEFT JOIN packages p ON p.system = s.system AND p.name = s.name
-           ORDER BY s.score DESC, s.name ASC"""
+           LEFT JOIN repo_stats r ON r.system = s.system AND r.name = s.name
+           WHERE s.model_version = ?
+           ORDER BY s.score DESC, s.name ASC""",
+        (cfg.model_version,),
     ).fetchall()
     conn.close()
 

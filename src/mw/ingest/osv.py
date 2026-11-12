@@ -5,7 +5,7 @@ from itertools import islice
 from .http import CachedClient
 
 OSV_QUERYBATCH = "https://api.osv.dev/v1/querybatch"
-ECOSYSTEM = {"npm": "npm", "pypi": "PyPI"}
+ECOSYSTEM = {"npm": "npm", "pypi": "PyPI", "crates": "crates.io", "maven": "Maven"}
 
 
 def _chunks(iterable, size):

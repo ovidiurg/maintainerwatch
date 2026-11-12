@@ -68,10 +68,30 @@ CREATE TABLE IF NOT EXISTS identity_links (
   PRIMARY KEY (system, name, id_a, id_b, link_type)
 );
 
+CREATE TABLE IF NOT EXISTS dependencies (
+  system TEXT NOT NULL, name TEXT NOT NULL, version TEXT NOT NULL,
+  dep_system TEXT NOT NULL, dep_name TEXT NOT NULL,
+  PRIMARY KEY (system, name, version, dep_system, dep_name)
+);
+
 CREATE INDEX IF NOT EXISTS idx_versions_pkg ON versions (system, name, published_at);
 CREATE INDEX IF NOT EXISTS idx_signals_pkg ON signals (system, name);
 CREATE INDEX IF NOT EXISTS idx_scores_pkg ON scores (system, name);
+CREATE INDEX IF NOT EXISTS idx_deps_dep ON dependencies (dep_system, dep_name);
 """
+
+
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, ddl: str) -> None:
+    columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
+
+
+def init_db(conn: sqlite3.Connection) -> None:
+    conn.executescript(SCHEMA)
+    _ensure_column(conn, "packages", "dependencies_count", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "packages", "fan_in", "INTEGER DEFAULT 0")
+    conn.commit()
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
@@ -81,11 +101,6 @@ def connect(path: str | Path) -> sqlite3.Connection:
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
     return conn
-
-
-def init_db(conn: sqlite3.Connection) -> None:
-    conn.executescript(SCHEMA)
-    conn.commit()
 
 
 def upsert_packages(conn: sqlite3.Connection, packages: Iterable[Package]) -> None:
@@ -221,6 +236,40 @@ def record_snapshot(
              payload_hash=excluded.payload_hash""",
         (system, name, captured_at, maintainer_set_json, payload_hash),
     )
+
+
+def upsert_dependencies(
+    conn: sqlite3.Connection,
+    rows: Iterable[tuple[str, str, str, str, str]],
+) -> None:
+    conn.executemany(
+        """INSERT OR IGNORE INTO dependencies
+             (system, name, version, dep_system, dep_name)
+           VALUES (?, ?, ?, ?, ?)""",
+        list(rows),
+    )
+    conn.commit()
+
+
+def update_dependency_counts(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """UPDATE packages SET dependencies_count = (
+             SELECT COUNT(DISTINCT dep_name) FROM dependencies d
+             WHERE d.system = packages.system AND d.name = packages.name)"""
+    )
+    conn.execute(
+        """UPDATE packages SET fan_in = (
+             SELECT COUNT(DISTINCT d.name) FROM dependencies d
+             WHERE d.dep_system = packages.system
+               AND LOWER(d.dep_name) = LOWER(packages.name))"""
+    )
+    conn.commit()
+
+
+def get_dependencies(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM dependencies WHERE system=? AND name=?", (system, name)
+    ).fetchall()
 
 
 def record_signal(

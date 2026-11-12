@@ -4,6 +4,7 @@ from ..models import SignalEvidence
 from . import (
     account_age,
     bus_factor,
+    license_inconsistency,
     publisher_change,
     release_anomaly,
     signing_gap,
@@ -18,6 +19,7 @@ SIGNALS = {
     "release_anomaly": release_anomaly.compute,
     "signing_gap": signing_gap.compute,
     "typosquat": typosquat.compute,
+    "license_inconsistency": license_inconsistency.compute,
 }
 
 

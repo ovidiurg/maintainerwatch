@@ -62,6 +62,7 @@ class Context:
     downloads_weekly: int = 0
     top_names: list[str] = field(default_factory=list)
     identity_mapping: dict[str, str] = field(default_factory=dict)
+    license: str | None = None
     as_of: str | None = None
     automation_identities: list[str] = field(default_factory=list)
     automation_patterns: list[str] = field(default_factory=list)

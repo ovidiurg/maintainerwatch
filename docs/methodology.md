@@ -10,6 +10,8 @@ be recomputed from stored signal values and evidence.
 |---|---|
 | npm registry (`registry.npmjs.org`) | versions, `_npmUser`, `time`, provenance attestations |
 | PyPI JSON API (`pypi.org/pypi/{name}/json`) | releases, upload times, signatures, author/maintainer |
+| crates.io API (`crates.io/api/v1`) | crates, versions, owners, dependencies |
+| Maven Central search API + POM | versions, license, SCM, developers, dependencies |
 | npm downloads API | weekly downloads |
 | pypistats.org | weekly downloads |
 | OSV (`api.osv.dev`) | vulnerability context |
@@ -45,6 +47,15 @@ improvement, not a takeover.
 | `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. |
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
+| `license_inconsistency` | 5 | Missing, unknown, or non-SPDX license metadata. This is a metadata signal, not a legal audit. |
+
+## Context
+
+`scorecard_score` (OpenSSF Scorecard) and dependency counts are stored as
+context, not part of the weighted score. `dependencies_count` is the number of
+direct runtime/build dependencies of the latest ingested version; `fan_in` is
+the number of ingested packages that depend directly on the package. Fan-in is
+computed within the ingested sample, so it is a lower bound.
 
 A signal that cannot be computed (for example, no repository data) is marked
 `applicable = false` and excluded from the score rather than counted as zero.
@@ -69,6 +80,11 @@ evidence and model version, so a score can be verified.
   coverage; many maintainers use noreply addresses.
 - GitHub and Keybase coverage is partial. Missing data lowers confidence, not
   the score.
+- Maven POMs may inherit licenses and dependencies from a parent POM. The MVP
+  resolves parent POMs up to three levels for license/SCM, but some metadata can
+  still be missing.
+- `fan_in` counts direct dependents inside the ingested sample, not transitive
+  dependents or the whole ecosystem.
 - Scores are risk indicators, not proof of compromise. They must be reviewed
   with the underlying evidence.
 

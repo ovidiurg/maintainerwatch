@@ -7,7 +7,7 @@ from pathlib import Path
 
 from . import db
 from .config import Config
-from .ingest import downloads, npm, osv, pypi
+from .ingest import crates, downloads, maven, npm, osv, pypi
 from .ingest.github import fetch_repo_stats
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
@@ -44,12 +44,13 @@ def ingest_system(
     conn = _open(cfg)
     top_n = top_n or cfg.top_n
 
-    if system == "npm":
-        fetch_top, fetch_package = npm.fetch_top, npm.fetch_package
-    elif system == "pypi":
-        fetch_top, fetch_package = pypi.fetch_top, pypi.fetch_package
-    else:
+    modules = {"npm": npm, "pypi": pypi, "crates": crates, "maven": maven}
+    module = modules.get(system)
+    if module is None:
         raise ValueError(f"unsupported system: {system}")
+    fetch_top = module.fetch_top
+    fetch_package = module.fetch_package
+    fetch_dependencies = module.fetch_dependencies
 
     packages = []
     versions: list[Version] = []
@@ -64,7 +65,19 @@ def ingest_system(
             if not result:
                 continue
             pkg, pkg_versions, pkg_maintainers = result
-            pkg.downloads_weekly = downloads.fetch_downloads(client, system, name)
+            if system in ("npm", "pypi"):
+                pkg.downloads_weekly = downloads.fetch_downloads(client, system, name)
+
+            dep_names = fetch_dependencies(client, name)
+            latest = max(
+                pkg_versions, key=lambda v: v.published_at or "", default=None
+            )
+            dep_rows = [
+                (system, name, latest.version if latest else "", system, dep)
+                for dep in dep_names
+            ]
+            if dep_rows:
+                db.upsert_dependencies(conn, dep_rows)
 
             packages.append(pkg)
             versions.extend(pkg_versions)
@@ -81,6 +94,7 @@ def ingest_system(
                 hashlib.sha256(payload.encode("utf-8")).hexdigest(),
             )
 
+        db.update_dependency_counts(conn)
         conn.commit()
 
         vulns = osv.fetch_vulns(client, [(system, n) for n in names])
@@ -153,6 +167,45 @@ def _maintainer_models(rows) -> list[Maintainer]:
     ]
 
 
+def backfill_dependencies(
+    cfg: Config, system: str | None = None, limit: int | None = None
+) -> dict:
+    conn = _open(cfg)
+    rows = db.list_packages(conn)
+    if system:
+        rows = [r for r in rows if r["system"] == system]
+    if limit:
+        rows = rows[:limit]
+
+    modules = {"npm": npm, "pypi": pypi, "crates": crates, "maven": maven}
+    dependency_rows = 0
+    with make_client(cfg) as client:
+        for r in rows:
+            module = modules.get(r["system"])
+            if module is None:
+                continue
+            deps = module.fetch_dependencies(client, r["name"])
+            versions = db.get_versions(conn, r["system"], r["name"])
+            latest = max(
+                versions, key=lambda v: v["published_at"] or "", default=None
+            )
+            payload = [
+                (
+                    r["system"], r["name"],
+                    latest["version"] if latest else "",
+                    r["system"], dep,
+                )
+                for dep in deps
+            ]
+            if payload:
+                db.upsert_dependencies(conn, payload)
+                dependency_rows += len(payload)
+
+    db.update_dependency_counts(conn)
+    conn.close()
+    return {"packages": len(rows), "dependency_rows": dependency_rows}
+
+
 def resolve_all(cfg: Config, limit: int | None = None) -> dict:
     conn = _open(cfg)
     rows = db.list_packages(conn)
@@ -195,6 +248,7 @@ def score_all(cfg: Config) -> dict:
             name=name,
             downloads_weekly=int(r["downloads_weekly"] or 0),
             top_names=top_cache[system],
+            license=r["license"],
             identity_mapping=identity_map(
                 conn, system, name, cfg.min_identity_confidence
             ),
@@ -226,12 +280,39 @@ def score_all(cfg: Config) -> dict:
     return {"scored": scored}
 
 
+def alerts(
+    cfg: Config,
+    min_score: float = 40.0,
+    signal: str | None = None,
+    min_signal: float = 0.5,
+    limit: int = 100,
+) -> list[dict]:
+    conn = _open(cfg)
+    sql = """SELECT s.system, s.name, s.score, s.band,
+                    p.downloads_weekly, p.osv_count, p.repo_url
+             FROM scores s
+             JOIN packages p ON p.system = s.system AND p.name = s.name
+             WHERE s.model_version = ? AND s.score >= ?"""
+    args: list[object] = [cfg.model_version, min_score]
+    if signal:
+        sql += """ AND EXISTS (
+                     SELECT 1 FROM signals g
+                     WHERE g.system = s.system AND g.name = s.name
+                       AND g.signal_type = ? AND g.value >= ?)"""
+        args.extend([signal, min_signal])
+    sql += " ORDER BY s.score DESC, s.name ASC LIMIT ?"
+    args.append(min(limit, 500))
+    rows = conn.execute(sql, args).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def scan(cfg: Config, system: str, name: str) -> dict | None:
     conn = _open(cfg)
     score_row = conn.execute(
-        """SELECT * FROM scores WHERE system=? AND name=?
+        """SELECT * FROM scores WHERE system=? AND name=? AND model_version=?
            ORDER BY computed_at DESC LIMIT 1""",
-        (system, name),
+        (system, name, cfg.model_version),
     ).fetchone()
     if not score_row:
         conn.close()
@@ -240,7 +321,11 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
         """SELECT * FROM signals WHERE system=? AND name=? AND model_version=?""",
         (system, name, score_row["model_version"]),
     ).fetchall()
+    pkg = db.get_package(conn, system, name)
+    repo = db.get_repo_stats(conn, system, name)
+    deps = db.get_dependencies(conn, system, name)
     conn.close()
+
     return {
         "system": system,
         "name": name,
@@ -249,6 +334,16 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
         "model_version": score_row["model_version"],
         "inputs_hash": score_row["inputs_hash"],
         "computed_at": score_row["computed_at"],
+        "context": {
+            "downloads_weekly": int(pkg["downloads_weekly"] or 0) if pkg else 0,
+            "osv_count": int(pkg["osv_count"] or 0) if pkg else 0,
+            "repo_url": pkg["repo_url"] if pkg else None,
+            "license": pkg["license"] if pkg else None,
+            "dependencies_count": int(pkg["dependencies_count"] or 0) if pkg else 0,
+            "fan_in": int(pkg["fan_in"] or 0) if pkg else 0,
+            "scorecard_score": repo["scorecard_score"] if repo else None,
+            "dependencies": sorted({d["dep_name"] for d in deps}),
+        },
         "signals": {
             r["signal_type"]: {
                 "value": r["value"],

@@ -98,6 +98,32 @@ class CachedClient:
             return None
         return None
 
+    def get_text(self, url: str, *, headers: dict[str, str] | None = None,
+                 use_cache: bool = True) -> str | None:
+        cache_key = "text:" + url + "|" + json.dumps(headers or {}, sort_keys=True)
+        if use_cache:
+            cached = self._read_cache(cache_key)
+            if isinstance(cached, str):
+                return cached
+        for attempt in range(4):
+            self._throttle()
+            try:
+                r = self._client.get(url, headers=headers)
+            except httpx.HTTPError:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            if r.status_code == 200:
+                if use_cache:
+                    self._write_cache(cache_key, r.text)
+                return r.text
+            if r.status_code == 404:
+                return None
+            if r.status_code in (403, 429, 500, 502, 503, 504):
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            return None
+        return None
+
     def post_json(self, url: str, payload: Any, *, headers: dict[str, str] | None = None) -> Any | None:
         for attempt in range(4):
             self._throttle()

@@ -15,6 +15,8 @@ class Package(BaseModel):
     repo_url: str | None = None
     license: str | None = None
     first_seen: str | None = None
+    dependencies_count: int = 0
+    fan_in: int = 0
 
 
 class Version(BaseModel):

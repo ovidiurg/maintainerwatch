@@ -160,3 +160,12 @@ def fetch_downloads(client: CachedClient, name: str) -> int:
         return int(doc.get("downloads") or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def fetch_dependencies(client: CachedClient, name: str) -> list[str]:
+    doc = client.get_json(f"{REGISTRY}/{quote(name, safe='')}")
+    if not doc:
+        return []
+    latest = (doc.get("dist-tags") or {}).get("latest")
+    meta = (doc.get("versions") or {}).get(latest) or {}
+    return sorted((meta.get("dependencies") or {}).keys())

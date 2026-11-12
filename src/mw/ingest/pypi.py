@@ -137,3 +137,21 @@ def fetch_downloads(client: CachedClient, name: str) -> int:
         return int((doc.get("data") or {}).get("last_week") or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def _requirement_name(requirement: str) -> str | None:
+    text = requirement.split(";", 1)[0].strip()
+    for separator in ("[", " ", "(", "<", ">", "=", "!", "~"):
+        text = text.split(separator, 1)[0]
+    text = text.strip().lower().replace("_", "-").replace(".", "-")
+    return text or None
+
+
+def fetch_dependencies(client: CachedClient, name: str) -> list[str]:
+    doc = client.get_json(f"{PYPI}/{quote(name, safe='')}/json")
+    if not doc:
+        return []
+    requirements = (doc.get("info") or {}).get("requires_dist") or []
+    return sorted(
+        {parsed for r in requirements if r for parsed in [_requirement_name(r)] if parsed}
+    )

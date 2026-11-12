@@ -21,10 +21,13 @@ def _records(cfg: Config) -> list[dict]:
                   p.downloads_weekly, p.osv_count, p.repo_url, p.license
            FROM scores s
            LEFT JOIN packages p ON p.system = s.system AND p.name = s.name
-           ORDER BY s.score DESC, s.name ASC"""
+           WHERE s.model_version = ?
+           ORDER BY s.score DESC, s.name ASC""",
+        (cfg.model_version,),
     ).fetchall()
     signal_rows = conn.execute(
-        "SELECT system, name, signal_type, value FROM signals"
+        "SELECT system, name, signal_type, value FROM signals WHERE model_version=?",
+        (cfg.model_version,),
     ).fetchall()
     conn.close()
 

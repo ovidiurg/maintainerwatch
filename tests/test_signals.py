@@ -5,9 +5,19 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from mw import db
+from mw.ingest.maven import _parse_pom
+from mw.ingest.pypi import _requirement_name
 from mw.models import SignalEvidence
 from mw.score import compute_score
-from mw.signals import account_age, bus_factor, publisher_change, release_anomaly, signing_gap, typosquat
+from mw.signals import (
+    account_age,
+    bus_factor,
+    license_inconsistency,
+    publisher_change,
+    release_anomaly,
+    signing_gap,
+    typosquat,
+)
 from mw.signals.base import Context
 
 
@@ -195,3 +205,66 @@ def test_score_ignores_not_applicable():
     score, band, _ = compute_score(signals, {"publisher_change": 30, "typosquat": 10}, "0.1.0")
     assert score == 0.0
     assert band == "low"
+
+
+def test_license_missing(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 1.0
+
+
+def test_license_recognised(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg", license="MIT")
+    )
+    assert ev.value == 0.0
+
+
+def test_license_alias_recognised(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg", license="BSD License")
+    )
+    assert ev.value == 0.0
+
+
+def test_license_unknown(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg", license="Unknown")
+    )
+    assert ev.value == 1.0
+
+
+def test_license_custom(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="npm", name="pkg", license="Proprietary")
+    )
+    assert ev.value == 0.5
+
+
+def test_pypi_requirement_name():
+    assert _requirement_name("requests>=2; python_version>='3.8'") == "requests"
+    assert _requirement_name("foo[bar]==1.0") == "foo"
+    assert _requirement_name("zope.interface (>=5)") == "zope-interface"
+    assert _requirement_name("name @ https://example.org/x.whl") == "name"
+
+
+def test_parse_maven_pom():
+    pom = """<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <licenses><license><name>Apache-2.0</name></license></licenses>
+      <scm><url>https://github.com/example/repo</url></scm>
+      <developers><developer><id>alice</id></developer></developers>
+      <dependencies>
+        <dependency><groupId>com.google.guava</groupId><artifactId>guava</artifactId></dependency>
+        <dependency><groupId>org.test</groupId><artifactId>test</artifactId><scope>test</scope></dependency>
+      </dependencies>
+    </project>"""
+    license_name, scm, deps, developers = _parse_pom(pom)
+    assert license_name == "Apache-2.0"
+    assert scm == "https://github.com/example/repo"
+    assert "com.google.guava:guava" in deps
+    assert "org.test:test" not in deps
+    assert "alice" in developers

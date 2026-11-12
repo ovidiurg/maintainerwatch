@@ -42,10 +42,11 @@ class Config(BaseModel):
             "release_anomaly": 15,
             "signing_gap": 10,
             "typosquat": 10,
+            "license_inconsistency": 5,
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.1.0"
+    model_version: str = "0.2.0"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",

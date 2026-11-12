@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -28,7 +29,9 @@ def init(config: Optional[str] = typer.Option(None, help="Config file path.")) -
 
 @app.command()
 def ingest(
-    system: Optional[str] = typer.Option(None, help="npm or pypi (default: all)."),
+    system: Optional[str] = typer.Option(
+        None, help="npm, pypi, crates or maven (default: all)."
+    ),
     top: Optional[int] = typer.Option(None, help="Number of top packages."),
     seed_file: Optional[str] = typer.Option(None, help="Newline-separated package list."),
     github: bool = typer.Option(True, help="Fetch GitHub repo stats."),
@@ -59,6 +62,17 @@ def score_all(config: Optional[str] = typer.Option(None, help="Config file path.
     """Compute signals and scores for every ingested package."""
     cfg = load_config(config)
     typer.echo(json.dumps(pipeline.score_all(cfg)))
+
+
+@app.command("backfill-deps")
+def backfill_deps(
+    system: Optional[str] = typer.Option(None, help="npm, pypi, crates or maven."),
+    limit: Optional[int] = typer.Option(None, help="Limit packages."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Backfill dependency edges and fan-in for ingested packages."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.backfill_dependencies(cfg, system=system, limit=limit)))
 
 
 @app.command()
@@ -96,6 +110,47 @@ def report(
     cfg = load_config(config)
     path, n = build_report(cfg, out=out)
     typer.echo(json.dumps({"path": str(path), "records": n}))
+
+
+@app.command()
+def alerts(
+    min_score: float = typer.Option(40.0, help="Minimum score."),
+    signal: Optional[str] = typer.Option(None, help="Require this signal."),
+    min_signal: float = typer.Option(0.5, help="Minimum signal value."),
+    limit: int = typer.Option(100, help="Maximum number of alerts."),
+    out: Optional[str] = typer.Option(None, help="Write JSON to this path."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """List packages above a score and optional signal threshold."""
+    cfg = load_config(config)
+    result = pipeline.alerts(
+        cfg, min_score=min_score, signal=signal,
+        min_signal=min_signal, limit=limit,
+    )
+    payload = json.dumps(result, indent=2)
+    if out:
+        Path(out).write_text(payload, encoding="utf-8")
+        typer.echo(json.dumps({"path": out, "alerts": len(result)}))
+    else:
+        typer.echo(payload)
+
+
+@app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", help="Bind address."),
+    port: int = typer.Option(8000, help="Bind port."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Run the read-only REST API."""
+    cfg = load_config(config)
+    try:
+        import uvicorn
+    except ImportError:
+        typer.echo("uvicorn is required: pip install fastapi uvicorn", err=True)
+        raise typer.Exit(code=1)
+    from .api import create_app
+
+    uvicorn.run(create_app(cfg), host=host, port=port)
 
 
 if __name__ == "__main__":

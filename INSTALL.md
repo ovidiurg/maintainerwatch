@@ -71,11 +71,36 @@ A larger run:
 ```bash
 mw ingest --system npm --top 200
 mw ingest --system pypi --top 200
+mw ingest --system crates --top 100
+mw ingest --system maven --top 50
+mw backfill-deps
 mw resolve --limit 150
 mw score-all
 mw report --out data/report.html
 mw export --format parquet
 ```
+
+Maven uses a curated seed list by default; pass `--seed-file` with
+`group:artifact` lines to target your own artifacts.
+
+## Alerts and REST API
+
+```bash
+mw alerts --min-score 40 --signal publisher_change --min-signal 0.5
+mw alerts --min-score 50 --out data/alerts.json
+mw serve --host 127.0.0.1 --port 8000
+```
+
+The API is read-only:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | status and model version |
+| `GET /systems` | package counts per ecosystem |
+| `GET /packages?system=&band=&min_score=&limit=` | ranked packages |
+| `GET /packages/{system}/{name}` | score, signals, context, dependencies |
+| `GET /top?system=&limit=` | top risk |
+| `GET /alerts?min_score=&signal=&min_signal=` | threshold alerts |
 
 ## Where data lives
 
