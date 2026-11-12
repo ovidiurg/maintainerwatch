@@ -62,10 +62,22 @@ class Context:
     downloads_weekly: int = 0
     top_names: list[str] = field(default_factory=list)
     identity_mapping: dict[str, str] = field(default_factory=dict)
+    as_of: str | None = None
 
     @property
     def versions(self) -> list[sqlite3.Row]:
-        return db.get_versions(self.conn, self.system, self.name)
+        rows = db.get_versions(self.conn, self.system, self.name)
+        if not self.as_of:
+            return rows
+        cutoff = parse_ts(self.as_of)
+        if not cutoff:
+            return rows
+        out = []
+        for r in rows:
+            dt = parse_ts(r["published_at"])
+            if dt is not None and dt < cutoff:
+                out.append(r)
+        return out
 
     @property
     def repo(self) -> sqlite3.Row | None:

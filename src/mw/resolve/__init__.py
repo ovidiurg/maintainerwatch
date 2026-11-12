@@ -75,7 +75,7 @@ def resolve_package(
         handles.update(
             v.publisher_name for v in versions if v.publisher_name
         )
-        for handle in sorted(handles)[:20]:
+        for handle in sorted(handles)[:5]:
             links.extend(keybase.lookup(client, system, name, handle))
 
     if use_pypi_provenance and repo_url:

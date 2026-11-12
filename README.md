@@ -57,6 +57,18 @@ Data lives in `data/maintainerwatch.sqlite`; exports in `data/`.
 Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically.
 
+## Results (MVP, 12 November 2026)
+
+- 423 packages scored: 223 npm (npms.io ranking) and 200 PyPI.
+- 99,603 versions, 816 maintainers, 411 repositories, 1,347 OSV records.
+- 868 identity links (445 high, 97 medium, 326 low confidence).
+- Risk bands: 11 high, 168 medium, 244 low.
+- Pre-incident replay: event-stream 48.4, colors 40.0, node-ipc 38.0,
+  ua-parser-js 0.0 (documented miss).
+
+See [docs/nlnet-proposal.md](docs/nlnet-proposal.md) and
+[docs/incident-validation.md](docs/incident-validation.md).
+
 ## Scoring
 
 A weighted sum of applicable signals, normalised to 0–100, with an

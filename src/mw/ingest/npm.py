@@ -8,6 +8,7 @@ from .http import CachedClient
 
 REGISTRY = "https://registry.npmjs.org"
 DOWNLOADS = "https://api.npmjs.org/downloads/point/last-week"
+NPMS_SEARCH = "https://api.npms.io/v2/search"
 
 # Curated seed for offline/smoke runs. For large runs, pass --seed-file with a
 # newline-separated list (e.g. an npm high-impact ranking).
@@ -63,6 +64,28 @@ def _license(doc: dict) -> str | None:
     return None
 
 
+def _npms_names(client: CachedClient, top_n: int) -> list[str]:
+    names: list[str] = []
+    seen: set[str] = set()
+    offset = 0
+    while len(names) < top_n and offset < 10_000:
+        doc = client.get_json(
+            f"{NPMS_SEARCH}?q=not:unstable&size=250&from={offset}"
+        )
+        results = (doc or {}).get("results") or []
+        if not results:
+            break
+        for r in results:
+            name = (r.get("package") or {}).get("name")
+            if name and name not in seen:
+                seen.add(name)
+                names.append(name)
+                if len(names) >= top_n:
+                    break
+        offset += 250
+    return names
+
+
 def fetch_top(client: CachedClient, top_n: int, seed_file: str | None = None) -> list[str]:
     if seed_file:
         names = [
@@ -71,7 +94,9 @@ def fetch_top(client: CachedClient, top_n: int, seed_file: str | None = None) ->
             if line.strip() and not line.startswith("#")
         ]
     else:
-        names = list(SEED_NPM)
+        names = _npms_names(client, top_n)
+        if not names:
+            names = list(SEED_NPM)
     seen: set[str] = set()
     out: list[str] = []
     for n in names:

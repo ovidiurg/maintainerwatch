@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ..models import SignalEvidence
 from ..resolve import canonical
-from .base import Context, clamp, days_since
+from .base import Context, clamp, days_between, now_utc, parse_ts
 
 WINDOW_DAYS = 365
 
@@ -16,6 +16,7 @@ def compute(ctx: Context) -> SignalEvidence:
             evidence={"reason": "fewer than 2 dated versions"},
         )
 
+    reference = parse_ts(ctx.as_of) if ctx.as_of else now_utc()
     changes: list[dict] = []
     prev: tuple[str, str] | None = None
     for v in versions:
@@ -34,9 +35,11 @@ def compute(ctx: Context) -> SignalEvidence:
             )
         prev = (ident, v["version"])
 
-    recent = [
-        c for c in changes if (days_since(c["at"]) or 1e9) <= WINDOW_DAYS
-    ]
+    recent = []
+    for c in changes:
+        when = parse_ts(c["at"])
+        if when and reference and days_between(when, reference) <= WINDOW_DAYS:
+            recent.append(c)
     value = clamp(len(recent) / 2.0)
     return SignalEvidence(
         value=value,
