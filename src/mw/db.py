@@ -1,0 +1,309 @@
+from __future__ import annotations
+
+import sqlite3
+from pathlib import Path
+from typing import Iterable
+
+from .models import Maintainer, Package, RepoStats, Version
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS packages (
+  system TEXT NOT NULL, name TEXT NOT NULL, normalized TEXT,
+  downloads_weekly INTEGER DEFAULT 0, osv_count INTEGER DEFAULT 0,
+  repo_url TEXT, license TEXT, first_seen TEXT,
+  PRIMARY KEY (system, name)
+);
+
+CREATE TABLE IF NOT EXISTS versions (
+  system TEXT NOT NULL, name TEXT NOT NULL, version TEXT NOT NULL,
+  published_at TEXT, publisher_name TEXT, publisher_email TEXT,
+  has_sig INTEGER DEFAULT 0, has_provenance INTEGER DEFAULT 0,
+  is_yanked INTEGER DEFAULT 0,
+  PRIMARY KEY (system, name, version)
+);
+
+CREATE TABLE IF NOT EXISTS maintainers (
+  system TEXT NOT NULL, name TEXT NOT NULL, identity TEXT NOT NULL,
+  role TEXT, source TEXT, account_created_at TEXT,
+  first_seen TEXT, last_seen TEXT,
+  PRIMARY KEY (system, name, identity, source)
+);
+
+CREATE TABLE IF NOT EXISTS repo_stats (
+  system TEXT NOT NULL, name TEXT NOT NULL, repo_url TEXT,
+  owner TEXT, owner_created_at TEXT, contributors_12m INTEGER DEFAULT 0,
+  top_author_share REAL DEFAULT 0, last_commit_at TEXT, scorecard_score REAL,
+  PRIMARY KEY (system, name)
+);
+
+CREATE TABLE IF NOT EXISTS osv (
+  system TEXT NOT NULL, name TEXT NOT NULL, vuln_id TEXT NOT NULL,
+  severity TEXT, published_at TEXT,
+  PRIMARY KEY (system, name, vuln_id)
+);
+
+CREATE TABLE IF NOT EXISTS signals (
+  system TEXT NOT NULL, name TEXT NOT NULL, signal_type TEXT NOT NULL,
+  value REAL, band TEXT, evidence_json TEXT,
+  model_version TEXT, computed_at TEXT,
+  PRIMARY KEY (system, name, signal_type, model_version)
+);
+
+CREATE TABLE IF NOT EXISTS scores (
+  system TEXT NOT NULL, name TEXT NOT NULL, score REAL, band TEXT,
+  model_version TEXT, inputs_hash TEXT, computed_at TEXT,
+  PRIMARY KEY (system, name, model_version)
+);
+
+CREATE TABLE IF NOT EXISTS snapshots (
+  system TEXT NOT NULL, name TEXT NOT NULL, captured_at TEXT NOT NULL,
+  maintainer_set_json TEXT, payload_hash TEXT,
+  PRIMARY KEY (system, name, captured_at)
+);
+
+CREATE TABLE IF NOT EXISTS identity_links (
+  system TEXT NOT NULL, name TEXT NOT NULL, id_a TEXT NOT NULL, id_b TEXT NOT NULL,
+  link_type TEXT NOT NULL, confidence TEXT NOT NULL,
+  evidence_url TEXT, observed_at TEXT,
+  PRIMARY KEY (system, name, id_a, id_b, link_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_versions_pkg ON versions (system, name, published_at);
+CREATE INDEX IF NOT EXISTS idx_signals_pkg ON signals (system, name);
+CREATE INDEX IF NOT EXISTS idx_scores_pkg ON scores (system, name);
+"""
+
+
+def connect(path: str | Path) -> sqlite3.Connection:
+    path = Path(path)
+    if str(path) != ":memory:":
+        path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(path))
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db(conn: sqlite3.Connection) -> None:
+    conn.executescript(SCHEMA)
+    conn.commit()
+
+
+def upsert_packages(conn: sqlite3.Connection, packages: Iterable[Package]) -> None:
+    rows = [
+        (p.system, p.name, p.normalized or p.name.lower(), p.downloads_weekly,
+         p.osv_count, p.repo_url, p.license, p.first_seen)
+        for p in packages
+    ]
+    conn.executemany(
+        """INSERT INTO packages
+             (system, name, normalized, downloads_weekly, osv_count,
+              repo_url, license, first_seen)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name) DO UPDATE SET
+             normalized=excluded.normalized,
+             downloads_weekly=excluded.downloads_weekly,
+             osv_count=excluded.osv_count,
+             repo_url=COALESCE(excluded.repo_url, packages.repo_url),
+             license=COALESCE(excluded.license, packages.license),
+             first_seen=COALESCE(excluded.first_seen, packages.first_seen)""",
+        rows,
+    )
+    conn.commit()
+
+
+def upsert_versions(conn: sqlite3.Connection, versions: Iterable[Version]) -> None:
+    rows = [
+        (v.system, v.name, v.version, v.published_at, v.publisher_name,
+         v.publisher_email, int(v.has_sig), int(v.has_provenance), int(v.is_yanked))
+        for v in versions
+    ]
+    conn.executemany(
+        """INSERT INTO versions
+             (system, name, version, published_at, publisher_name,
+              publisher_email, has_sig, has_provenance, is_yanked)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, version) DO UPDATE SET
+             published_at=COALESCE(excluded.published_at, versions.published_at),
+             publisher_name=COALESCE(excluded.publisher_name, versions.publisher_name),
+             publisher_email=COALESCE(excluded.publisher_email, versions.publisher_email),
+             has_sig=MAX(excluded.has_sig, versions.has_sig),
+             has_provenance=MAX(excluded.has_provenance, versions.has_provenance),
+             is_yanked=excluded.is_yanked""",
+        rows,
+    )
+    conn.commit()
+
+
+def upsert_maintainers(conn: sqlite3.Connection, maintainers: Iterable[Maintainer]) -> None:
+    rows = [
+        (m.system, m.name, m.identity, m.role, m.source,
+         m.account_created_at, m.first_seen, m.last_seen)
+        for m in maintainers
+    ]
+    conn.executemany(
+        """INSERT INTO maintainers
+             (system, name, identity, role, source, account_created_at, first_seen, last_seen)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, identity, source) DO UPDATE SET
+             role=excluded.role,
+             account_created_at=COALESCE(excluded.account_created_at, maintainers.account_created_at),
+             first_seen=COALESCE(maintainers.first_seen, excluded.first_seen),
+             last_seen=COALESCE(excluded.last_seen, maintainers.last_seen)""",
+        rows,
+    )
+    conn.commit()
+
+
+def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> None:
+    rows = [
+        (s.system, s.name, s.repo_url, s.owner, s.owner_created_at,
+         s.contributors_12m, s.top_author_share, s.last_commit_at, s.scorecard_score)
+        for s in stats
+    ]
+    conn.executemany(
+        """INSERT INTO repo_stats
+             (system, name, repo_url, owner, owner_created_at,
+              contributors_12m, top_author_share, last_commit_at, scorecard_score)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name) DO UPDATE SET
+             repo_url=COALESCE(excluded.repo_url, repo_stats.repo_url),
+             owner=COALESCE(excluded.owner, repo_stats.owner),
+             owner_created_at=COALESCE(excluded.owner_created_at, repo_stats.owner_created_at),
+             contributors_12m=excluded.contributors_12m,
+             top_author_share=excluded.top_author_share,
+             last_commit_at=COALESCE(excluded.last_commit_at, repo_stats.last_commit_at),
+             scorecard_score=COALESCE(excluded.scorecard_score, repo_stats.scorecard_score)""",
+        rows,
+    )
+    conn.commit()
+
+
+def upsert_osv(conn: sqlite3.Connection, rows: Iterable[tuple[str, str, str, str | None, str | None]]) -> None:
+    conn.executemany(
+        """INSERT INTO osv (system, name, vuln_id, severity, published_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, vuln_id) DO UPDATE SET
+             severity=COALESCE(excluded.severity, osv.severity),
+             published_at=COALESCE(excluded.published_at, osv.published_at)""",
+        list(rows),
+    )
+    conn.commit()
+
+
+def get_package(conn: sqlite3.Connection, system: str, name: str) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM packages WHERE system=? AND name=?", (system, name)
+    ).fetchone()
+
+
+def update_osv_counts(conn: sqlite3.Connection, counts: dict[tuple[str, str], int]) -> None:
+    conn.executemany(
+        "UPDATE packages SET osv_count=? WHERE system=? AND name=?",
+        [(count, system, name) for (system, name), count in counts.items()],
+    )
+    conn.commit()
+
+
+def record_snapshot(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    captured_at: str,
+    maintainer_set_json: str,
+    payload_hash: str,
+) -> None:
+    conn.execute(
+        """INSERT INTO snapshots
+             (system, name, captured_at, maintainer_set_json, payload_hash)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, captured_at) DO UPDATE SET
+             maintainer_set_json=excluded.maintainer_set_json,
+             payload_hash=excluded.payload_hash""",
+        (system, name, captured_at, maintainer_set_json, payload_hash),
+    )
+
+
+def record_signal(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    signal_type: str,
+    value: float,
+    band: str,
+    evidence_json: str,
+    model_version: str,
+    computed_at: str,
+) -> None:
+    conn.execute(
+        """INSERT INTO signals
+             (system, name, signal_type, value, band, evidence_json, model_version, computed_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, signal_type, model_version) DO UPDATE SET
+             value=excluded.value, band=excluded.band,
+             evidence_json=excluded.evidence_json, computed_at=excluded.computed_at""",
+        (system, name, signal_type, value, band, evidence_json, model_version, computed_at),
+    )
+
+
+def record_score(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    score: float,
+    band: str,
+    model_version: str,
+    inputs_hash: str,
+    computed_at: str,
+) -> None:
+    conn.execute(
+        """INSERT INTO scores
+             (system, name, score, band, model_version, inputs_hash, computed_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, model_version) DO UPDATE SET
+             score=excluded.score, band=excluded.band,
+             inputs_hash=excluded.inputs_hash, computed_at=excluded.computed_at""",
+        (system, name, score, band, model_version, inputs_hash, computed_at),
+    )
+
+
+def list_packages(conn: sqlite3.Connection, system: str | None = None) -> list[sqlite3.Row]:
+    if system:
+        return conn.execute(
+            "SELECT * FROM packages WHERE system=? ORDER BY name", (system,)
+        ).fetchall()
+    return conn.execute("SELECT * FROM packages ORDER BY system, name").fetchall()
+
+
+def get_versions(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
+    return conn.execute(
+        """SELECT * FROM versions WHERE system=? AND name=?
+           ORDER BY COALESCE(published_at, '') ASC""",
+        (system, name),
+    ).fetchall()
+
+
+def get_repo_stats(conn: sqlite3.Connection, system: str, name: str) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM repo_stats WHERE system=? AND name=?", (system, name)
+    ).fetchone()
+
+
+def get_maintainers(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM maintainers WHERE system=? AND name=?", (system, name)
+    ).fetchall()
+
+
+def get_identity_links(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM identity_links WHERE system=? AND name=?", (system, name)
+    ).fetchall()
+
+
+def top_names(conn: sqlite3.Connection, system: str, limit: int = 5000) -> list[str]:
+    rows = conn.execute(
+        """SELECT name FROM packages WHERE system=?
+           ORDER BY downloads_weekly DESC LIMIT ?""",
+        (system, limit),
+    ).fetchall()
+    return [r["name"] for r in rows]
