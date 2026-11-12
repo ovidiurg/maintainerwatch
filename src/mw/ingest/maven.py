@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
@@ -152,30 +153,96 @@ def _pom_url(group: str, artifact: str, version: str) -> str:
     )
 
 
-def _parse_pom(text: str) -> tuple[str | None, str | None, list[str], list[str]]:
+def _resolve(value: str | None, props: dict[str, str]) -> str | None:
+    if not value:
+        return value
+    text = value
+    for _ in range(5):
+        replaced = re.sub(
+            r"\$\{([^}]+)\}",
+            lambda m: props.get(m.group(1).strip(), m.group(0)),
+            text,
+        )
+        if replaced == text:
+            break
+        text = replaced
+    return text
+
+
+def _collect_properties(text: str) -> dict[str, str]:
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return {}
+    ns = root.tag.split("}")[0].strip("{") if root.tag.startswith("{") else ""
+
+    def tag(name: str) -> str:
+        return f"{{{ns}}}{name}" if ns else name
+
+    props: dict[str, str] = {}
+    properties = root.find(tag("properties"))
+    if properties is not None:
+        for child in properties:
+            key = child.tag.split("}")[-1]
+            props[key] = (child.text or "").strip()
+
+    group = (root.findtext(tag("groupId")) or "").strip()
+    artifact = (root.findtext(tag("artifactId")) or "").strip()
+    version = (root.findtext(tag("version")) or "").strip()
+    parent = root.find(tag("parent"))
+    parent_group = (parent.findtext(tag("groupId")) if parent is not None else "") or ""
+    parent_artifact = (parent.findtext(tag("artifactId")) if parent is not None else "") or ""
+    parent_version = (parent.findtext(tag("version")) if parent is not None else "") or ""
+
+    props.update(
+        {
+            "project.groupId": group,
+            "project.artifactId": artifact,
+            "project.version": version,
+            "project.parent.groupId": parent_group.strip(),
+            "project.parent.artifactId": parent_artifact.strip(),
+            "project.parent.version": parent_version.strip(),
+            "pom.groupId": group,
+            "pom.artifactId": artifact,
+            "pom.version": version,
+        }
+    )
+
+    resolved = dict(props)
+    for _ in range(5):
+        resolved = {key: _resolve(value, resolved) or "" for key, value in resolved.items()}
+    return resolved
+
+
+def _parse_pom(
+    text: str, props: dict[str, str] | None = None
+) -> tuple[str | None, str | None, list[str], list[str]]:
     try:
         root = ET.fromstring(text)
     except ET.ParseError:
         return None, None, [], []
 
     ns = root.tag.split("}")[0].strip("{") if root.tag.startswith("{") else ""
+    props = props if props is not None else _collect_properties(text)
 
     def tag(name: str) -> str:
         return f"{{{ns}}}{name}" if ns else name
 
+    def resolved(value: str | None) -> str:
+        return (_resolve(value, props) or "").strip()
+
     license_name = None
     for lic in root.findall(f".//{tag('licenses')}/{tag('license')}"):
-        name = (lic.findtext(tag("name")) or "").strip()
+        name = resolved(lic.findtext(tag("name")))
         if name:
             license_name = name
             break
 
-    scm = (
+    scm = resolved(
         root.findtext(f".//{tag('scm')}/{tag('url')}")
         or root.findtext(f".//{tag('scm')}/{tag('connection')}")
     )
     if scm:
-        scm = scm.strip()
         for prefix in ("scm:git:", "scm:git@", "git+"):
             if scm.startswith(prefix):
                 scm = scm[len(prefix):]
@@ -185,8 +252,8 @@ def _parse_pom(text: str) -> tuple[str | None, str | None, list[str], list[str]]
 
     deps: list[str] = []
     for dep in root.findall(f".//{tag('dependencies')}/{tag('dependency')}"):
-        group = (dep.findtext(tag("groupId")) or "").strip()
-        artifact = (dep.findtext(tag("artifactId")) or "").strip()
+        group = resolved(dep.findtext(tag("groupId")))
+        artifact = resolved(dep.findtext(tag("artifactId")))
         scope = (dep.findtext(tag("scope")) or "compile").strip().lower()
         optional = (dep.findtext(tag("optional")) or "").strip().lower() == "true"
         if group and artifact and scope in ("compile", "runtime") and not optional:
@@ -195,14 +262,145 @@ def _parse_pom(text: str) -> tuple[str | None, str | None, list[str], list[str]]
     developers: list[str] = []
     for dev in root.findall(f".//{tag('developers')}/{tag('developer')}"):
         ident = (
-            dev.findtext(tag("id"))
-            or dev.findtext(tag("name"))
-            or dev.findtext(tag("email"))
+            resolved(dev.findtext(tag("id")))
+            or resolved(dev.findtext(tag("name")))
+            or resolved(dev.findtext(tag("email")))
         )
-        if ident and ident.strip():
-            developers.append(ident.strip())
+        if ident:
+            developers.append(ident)
 
     return license_name, scm, sorted(set(deps)), developers
+
+
+def _bom_imports(
+    text: str, props: dict[str, str] | None = None
+) -> list[tuple[str, str, str]]:
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return []
+    ns = root.tag.split("}")[0].strip("{") if root.tag.startswith("{") else ""
+    props = props if props is not None else _collect_properties(text)
+
+    def tag(name: str) -> str:
+        return f"{{{ns}}}{name}" if ns else name
+
+    imports: list[tuple[str, str, str]] = []
+    for dep in root.findall(
+        f".//{tag('dependencyManagement')}/{tag('dependencies')}/{tag('dependency')}"
+    ):
+        scope = (dep.findtext(tag("scope")) or "").strip().lower()
+        if scope != "import":
+            continue
+        group = (_resolve(dep.findtext(tag("groupId")), props) or "").strip()
+        artifact = (_resolve(dep.findtext(tag("artifactId")), props) or "").strip()
+        version = (_resolve(dep.findtext(tag("version")), props) or "").strip()
+        if group and artifact and version:
+            imports.append((group, artifact, version))
+    return imports
+
+
+def _parent_coords(
+    text: str, props: dict[str, str] | None = None
+) -> tuple[str, str, str] | None:
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return None
+    ns = root.tag.split("}")[0].strip("{") if root.tag.startswith("{") else ""
+    props = props if props is not None else _collect_properties(text)
+
+    def tag(name: str) -> str:
+        return f"{{{ns}}}{name}" if ns else name
+
+    parent = root.find(tag("parent"))
+    if parent is None:
+        return None
+    group = (_resolve(parent.findtext(tag("groupId")), props) or "").strip()
+    artifact = (_resolve(parent.findtext(tag("artifactId")), props) or "").strip()
+    version = (_resolve(parent.findtext(tag("version")), props) or "").strip()
+    if group and artifact and version:
+        return group, artifact, version
+    return None
+
+
+def _pom_metadata(
+    client: CachedClient, group: str, artifact: str, version: str, depth: int = 0
+) -> tuple[str | None, str | None, list[str], list[str], dict[str, str]]:
+    text = client.get_text(_pom_url(group, artifact, version))
+    if not text:
+        return None, None, [], [], {}
+
+    own_props = _collect_properties(text)
+    parent_props: dict[str, str] = {}
+    parent_license = None
+    parent_scm = None
+    parent_developers: list[str] = []
+
+    if depth < 6:
+        parent = _parent_coords(text, own_props)
+        if parent:
+            (
+                parent_license,
+                parent_scm,
+                _,
+                parent_developers,
+                parent_props,
+            ) = _pom_metadata(client, *parent, depth=depth + 1)
+
+    props = {**parent_props, **own_props}
+    license_name, scm, deps, developers = _parse_pom(text, props=props)
+
+    # BOM imports are detected for completeness. Managed dependencies are not
+    # direct dependencies, so they are intentionally not added to the edge list.
+    _bom_imports(text, props)
+
+    return (
+        license_name or parent_license,
+        scm or parent_scm,
+        deps,
+        developers or parent_developers,
+        props,
+    )
+
+
+def _metadata_url(group: str, artifact: str) -> str:
+    return f"{REPO}/{group.replace('.', '/')}/{artifact}/maven-metadata.xml"
+
+
+def _metadata_latest(text: str | None) -> str | None:
+    if not text:
+        return None
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return None
+    ns = root.tag.split("}")[0].strip("{") if root.tag.startswith("{") else ""
+
+    def tag(name: str) -> str:
+        return f"{{{ns}}}{name}" if ns else name
+
+    versioning = root.find(tag("versioning"))
+    if versioning is None:
+        return None
+    for key in ("release", "latest"):
+        value = (versioning.findtext(tag(key)) or "").strip()
+        if value:
+            return value
+    versions = [
+        v.text.strip()
+        for v in versioning.findall(f"{tag('versions')}/{tag('version')}")
+        if v.text
+    ]
+    return versions[-1] if versions else None
+
+
+def _search(client: CachedClient, query: str, core: str | None = None) -> list[dict]:
+    url = f"{SEARCH}?q={quote(query)}&rows=200&wt=json"
+    if core:
+        url += f"&core={core}"
+    doc = client.get_json(url)
+    return ((doc or {}).get("response") or {}).get("docs") or []
 
 
 def fetch_top(client: CachedClient, top_n: int, seed_file: str | None = None) -> list[str]:
@@ -223,56 +421,6 @@ def fetch_top(client: CachedClient, top_n: int, seed_file: str | None = None) ->
     return out[:top_n]
 
 
-def _parent_coords(text: str) -> tuple[str, str, str] | None:
-    try:
-        root = ET.fromstring(text)
-    except ET.ParseError:
-        return None
-    ns = root.tag.split("}")[0].strip("{") if root.tag.startswith("{") else ""
-
-    def tag(name: str) -> str:
-        return f"{{{ns}}}{name}" if ns else name
-
-    parent = root.find(tag("parent"))
-    if parent is None:
-        return None
-    group = (parent.findtext(tag("groupId")) or "").strip()
-    artifact = (parent.findtext(tag("artifactId")) or "").strip()
-    version = (parent.findtext(tag("version")) or "").strip()
-    if group and artifact and version:
-        return group, artifact, version
-    return None
-
-
-def _pom_metadata(
-    client: CachedClient, group: str, artifact: str, version: str, depth: int = 0
-) -> tuple[str | None, str | None, list[str], list[str]]:
-    text = client.get_text(_pom_url(group, artifact, version))
-    if not text:
-        return None, None, [], []
-    license_name, scm, deps, developers = _parse_pom(text)
-
-    if (not license_name or not scm) and depth < 3:
-        parent = _parent_coords(text)
-        if parent:
-            p_license, p_scm, _, p_developers = _pom_metadata(
-                client, *parent, depth=depth + 1
-            )
-            license_name = license_name or p_license
-            scm = scm or p_scm
-            developers = developers or p_developers
-
-    return license_name, scm, deps, developers
-
-
-def _search(client: CachedClient, query: str, core: str | None = None) -> list[dict]:
-    url = f"{SEARCH}?q={quote(query)}&rows=200&wt=json"
-    if core:
-        url += f"&core={core}"
-    doc = client.get_json(url)
-    return ((doc or {}).get("response") or {}).get("docs") or []
-
-
 def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Version], list[Maintainer]] | None:
     parts = _split(name)
     if not parts:
@@ -280,10 +428,10 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
     group, artifact = parts
     query = f'g:"{group}" AND a:"{artifact}"'
 
-    latest_docs = _search(client, query)
-    if not latest_docs:
-        return None
-    latest = latest_docs[0].get("latestVersion")
+    latest = _metadata_latest(client.get_text(_metadata_url(group, artifact)))
+    if not latest:
+        latest_docs = _search(client, query)
+        latest = latest_docs[0].get("latestVersion") if latest_docs else None
     if not latest:
         return None
 
@@ -307,7 +455,7 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
     license_name = None
     repo_url = None
     developers: list[str] = []
-    license_name, repo_url, _, developers = _pom_metadata(
+    license_name, repo_url, _, developers, _ = _pom_metadata(
         client, group, artifact, latest
     )
 
@@ -337,8 +485,11 @@ def fetch_dependencies(client: CachedClient, name: str) -> list[str]:
     if not parts:
         return []
     group, artifact = parts
-    docs = _search(client, f'g:"{group}" AND a:"{artifact}"')
-    if not docs or not docs[0].get("latestVersion"):
+    latest = _metadata_latest(client.get_text(_metadata_url(group, artifact)))
+    if not latest:
+        docs = _search(client, f'g:"{group}" AND a:"{artifact}"')
+        latest = docs[0].get("latestVersion") if docs else None
+    if not latest:
         return []
-    _, _, deps, _ = _pom_metadata(client, group, artifact, docs[0]["latestVersion"])
+    _, _, deps, _, _ = _pom_metadata(client, group, artifact, latest)
     return deps

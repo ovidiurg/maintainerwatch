@@ -11,7 +11,7 @@ be recomputed from stored signal values and evidence.
 | npm registry (`registry.npmjs.org`) | versions, `_npmUser`, `time`, provenance attestations |
 | PyPI JSON API (`pypi.org/pypi/{name}/json`) | releases, upload times, signatures, author/maintainer |
 | crates.io API (`crates.io/api/v1`) | crates, versions, owners, dependencies |
-| Maven Central search API + POM | versions, license, SCM, developers, dependencies |
+| Maven Central search API + `maven-metadata.xml` + POM | versions, license, SCM, developers, dependencies |
 | npm downloads API | weekly downloads |
 | pypistats.org | weekly downloads |
 | OSV (`api.osv.dev`) | vulnerability context |
@@ -94,9 +94,12 @@ evidence and model version, so a score can be verified.
   coverage; many maintainers use noreply addresses.
 - GitHub and Keybase coverage is partial. Missing data lowers confidence, not
   the score.
-- Maven POMs may inherit licenses and dependencies from a parent POM. The MVP
-  resolves parent POMs up to three levels for license/SCM, but some metadata can
-  still be missing.
+- Maven parsing resolves `${...}` property placeholders, built-in project
+  properties and inherited parent properties; parents are followed up to six
+  levels for license/SCM. BOM imports are detected but managed dependencies are
+  not counted as direct edges, because they are not actual dependencies.
+  Metadata can still be missing when a parent POM is absent or a license is
+  only declared in a profile.
 - `fan_in` counts direct dependents inside the ingested sample, not transitive
   dependents or the whole ecosystem.
 - Scores are risk indicators, not proof of compromise. They must be reviewed

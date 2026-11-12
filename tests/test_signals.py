@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from mw import db
-from mw.ingest.maven import _parse_pom
+from mw.ingest.maven import _bom_imports, _metadata_latest, _parse_pom
 from mw.ingest.pypi import _license, _requirement_name
 from mw.models import SignalEvidence
 from mw.score import compute_score
@@ -371,3 +371,48 @@ def test_parse_maven_pom():
     assert "com.google.guava:guava" in deps
     assert "org.test:test" not in deps
     assert "alice" in developers
+
+
+def test_parse_maven_pom_resolves_properties():
+    pom = """<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <groupId>com.example</groupId>
+      <artifactId>demo</artifactId>
+      <version>1.2.3</version>
+      <properties><license.name>Apache-2.0</license.name></properties>
+      <licenses><license><name>${license.name}</name></license></licenses>
+      <scm><url>https://github.com/example/${project.artifactId}</url></scm>
+      <dependencies>
+        <dependency><groupId>${project.groupId}</groupId><artifactId>dep</artifactId></dependency>
+      </dependencies>
+    </project>"""
+    license_name, scm, deps, _ = _parse_pom(pom)
+    assert license_name == "Apache-2.0"
+    assert scm == "https://github.com/example/demo"
+    assert deps == ["com.example:dep"]
+
+
+def test_parse_maven_pom_ignores_bom_imports():
+    pom = """<project xmlns="http://maven.apache.org/POM/4.0.0">
+      <dependencyManagement><dependencies>
+        <dependency><groupId>g</groupId><artifactId>bom</artifactId>
+          <version>1.0</version><type>pom</type><scope>import</scope></dependency>
+      </dependencies></dependencyManagement>
+      <dependencies>
+        <dependency><groupId>g</groupId><artifactId>real</artifactId></dependency>
+      </dependencies>
+    </project>"""
+    assert _parse_pom(pom)[2] == ["g:real"]
+    assert _bom_imports(pom) == [("g", "bom", "1.0")]
+
+
+def test_maven_metadata_latest():
+    xml = """<metadata><versioning>
+      <latest>2.22.0</latest><release>2.22.0</release>
+      <versions><version>2.1</version><version>2.22.0</version></versions>
+    </versioning></metadata>"""
+    assert _metadata_latest(xml) == "2.22.0"
+    assert _metadata_latest(
+        "<metadata><versioning><versions><version>1</version><version>2</version>"
+        "</versions></versioning></metadata>"
+    ) == "2"
+    assert _metadata_latest("<metadata/>") is None

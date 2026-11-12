@@ -79,7 +79,7 @@ falls back to `gh auth token` automatically.
 - 207,252 versions, 2,396 maintainers, 1,122 repositories, 3,229 OSV records,
   5,594 dependency edges.
 - 2,034 identity links (1,211 high, 162 medium, 661 low confidence).
-- Risk bands: 4 high, 429 medium, 736 low. OIDC/bot publishers are ignored.
+- Risk bands: 4 high, 428 medium, 737 low. OIDC/bot publishers are ignored.
 - PyPI `publisher_change` is not applicable until 180 days of snapshot history
   exist; PyPI scores use the remaining signals until then.
 - Highest: path-to-regexp 63.9, commander 52.5, express 51.4, antd 51.4.
