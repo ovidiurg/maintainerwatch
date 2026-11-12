@@ -13,6 +13,7 @@ from mw.score import compute_score
 from mw.signals import (
     account_age,
     bus_factor,
+    commit_anomaly,
     license_inconsistency,
     publisher_change,
     release_anomaly,
@@ -68,6 +69,15 @@ def _add_maintainer(conn, identity, system="pypi", name="pkg"):
              (system, name, identity, role, source)
            VALUES (?, ?, ?, 'maintainer', ?)""",
         (system, name, identity, system),
+    )
+
+
+def _add_commit(conn, days_ago, author, sha, system="npm", name="pkg"):
+    conn.execute(
+        """INSERT OR REPLACE INTO commits
+             (system, name, sha, committed_at, author_login)
+           VALUES (?, ?, ?, ?, ?)""",
+        (system, name, sha, _iso(days_ago), author),
     )
 
 
@@ -443,6 +453,38 @@ def test_transitive_fan_in_cycle(conn):
     }
     assert rows["a"]["fan_in_transitive"] == 1
     assert rows["b"]["fan_in_transitive"] == 1
+
+
+def test_commit_anomaly_new_authors(conn):
+    _add_package(conn)
+    _add_commit(conn, 600, "alice", "old-alice")
+    for index in range(4):
+        _add_commit(conn, 80 - index * 10, "alice", f"alice-{index}")
+    for index in range(8):
+        _add_commit(conn, 15 + index * 10, "bob", f"bob-{index}")
+    ev = commit_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is True
+    assert ev.evidence["new_author_share"] > 0.5
+    assert ev.value > 0.25
+
+
+def test_commit_anomaly_burst(conn):
+    _add_package(conn)
+    _add_commit(conn, 600, "alice", "old")
+    for index in range(10):
+        _add_commit(conn, 29 - index, "alice", f"recent-{index}")
+    ev = commit_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is True
+    assert ev.evidence["burst_value"] == 1.0
+    assert ev.value == 1.0
+
+
+def test_commit_anomaly_not_applicable(conn):
+    _add_package(conn)
+    _add_commit(conn, 10, "alice", "one")
+    _add_commit(conn, 20, "alice", "two")
+    ev = commit_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
 
 
 def test_pypi_license_prefers_expression():

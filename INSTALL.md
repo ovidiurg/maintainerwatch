@@ -74,14 +74,22 @@ mw ingest --system pypi --top 200
 mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw backfill-deps
+mw backfill-licenses
+mw backfill-commits
 mw resolve --limit 150
 mw score-all
 mw report --out data/report.html
 mw export --format parquet
+mw export --format spdx
+mw export --format cyclonedx
+mw export --format osv
 ```
 
 Maven uses a curated seed list by default; pass `--seed-file` with
 `group:artifact` lines to target your own artifacts.
+
+`backfill-commits` fetches the last two GitHub commit pages per repository; for
+historical replay use `--until` (see `scripts/incident_check.py`).
 
 ## Alerts and REST API
 

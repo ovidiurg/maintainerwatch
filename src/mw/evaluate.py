@@ -9,7 +9,12 @@ from .resolve import identity_map
 from .signals import compute_all
 from .signals.base import Context
 
-REPLAY_SIGNALS = ["publisher_change", "release_anomaly", "signing_gap"]
+REPLAY_SIGNALS = [
+    "publisher_change",
+    "release_anomaly",
+    "signing_gap",
+    "commit_anomaly",
+]
 
 
 def replay_score(signals: dict[str, SignalEvidence], weights: dict[str, int]) -> float:

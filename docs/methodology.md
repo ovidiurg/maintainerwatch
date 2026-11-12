@@ -16,6 +16,7 @@ be recomputed from stored signal values and evidence.
 | pypistats.org | weekly downloads |
 | OSV (`api.osv.dev`) | vulnerability context |
 | GitHub REST API | repo owner, owner account age, contributor share, commit emails |
+| GitHub commits API | commit authors and dates for `commit_anomaly` |
 | GitHub releases API | release timeline for non-package projects such as xz |
 | OpenSSF Scorecard | repository security score (context) |
 | Keybase public API | self-declared identity proofs |
@@ -52,6 +53,7 @@ applicable until such a snapshot exists.
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
+| `commit_anomaly` | 15 | New-author share in a 90-day window and commit burst (30 days vs the previous 90 days) from sampled GitHub commits. |
 
 ## License sources
 
@@ -63,6 +65,25 @@ as `MIT OR Apache-2.0` are compatible when the other source matches any option.
 Repository URLs are chosen from `project_urls`, excluding conduct, docs, issue
 and wiki links and requiring a code-forge host; this prevents a "Code of
 Conduct" URL from being mistaken for the source repository.
+
+## Commit-level signal
+
+`commit_anomaly` uses commits stored in the `commits` table (default: the last
+two GitHub API pages, up to 200 commits per package; historical replay can fetch
+commits before a cutoff with `mw backfill-commits --until`). It computes:
+new-author share (commits in the last 90 days by authors first seen in the last
+90 days, relative to all commits in the window) and commit burst (last 30 days
+vs the average per 30 days over the previous 90 days, requiring at least 10
+recent commits). The value is the maximum of the two components. The signal is
+high-recall and low-precision: active projects can trigger it, so it is a
+triage aid, not proof of compromise.
+
+## Standard outputs
+
+`mw export --format` writes `json` (full dataset with signals and context),
+`spdx` (SPDX 2.3 JSON with purl external references), `cyclonedx` (CycloneDX
+1.5 JSON BOM with risk properties) and `osv` (an OSV-compatible `results` array
+of packages and vulnerability IDs), in addition to `parquet` and `csv`.
 
 ## Context
 
@@ -118,6 +139,10 @@ evidence and model version, so a score can be verified.
 - `fan_in` is direct and `fan_in_transitive` adds reverse reachability; both
   count only the ingested graph, so they are lower bounds. PyPI test/dev extras
   are excluded.
+- Commit history is sampled (default two pages); a long-term maintainer is not
+  "new", and an account hijack that keeps the same author can still be missed.
+- `commit_anomaly` is high-recall/low-precision and should be used as a triage
+  aid, not as a standalone alarm.
 - Scores are risk indicators, not proof of compromise. They must be reviewed
   with the underlying evidence.
 
@@ -127,7 +152,7 @@ The MVP replays known incidents (event-stream, ua-parser-js, colors, node-ipc,
 xz-utils) using data available before each incident.
 `scripts/incident_check.py` writes `docs/incident-validation.md` with a
 precision/recall table against a 27-package benign sample. The benign label is a
-proxy, not ground truth. At threshold 40 the replay gives precision 0.222,
-recall 0.400 and a false-positive rate of 0.259. The release-only replay misses
-ua-parser-js (account hijack without a publisher change) and xz-utils
-(commit-level takeover rather than a release anomaly).
+proxy, not ground truth. At threshold 40 the replay gives precision 0.300,
+recall 0.600 and a false-positive rate of 0.259. Commit-level signals catch the
+ua-parser-js hijack burst and the xz-utils new-author/burst pattern; colors and
+node-ipc remain medium at best.

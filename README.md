@@ -8,7 +8,7 @@ describe packages (`deps.dev`), vulnerabilities (`OSV`) or repository practices
 (`OpenSSF Scorecard`), but not the people behind packages across ecosystems.
 
 MaintainerWatch ingests public package metadata, resolves maintainer identities
-with explicit confidence levels, derives six explainable risk signals and
+with explicit confidence levels, derives eight explainable risk signals and
 publishes a versioned open dataset plus a CLI/report.
 
 ## Scope
@@ -23,6 +23,7 @@ publishes a versioned open dataset plus a CLI/report.
   5. `signing_gap` — missing provenance / signatures on recent releases
   6. `typosquat` — name close to a top package, with low downloads
   7. `license_inconsistency` — missing or non-SPDX license metadata
+  8. `commit_anomaly` — new-author share and commit burst relative to the baseline
 - Context: OSV vulnerabilities, OpenSSF Scorecard, dependency fan-in/out
   (direct and transitive).
 - Identity resolution (minimal, passive): Keybase proofs, GitHub commit
@@ -51,6 +52,8 @@ mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw ingest --system github --top 1
 mw backfill-deps
+mw backfill-licenses
+mw backfill-commits
 mw resolve
 mw score-all
 
@@ -65,6 +68,9 @@ mw serve --host 127.0.0.1 --port 8000
 
 # Export the dataset and build the report.
 mw export --format parquet
+mw export --format spdx
+mw export --format cyclonedx
+mw export --format osv
 mw report --out report.html
 ```
 
@@ -77,21 +83,21 @@ falls back to `gh auth token` automatically.
 
 - 1,169 packages scored: 518 npm, 500 PyPI, 100 crates.io, 50 Maven and 1
   GitHub repository.
-- 207,252 versions, 2,396 maintainers, 1,122 repositories, 3,229 OSV records,
-  2,638 runtime dependency edges (PyPI extras excluded).
+- 207,252 versions, 210,185 commits, 2,396 maintainers, 1,122 repositories,
+  3,229 OSV records, 2,638 runtime dependency edges (PyPI extras excluded).
 - 2,034 identity links (1,211 high, 162 medium, 661 low confidence).
-- Risk bands: 4 high, 430 medium, 735 low. OIDC/bot publishers are ignored.
+- Risk bands: 8 high, 570 medium, 591 low. OIDC/bot publishers are ignored.
 - License cross-check: 1,148 compatible/recognised, 10 non-SPDX, 7 missing and
   4 declared-vs-repository conflicts (pathspec, uvloop, eslint-visitor-keys,
   opencv-python-headless).
 - PyPI `publisher_change` is not applicable until 180 days of snapshot history
   exist; PyPI scores use the remaining signals until then.
-- Highest: path-to-regexp 63.9, commander 52.5, express 51.4, antd 51.4.
-- Pre-incident replay: event-stream 48.4, colors 40.0, node-ipc 38.0,
-  ua-parser-js 0.0, xz-utils 18.9. At threshold 40 the 27-package benign
-  sample gives precision 0.222, recall 0.400, false-positive rate 0.259.
-- Pre-incident replay: event-stream 48.4, colors 40.0, node-ipc 38.0,
-  ua-parser-js 0.0 (documented miss).
+- Highest: antd 58.7, path-to-regexp 55.9, graphql 53.6, fqdn 53.1, json5 52.4.
+- Pre-incident replay: event-stream 59.5, colors 40.0, node-ipc 38.0,
+  ua-parser-js 25.0, xz-utils 42.8. At threshold 40 the 27-package benign
+  sample gives precision 0.300, recall 0.600, false-positive rate 0.259.
+- Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
+  (`mw export --format json|spdx|cyclonedx|osv`).
 
 See [docs/nlnet-proposal.md](docs/nlnet-proposal.md) and
 [docs/incident-validation.md](docs/incident-validation.md).

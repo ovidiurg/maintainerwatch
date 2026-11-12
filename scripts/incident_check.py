@@ -43,16 +43,17 @@ versions published before the incident cutoff**, then compute the release-based
 signals. `bus_factor` and `account_age` are excluded because the available
 GitHub statistics are current-state and would leak future information;
 `typosquat` is excluded because the top-package list is current. The replay
-score therefore covers `publisher_change`, `release_anomaly` and `signing_gap`,
-renormalised to 0-100 over the signals that are applicable (weights 30/15/10).
+score therefore covers `publisher_change`, `release_anomaly`, `signing_gap` and
+`commit_anomaly`, renormalised to 0-100 over the signals that are applicable
+(weights 30/15/10/20).
 
 A high replay score means the package looked risky *before* the incident. It is
 not proof of compromise, and a low score is a miss to be reported honestly.
 
 ## Incidents
 
-| Incident | Package | Cutoff | publisher_change | release_anomaly | signing_gap | Replay score | Band | Applicable |
-|---|---|---|---|---|---|---|---|---|
+| Incident | Package | Cutoff | publisher_change | release_anomaly | signing_gap | commit_anomaly | Replay score | Band | Applicable |
+|---|---|---|---|---|---|---|---|---|---|
 """
 
 
@@ -89,6 +90,7 @@ def main() -> None:
             f"{fmt('publisher_change')} | "
             f"{fmt('release_anomaly')} | "
             f"{fmt('signing_gap')} | "
+            f"{fmt('commit_anomaly')} | "
             f"{result.score} | {band_for(result.score)} | "
             f"{', '.join(result.applicable) or 'none'} |\n"
         )
@@ -118,15 +120,16 @@ def main() -> None:
         "- Publisher identity comes from npm `_npmUser` or GitHub release authors;\n"
         "  older versions may lack it.\n"
         "- Release anomalies need at least three dated releases before the cutoff.\n"
-        "- `ua-parser-js` is a known miss: the account was hijacked without a\n"
-        "  publisher change, so release metadata alone cannot see it.\n"
-        "- `xz-utils` is a known miss in the release-only replay: the backdoor was\n"
-        "  introduced through commit-level maintainer changes, not a release\n"
-        "  anomaly. This motivates the commit-level work in the roadmap.\n"
+        "- Commit-level signals need `mw backfill-commits`; historical incidents must\n"
+        "  be fetched with `--until`. Without commits, `commit_anomaly` shows `–`.\n"
+        "- `ua-parser-js` can still be missed: the account was hijacked without a\n"
+        "  publisher change, and commit-level signals only see the same author.\n"
+        "- `xz-utils` is a hard case: the backdoor came through a long-term\n"
+        "  maintainer, so new-author and burst signals may not fire before the cutoff.\n"
         "- Maven release cadence is not assessed, so Maven packages only contribute\n"
         "  where other replay signals apply.\n"
         "- A full replay would require historical repository and download snapshots;\n"
-        "  this MVP replays release metadata only.\n"
+        "  this MVP replays release metadata plus the commits fetched per package.\n"
     )
 
     out = Path("docs/incident-validation.md")

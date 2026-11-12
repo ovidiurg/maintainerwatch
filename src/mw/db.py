@@ -77,10 +77,17 @@ CREATE TABLE IF NOT EXISTS dependencies (
   PRIMARY KEY (system, name, version, dep_system, dep_name)
 );
 
+CREATE TABLE IF NOT EXISTS commits (
+  system TEXT NOT NULL, name TEXT NOT NULL, sha TEXT NOT NULL,
+  committed_at TEXT, author_login TEXT, author_email TEXT,
+  PRIMARY KEY (system, name, sha)
+);
+
 CREATE INDEX IF NOT EXISTS idx_versions_pkg ON versions (system, name, published_at);
 CREATE INDEX IF NOT EXISTS idx_signals_pkg ON signals (system, name);
 CREATE INDEX IF NOT EXISTS idx_scores_pkg ON scores (system, name);
 CREATE INDEX IF NOT EXISTS idx_deps_dep ON dependencies (dep_system, dep_name);
+CREATE INDEX IF NOT EXISTS idx_commits_pkg ON commits (system, name, committed_at);
 """
 
 
@@ -338,6 +345,47 @@ def clear_package_dependencies(
     conn.execute(
         "DELETE FROM dependencies WHERE system=? AND name=?", (system, name)
     )
+    conn.commit()
+
+
+def upsert_commits(
+    conn: sqlite3.Connection,
+    rows: Iterable[tuple[str, str, str, str, str | None, str | None]],
+) -> None:
+    conn.executemany(
+        """INSERT INTO commits
+             (system, name, sha, committed_at, author_login, author_email)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name, sha) DO UPDATE SET
+             committed_at=excluded.committed_at,
+             author_login=COALESCE(excluded.author_login, commits.author_login),
+             author_email=COALESCE(excluded.author_email, commits.author_email)""",
+        list(rows),
+    )
+    conn.commit()
+
+
+def get_commits(
+    conn: sqlite3.Connection, system: str, name: str
+) -> list[sqlite3.Row]:
+    return conn.execute(
+        """SELECT * FROM commits WHERE system=? AND name=?
+           ORDER BY committed_at ASC""",
+        (system, name),
+    ).fetchall()
+
+
+def clear_commits(
+    conn: sqlite3.Connection, system: str | None = None, name: str | None = None
+) -> None:
+    if system and name:
+        conn.execute(
+            "DELETE FROM commits WHERE system=? AND name=?", (system, name)
+        )
+    elif system:
+        conn.execute("DELETE FROM commits WHERE system=?", (system,))
+    else:
+        conn.execute("DELETE FROM commits")
     conn.commit()
 
 

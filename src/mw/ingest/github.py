@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from urllib.parse import quote
 
 from ..models import RepoStats
 from .http import CachedClient
@@ -105,6 +106,51 @@ def fetch_repo_license(
         return None
     license_id = (meta.get("license") or {}).get("spdx_id")
     return None if license_id in (None, "NOASSERTION") else license_id
+
+
+def fetch_commits(
+    client: CachedClient,
+    repo_url: str | None,
+    token: str | None,
+    until: str | None = None,
+    pages: int = 2,
+    per_page: int = 100,
+) -> list[dict]:
+    parsed = parse_github_repo(repo_url)
+    if not parsed:
+        return []
+    owner, repo = parsed
+    headers = _headers(token)
+    until_param = until.replace("+00:00", "Z") if until else None
+
+    out: list[dict] = []
+    for page in range(1, pages + 1):
+        url = f"{API}/repos/{owner}/{repo}/commits?per_page={per_page}&page={page}"
+        if until_param:
+            url += f"&until={quote(until_param, safe=':')}"
+        commits = client.get_json(url, headers=headers)
+        if not isinstance(commits, list) or not commits:
+            break
+        for commit in commits:
+            data = commit.get("commit") or {}
+            author = data.get("author") or {}
+            committer = data.get("committer") or {}
+            committed_at = author.get("date") or committer.get("date")
+            sha = commit.get("sha")
+            login = (commit.get("author") or {}).get("login")
+            email = (author.get("email") or "").strip().lower() or None
+            if sha and committed_at:
+                out.append(
+                    {
+                        "sha": sha,
+                        "committed_at": committed_at,
+                        "author_login": login,
+                        "author_email": email,
+                    }
+                )
+        if len(commits) < per_page:
+            break
+    return out
 
 
 def fetch_commit_emails(

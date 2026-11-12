@@ -91,6 +91,25 @@ def backfill_licenses(
     ))
 
 
+@app.command("backfill-commits")
+def backfill_commits(
+    system: Optional[str] = typer.Option(None, help="npm, pypi, crates, maven or github."),
+    name: Optional[str] = typer.Option(None, help="Only this package name."),
+    until: Optional[str] = typer.Option(None, help="Fetch commits before this ISO date."),
+    pages: int = typer.Option(2, help="GitHub commit pages (100 per page)."),
+    limit: Optional[int] = typer.Option(None, help="Limit packages."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Backfill recent GitHub commits for commit-level signals."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.backfill_commits(
+            cfg, system=system, name=name, until=until,
+            pages=pages, limit=limit,
+        )
+    ))
+
+
 @app.command()
 def scan(
     name: str = typer.Argument(..., help="Package name."),
@@ -110,7 +129,9 @@ def scan(
 
 @app.command("export")
 def export_cmd(
-    format: str = typer.Option("parquet", help="parquet or csv."),
+    format: str = typer.Option(
+        "parquet", help="parquet, csv, json, spdx, cyclonedx or osv."
+    ),
     config: Optional[str] = typer.Option(None, help="Config file path."),
 ) -> None:
     """Export the scored dataset."""

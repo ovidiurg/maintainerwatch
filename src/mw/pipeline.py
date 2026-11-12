@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 from . import db
 from .config import Config
-from .ingest import crates, downloads, github_repo, maven, npm, osv, pypi
+from .ingest import crates, downloads, github, github_repo, maven, npm, osv, pypi
 from .ingest.github import fetch_repo_license, fetch_repo_stats
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
@@ -265,6 +265,50 @@ def backfill_licenses(
 
     conn.close()
     return {"packages": len(rows), "updated": updated}
+
+
+def backfill_commits(
+    cfg: Config,
+    system: str | None = None,
+    name: str | None = None,
+    until: str | None = None,
+    pages: int = 2,
+    limit: int | None = None,
+) -> dict:
+    conn = _open(cfg)
+    rows = db.list_packages(conn)
+    if system:
+        rows = [r for r in rows if r["system"] == system]
+    if name:
+        rows = [r for r in rows if r["name"] == name]
+    if limit:
+        rows = rows[:limit]
+
+    total = 0
+    with make_client(cfg) as client:
+        for r in rows:
+            if not r["repo_url"]:
+                continue
+            commits = github.fetch_commits(
+                client, r["repo_url"], cfg.github_token,
+                until=until, pages=pages,
+            )
+            if not commits:
+                continue
+            db.upsert_commits(
+                conn,
+                [
+                    (
+                        r["system"], r["name"], c["sha"], c["committed_at"],
+                        c["author_login"], c["author_email"],
+                    )
+                    for c in commits
+                ],
+            )
+            total += len(commits)
+
+    conn.close()
+    return {"packages": len(rows), "commits": total}
 
 
 def resolve_all(cfg: Config, limit: int | None = None) -> dict:
