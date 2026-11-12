@@ -25,6 +25,18 @@ weights:
 # Confidence levels accepted for identity-gated signals.
 min_identity_confidence: medium
 
+# Publisher identities that are automation, not people. Transitions to/from
+# these are ignored by publisher_change (OIDC trusted publishing is a security
+# improvement, not a takeover).
+automation_identities:
+  - npm-oidc-no-reply@github.com
+  - storybookbot@gmail.com
+automation_patterns:
+  - '\+oss-bot@'
+  - '\[bot\]'
+  - '^github-actions'
+  - 'no-reply@github\.com$'
+
 model_version: "0.1.0"
 
 osint:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from ..models import SignalEvidence
 from ..resolve import canonical
 from .base import Context, clamp, days_between, now_utc, parse_ts
@@ -16,13 +18,24 @@ def compute(ctx: Context) -> SignalEvidence:
             evidence={"reason": "fewer than 2 dated versions"},
         )
 
+    auto_ids = {i.strip().lower() for i in ctx.automation_identities}
+    auto_res = [re.compile(p) for p in ctx.automation_patterns]
+
+    def is_automation(value: str | None) -> bool:
+        if not value:
+            return False
+        key = value.strip().lower()
+        if key in auto_ids:
+            return True
+        return any(r.search(key) for r in auto_res)
+
     reference = parse_ts(ctx.as_of) if ctx.as_of else now_utc()
     changes: list[dict] = []
     prev: tuple[str, str] | None = None
     for v in versions:
         raw = v["publisher_email"] or v["publisher_name"]
         ident = canonical(raw, ctx.identity_mapping)
-        if not ident:
+        if not ident or is_automation(raw) or is_automation(ident):
             continue
         if prev and prev[0] != ident:
             changes.append(

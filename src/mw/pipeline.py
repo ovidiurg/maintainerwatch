@@ -198,6 +198,8 @@ def score_all(cfg: Config) -> dict:
             identity_mapping=identity_map(
                 conn, system, name, cfg.min_identity_confidence
             ),
+            automation_identities=cfg.automation_identities,
+            automation_patterns=cfg.automation_patterns,
         )
         signals = compute_all(ctx)
         score, band, inputs_hash = compute_score(

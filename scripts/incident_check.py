@@ -62,6 +62,8 @@ def main() -> None:
             top_names=db.top_names(conn, system, 5000),
             identity_mapping=identity_map(conn, system, name, cfg.min_identity_confidence),
             as_of=cutoff,
+            automation_identities=cfg.automation_identities,
+            automation_patterns=cfg.automation_patterns,
         )
         signals = compute_all(ctx)
         weights = {k: cfg.weights[k] for k in REPLAY_SIGNALS}

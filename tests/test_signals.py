@@ -148,6 +148,32 @@ def test_publisher_change_uses_identity_mapping(conn):
     assert ev.evidence["n_recent"] == 0
 
 
+def test_publisher_change_ignores_automation(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(90), "alice@example.org"),
+                         ("1.0.1", _iso(60), "npm-oidc-no-reply@github.com"),
+                         ("1.0.2", _iso(30), "alice@example.org")])
+    ctx = Context(conn=conn, system="npm", name="pkg",
+                  automation_identities=["npm-oidc-no-reply@github.com"],
+                  automation_patterns=[r"\+oss-bot@"])
+    ev = publisher_change.compute(ctx)
+    assert ev.evidence["n_recent"] == 0
+    assert ev.value == 0.0
+
+
+def test_publisher_change_skips_bot_between_people(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(90), "alice@example.org"),
+                         ("1.0.1", _iso(60), "npm-oidc-no-reply@github.com"),
+                         ("1.0.2", _iso(30), "bob@example.org")])
+    ctx = Context(conn=conn, system="npm", name="pkg",
+                  automation_identities=["npm-oidc-no-reply@github.com"],
+                  automation_patterns=[r"\+oss-bot@"])
+    ev = publisher_change.compute(ctx)
+    assert ev.evidence["n_recent"] == 1
+    assert ev.value == 0.5
+
+
 def test_score_is_reproducible():
     signals = {
         "publisher_change": SignalEvidence(value=0.5, evidence={"n_recent": 1}),

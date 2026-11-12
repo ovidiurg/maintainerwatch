@@ -30,7 +30,10 @@ to the same person. We store links in `identity_links` with a confidence:
 
 `publisher_change` compares the canonical identity of the publisher between
 consecutive releases. Links below the configured `min_identity_confidence`
-(default `medium`) are ignored.
+(default `medium`) are ignored. Automation identities (npm OIDC trusted
+publishing such as `npm-oidc-no-reply@github.com`, release bots, `+oss-bot`
+aliases) are skipped, because a transition to automation is a security
+improvement, not a takeover.
 
 ## Signals
 

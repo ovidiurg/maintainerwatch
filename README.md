@@ -65,7 +65,9 @@ falls back to `gh auth token` automatically.
 - 423 packages scored: 223 npm (npms.io ranking) and 200 PyPI.
 - 99,603 versions, 816 maintainers, 411 repositories, 1,347 OSV records.
 - 868 identity links (445 high, 97 medium, 326 low confidence).
-- Risk bands: 11 high, 168 medium, 244 low.
+- Risk bands: 4 high, 154 medium, 265 low. OIDC/bot publishers are ignored
+  (they previously inflated 7 scores).
+- Highest: path-to-regexp 67.1, commander 55.1, express 54.0, http-errors 52.2.
 - Pre-incident replay: event-stream 48.4, colors 40.0, node-ipc 38.0,
   ua-parser-js 0.0 (documented miss).
 
