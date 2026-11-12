@@ -108,6 +108,16 @@ def test_release_anomaly_not_applicable_with_few_versions(conn):
     assert ev.applicable is False
 
 
+def test_release_anomaly_maven_not_applicable(conn):
+    _add_package(conn, system="maven")
+    _add_versions(conn, [("1.0.0", "2020-01-01T00:00:00+00:00", "a"),
+                         ("1.0.1", "2020-02-01T00:00:00+00:00", "a"),
+                         ("1.0.2", "2023-01-01T00:00:00+00:00", "a")],
+                  system="maven")
+    ev = release_anomaly.compute(Context(conn=conn, system="maven", name="pkg"))
+    assert ev.applicable is False
+
+
 def test_signing_gap_npm_no_provenance(conn):
     _add_package(conn)
     _add_versions(conn, [("1.0.0", "2020-01-01T00:00:00+00:00", "a")])

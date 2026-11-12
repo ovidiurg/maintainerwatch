@@ -47,7 +47,7 @@ applicable until such a snapshot exists.
 | `publisher_change` | 30 | A canonical publisher identity changed between releases in the last 365 days. Value = min(1, changes / 2). |
 | `bus_factor` | 20 | Share of repository contributions held by the top author (12 months). |
 | `account_age` | 15 | Age of the repository owner account; younger is riskier. |
-| `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. |
+| `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, or non-SPDX license metadata. This is a metadata signal, not a legal audit. |
@@ -82,6 +82,9 @@ evidence and model version, so a score can be verified.
 - `signing_gap` is not applicable for crates.io/Maven (no signing data) or PyPI
   when no recent release is signed, to avoid penalising ecosystems that do not
   use signatures.
+- `release_anomaly` is not applicable for Maven: its release cadence (frequent
+  batched releases, then long gaps) is not comparable to npm/PyPI and produced
+  misleading anomalies.
 - License metadata prefers PyPI `license_expression` (PEP 639), but
   registry-vs-classifier and declared-vs-repository comparisons are still
   pending (see roadmap).

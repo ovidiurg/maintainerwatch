@@ -14,6 +14,13 @@ from .base import (
 
 
 def compute(ctx: Context) -> SignalEvidence:
+    if ctx.system == "maven":
+        return SignalEvidence(
+            value=0.0,
+            applicable=False,
+            evidence={"reason": "Maven release cadence is not assessed"},
+        )
+
     dates = [parse_ts(v["published_at"]) for v in ctx.versions]
     dates = sorted(d for d in dates if d is not None)
     if len(dates) < 3:
