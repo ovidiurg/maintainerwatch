@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS packages (
   system TEXT NOT NULL, name TEXT NOT NULL, normalized TEXT,
   downloads_weekly INTEGER DEFAULT 0, osv_count INTEGER DEFAULT 0,
   repo_url TEXT, license TEXT, license_classifier TEXT, first_seen TEXT,
+  dependencies_count INTEGER DEFAULT 0, fan_in INTEGER DEFAULT 0,
+  fan_in_transitive INTEGER DEFAULT 0,
   PRIMARY KEY (system, name)
 );
 
@@ -92,6 +94,7 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     _ensure_column(conn, "packages", "dependencies_count", "INTEGER DEFAULT 0")
     _ensure_column(conn, "packages", "fan_in", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "packages", "fan_in_transitive", "INTEGER DEFAULT 0")
     _ensure_column(conn, "packages", "license_classifier", "TEXT")
     _ensure_column(conn, "repo_stats", "license", "TEXT")
     conn.commit()
@@ -291,6 +294,49 @@ def update_dependency_counts(conn: sqlite3.Connection) -> None:
              SELECT COUNT(DISTINCT d.name) FROM dependencies d
              WHERE d.dep_system = packages.system
                AND LOWER(d.dep_name) = LOWER(packages.name))"""
+    )
+
+    edges = conn.execute(
+        """SELECT DISTINCT system, name, dep_system, dep_name FROM dependencies"""
+    ).fetchall()
+    reverse: dict[tuple[str, str], set[tuple[str, str]]] = {}
+    for edge in edges:
+        key = (edge["dep_system"], edge["dep_name"].lower())
+        reverse.setdefault(key, set()).add((edge["system"], edge["name"].lower()))
+
+    nodes = conn.execute("SELECT system, name FROM packages").fetchall()
+    updates = []
+    for node in nodes:
+        start = (node["system"], node["name"].lower())
+        visited = {start}
+        stack = [start]
+        while stack:
+            current = stack.pop()
+            for parent in reverse.get(current, ()):
+                if parent not in visited:
+                    visited.add(parent)
+                    stack.append(parent)
+        updates.append((len(visited) - 1, node["system"], node["name"]))
+    conn.executemany(
+        "UPDATE packages SET fan_in_transitive=? WHERE system=? AND name=?",
+        updates,
+    )
+    conn.commit()
+
+
+def clear_dependencies(conn: sqlite3.Connection, system: str | None = None) -> None:
+    if system:
+        conn.execute("DELETE FROM dependencies WHERE system=?", (system,))
+    else:
+        conn.execute("DELETE FROM dependencies")
+    conn.commit()
+
+
+def clear_package_dependencies(
+    conn: sqlite3.Connection, system: str, name: str
+) -> None:
+    conn.execute(
+        "DELETE FROM dependencies WHERE system=? AND name=?", (system, name)
     )
     conn.commit()
 

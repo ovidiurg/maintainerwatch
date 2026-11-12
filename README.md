@@ -23,7 +23,8 @@ publishes a versioned open dataset plus a CLI/report.
   5. `signing_gap` — missing provenance / signatures on recent releases
   6. `typosquat` — name close to a top package, with low downloads
   7. `license_inconsistency` — missing or non-SPDX license metadata
-- Context: OSV vulnerabilities, OpenSSF Scorecard, dependency fan-in/out.
+- Context: OSV vulnerabilities, OpenSSF Scorecard, dependency fan-in/out
+  (direct and transitive).
 - Identity resolution (minimal, passive): Keybase proofs, GitHub commit
   emails / GPG keys, PyPI PEP 740 provenance. No social-media scraping.
 
@@ -77,7 +78,7 @@ falls back to `gh auth token` automatically.
 - 1,169 packages scored: 518 npm, 500 PyPI, 100 crates.io, 50 Maven and 1
   GitHub repository.
 - 207,252 versions, 2,396 maintainers, 1,122 repositories, 3,229 OSV records,
-  5,594 dependency edges.
+  2,638 runtime dependency edges (PyPI extras excluded).
 - 2,034 identity links (1,211 high, 162 medium, 661 low confidence).
 - Risk bands: 4 high, 430 medium, 735 low. OIDC/bot publishers are ignored.
 - License cross-check: 1,148 compatible/recognised, 10 non-SPDX, 7 missing and

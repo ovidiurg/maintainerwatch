@@ -7,7 +7,7 @@ import pytest
 
 from mw import db
 from mw.ingest.maven import _bom_imports, _metadata_latest, _parse_pom
-from mw.ingest.pypi import _license, _repo_url, _requirement_name
+from mw.ingest.pypi import _is_extra, _license, _repo_url, _requirement_name
 from mw.models import SignalEvidence
 from mw.score import compute_score
 from mw.signals import (
@@ -396,6 +396,53 @@ def test_pypi_requirement_name():
     assert _requirement_name("foo[bar]==1.0") == "foo"
     assert _requirement_name("zope.interface (>=5)") == "zope-interface"
     assert _requirement_name("name @ https://example.org/x.whl") == "name"
+
+
+def test_pypi_extra_marker():
+    assert _is_extra("pytest; extra == 'test'") is True
+    assert _is_extra('pytest; extra == "dev"') is True
+    assert _is_extra("requests>=2") is False
+    assert _is_extra("importlib-metadata; python_version < '3.8'") is False
+
+
+def test_transitive_fan_in(conn):
+    for name in ("a", "b", "c"):
+        _add_package(conn, system="npm", name=name)
+    db.upsert_dependencies(conn, [
+        ("npm", "a", "1.0", "npm", "b"),
+        ("npm", "b", "1.0", "npm", "c"),
+    ])
+    db.update_dependency_counts(conn)
+    rows = {
+        row["name"]: row
+        for row in conn.execute(
+            "SELECT name, fan_in, fan_in_transitive, dependencies_count FROM packages"
+        )
+    }
+    assert rows["c"]["fan_in"] == 1
+    assert rows["c"]["fan_in_transitive"] == 2
+    assert rows["b"]["fan_in"] == 1
+    assert rows["b"]["fan_in_transitive"] == 1
+    assert rows["a"]["fan_in"] == 0
+    assert rows["a"]["fan_in_transitive"] == 0
+
+
+def test_transitive_fan_in_cycle(conn):
+    for name in ("a", "b"):
+        _add_package(conn, system="npm", name=name)
+    db.upsert_dependencies(conn, [
+        ("npm", "a", "1.0", "npm", "b"),
+        ("npm", "b", "1.0", "npm", "a"),
+    ])
+    db.update_dependency_counts(conn)
+    rows = {
+        row["name"]: row
+        for row in conn.execute(
+            "SELECT name, fan_in_transitive FROM packages"
+        )
+    }
+    assert rows["a"]["fan_in_transitive"] == 1
+    assert rows["b"]["fan_in_transitive"] == 1
 
 
 def test_pypi_license_prefers_expression():

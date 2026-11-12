@@ -86,6 +86,7 @@ def ingest_system(
                 (system, name, latest.version if latest else "", system, dep)
                 for dep in dep_names
             ]
+            db.clear_package_dependencies(conn, system, name)
             if dep_rows:
                 db.upsert_dependencies(conn, dep_rows)
 
@@ -194,6 +195,7 @@ def backfill_dependencies(
         "maven": maven,
         "github": github_repo,
     }
+    db.clear_dependencies(conn, system)
     dependency_rows = 0
     with make_client(cfg) as client:
         for r in rows:
@@ -405,6 +407,7 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "license_repo": repo["license"] if repo else None,
             "dependencies_count": int(pkg["dependencies_count"] or 0) if pkg else 0,
             "fan_in": int(pkg["fan_in"] or 0) if pkg else 0,
+            "fan_in_transitive": int(pkg["fan_in_transitive"] or 0) if pkg else 0,
             "scorecard_score": repo["scorecard_score"] if repo else None,
             "dependencies": sorted({d["dep_name"] for d in deps}),
         },

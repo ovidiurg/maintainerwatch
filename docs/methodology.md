@@ -68,9 +68,13 @@ Conduct" URL from being mistaken for the source repository.
 
 `scorecard_score` (OpenSSF Scorecard) and dependency counts are stored as
 context, not part of the weighted score. `dependencies_count` is the number of
-direct runtime/build dependencies of the latest ingested version; `fan_in` is
-the number of ingested packages that depend directly on the package. Fan-in is
-computed within the ingested sample, so it is a lower bound.
+direct runtime/build dependencies of the latest ingested version. `fan_in` is
+the number of ingested packages that depend directly on the package;
+`fan_in_transitive` is the number of distinct packages that reach it through
+any dependency path inside the ingested graph (cycle-safe). Both are lower
+bounds because only ingested packages are counted. PyPI `requires_dist`
+entries gated by an `extra ==` marker (test/dev extras) are excluded from the
+graph.
 
 A signal that cannot be computed (for example, no repository data) is marked
 `applicable = false` and excluded from the score rather than counted as zero.
@@ -111,8 +115,9 @@ evidence and model version, so a score can be verified.
   not counted as direct edges, because they are not actual dependencies.
   Metadata can still be missing when a parent POM is absent or a license is
   only declared in a profile.
-- `fan_in` counts direct dependents inside the ingested sample, not transitive
-  dependents or the whole ecosystem.
+- `fan_in` is direct and `fan_in_transitive` adds reverse reachability; both
+  count only the ingested graph, so they are lower bounds. PyPI test/dev extras
+  are excluded.
 - Scores are risk indicators, not proof of compromise. They must be reviewed
   with the underlying evidence.
 

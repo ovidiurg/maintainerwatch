@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from urllib.parse import quote
 
@@ -207,11 +208,24 @@ def _requirement_name(requirement: str) -> str | None:
     return text or None
 
 
+def _is_extra(requirement: str) -> bool:
+    if ";" not in requirement:
+        return False
+    marker = requirement.split(";", 1)[1].lower()
+    return re.search(r"\bextra\s*==", marker) is not None
+
+
 def fetch_dependencies(client: CachedClient, name: str) -> list[str]:
     doc = client.get_json(f"{PYPI}/{quote(name, safe='')}/json")
     if not doc:
         return []
     requirements = (doc.get("info") or {}).get("requires_dist") or []
     return sorted(
-        {parsed for r in requirements if r for parsed in [_requirement_name(r)] if parsed}
+        {
+            parsed
+            for requirement in requirements
+            if requirement and not _is_extra(requirement)
+            for parsed in [_requirement_name(requirement)]
+            if parsed
+        }
     )

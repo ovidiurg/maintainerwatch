@@ -48,7 +48,8 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     ) -> list[dict]:
         sql = """SELECT s.system, s.name, s.score, s.band,
                         p.downloads_weekly, p.osv_count, p.fan_in,
-                        p.dependencies_count, p.repo_url, p.license
+                        p.fan_in_transitive, p.dependencies_count,
+                        p.repo_url, p.license
                  FROM scores s
                  JOIN packages p ON p.system = s.system AND p.name = s.name
                  WHERE s.model_version = ?"""
