@@ -26,6 +26,9 @@ publishes a versioned open dataset plus a CLI/report.
 
 ## Install
 
+See [INSTALL.md](INSTALL.md) for the full setup, GitHub authentication and
+troubleshooting. Short version:
+
 ```bash
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
