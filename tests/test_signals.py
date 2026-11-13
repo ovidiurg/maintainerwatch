@@ -243,7 +243,7 @@ def test_pypi_snapshot_detects_added_maintainer(conn):
                          ("1.1.0", _iso(300), "alice")], system="pypi")
     _add_maintainer(conn, "alice")
     _add_maintainer(conn, "bob")
-    db.record_snapshot(conn, "pypi", "pkg", _iso(400),
+    db.record_snapshot(conn, "pypi", "pkg", _iso(300),
                        json.dumps(["alice"]), "hash-old")
     ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.applicable is True
@@ -258,7 +258,7 @@ def test_pypi_snapshot_unchanged(conn):
     _add_versions(conn, [("1.0.0", _iso(600), "alice"),
                          ("1.1.0", _iso(300), "alice")], system="pypi")
     _add_maintainer(conn, "alice")
-    db.record_snapshot(conn, "pypi", "pkg", _iso(400),
+    db.record_snapshot(conn, "pypi", "pkg", _iso(300),
                        json.dumps(["alice"]), "hash-old")
     ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.applicable is True
@@ -282,6 +282,17 @@ def test_pypi_recent_snapshot_is_ignored(conn):
     _add_maintainer(conn, "alice")
     db.record_snapshot(conn, "pypi", "pkg", _iso(30),
                        json.dumps(["bob"]), "hash-recent")
+    ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_pypi_old_snapshot_is_ignored(conn):
+    _add_package(conn, system="pypi")
+    _add_versions(conn, [("1.0.0", _iso(600), "alice"),
+                         ("1.1.0", _iso(300), "alice")], system="pypi")
+    _add_maintainer(conn, "alice")
+    db.record_snapshot(conn, "pypi", "pkg", _iso(400),
+                       json.dumps(["bob"]), "hash-old")
     ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.applicable is False
 

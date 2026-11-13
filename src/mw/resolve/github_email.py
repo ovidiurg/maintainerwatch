@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..ingest.github import fetch_commit_emails
+from ..ingest import forge
 from ..ingest.http import CachedClient
 from ..models import IdentityLink
 
@@ -12,12 +12,13 @@ def links_from_commits(
     repo_url: str | None,
     emails: set[str],
     token: str | None,
+    gitlab_token: str | None = None,
     owner: str | None = None,
 ) -> list[IdentityLink]:
-    """Link a publisher email to a GitHub login when the email is in public commits."""
+    """Link a publisher email to a GitHub/GitLab login when it is in public commits."""
     if not repo_url or not emails:
         return []
-    pairs = fetch_commit_emails(client, repo_url, token)
+    pairs = forge.fetch_commit_emails(client, repo_url, token, gitlab_token)
     email_to_logins: dict[str, set[str]] = {}
     for email, login in pairs:
         if email and login:

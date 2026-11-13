@@ -14,7 +14,8 @@ publishes a versioned open dataset plus a CLI/report.
 ## Scope
 
 - Ecosystems: **npm**, **PyPI**, **crates.io** and **Maven Central** (top or
-  seed lists), plus a **GitHub release timeline** for non-package projects.
+  seed lists), plus a **GitHub/GitLab release timeline** for non-package
+  projects.
 - Signals:
   1. `publisher_change` — maintainer/publisher changed between releases
   2. `bus_factor` — concentration of commits in one author
@@ -55,6 +56,7 @@ mw ingest --system github --top 1
 mw backfill-deps
 mw backfill-licenses
 mw backfill-commits
+mw backfill-snapshots
 mw resolve
 mw score-all
 
@@ -78,7 +80,8 @@ mw report --out report.html
 Data lives in `data/maintainerwatch.sqlite`; exports in `data/`.
 
 Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
-falls back to `gh auth token` automatically.
+falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
+(optional; public projects work without it, subject to rate limits).
 
 ## Results (MVP, 12 November 2026)
 
@@ -87,14 +90,15 @@ falls back to `gh auth token` automatically.
 - 207,252 versions, 210,185 commits, 2,396 maintainers, 1,122 repositories,
   3,229 OSV records, 2,638 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 1 high, 497 medium, 671 low. OIDC/bot publishers are ignored.
+- Risk bands: 1 high, 609 medium, 559 low. OIDC/bot publishers are ignored.
 - License cross-check: 1,148 compatible/recognised, 10 non-SPDX, 7 missing and
   4 declared-vs-repository conflicts (pathspec, uvloop, eslint-visitor-keys,
   opencv-python-headless).
-- PyPI `publisher_change` is not applicable until 180 days of snapshot history
-  exist; PyPI scores use the remaining signals until then.
-- Highest: antd 50.0, editables 49.9, duckdb 49.6, graphql 49.5,
-  path-to-regexp 48.4.
+- Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
+  packages; PyPI `publisher_change` is now applicable (298 high, 20 low, 182
+  not applicable) and its snapshot value is capped at 0.5.
+- Highest: antd 50.0, editables 49.9, graphql 49.5, path-to-regexp 48.4,
+  json5 48.1.
 - Pre-incident replay: event-stream 59.5, colors 40.0, node-ipc 38.0,
   ua-parser-js 25.0, xz-utils 42.8. At threshold 40 the 27-package benign
   sample gives precision 0.300, recall 0.600, false-positive rate 0.259.

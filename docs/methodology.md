@@ -17,6 +17,7 @@ be recomputed from stored signal values and evidence.
 | OSV (`api.osv.dev`) | vulnerability context |
 | GitHub REST API | repo owner, owner account age, contributor share, commit emails |
 | GitHub commits API | commit authors and dates for `commit_anomaly` |
+| GitLab API | repo stats, commits and licenses for GitLab-hosted projects |
 | keyserver.ubuntu.com (HKP) | GPG key IDs linked to publisher emails |
 | GitHub releases API | release timeline for non-package projects such as xz |
 | OpenSSF Scorecard | repository security score (context) |
@@ -50,7 +51,7 @@ to the same canonical identity.
 
 | Signal | Weight | Definition |
 |---|---|---|
-| `publisher_change` | 30 | A canonical publisher identity changed between releases in the last 365 days. Value = min(1, changes / 2). |
+| `publisher_change` | 30 | A canonical publisher identity changed between releases in the last 365 days (value = min(1, changes / 2)), or between current maintainers and a 180-365 day snapshot (value capped at 0.5). |
 | `bus_factor` | 20 | Share of repository contributions held by the top author (12 months). |
 | `account_age` | 15 | Age of the repository owner account; younger is riskier. |
 | `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
@@ -83,6 +84,16 @@ vs the average per 30 days over the previous 90 days, requiring at least 10
 recent commits). The value is the maximum of the two components. The signal is
 high-recall and low-precision: active projects can trigger it, so it is a
 triage aid, not proof of compromise.
+
+## Historical snapshots
+
+For PyPI, `mw backfill-snapshots` reconstructs a maintainer snapshot from the
+PEP 658 `.metadata` sidecar of the latest release published 180-365 days ago.
+It stores the `Author`, `Author-email`, `Maintainer` and `Maintainer-email`
+values. `publisher_change` compares current maintainers with the newest
+snapshot in that window; because the exact change date is unknown, the value is
+capped at 0.5. Snapshots can also be imported with `--source`
+(JSONL/JSON/CSV) using `{system, name, captured_at, maintainers}` records.
 
 ## Standard outputs
 
@@ -149,6 +160,11 @@ evidence and model version, so a score can be verified.
   "new", and an account hijack that keeps the same author can still be missed.
 - `commit_anomaly` is high-recall/low-precision and should be used as a triage
   aid, not as a standalone alarm.
+- GitLab contributor counts are all-time rather than 12 months, and public
+  GitLab requests are rate-limited without `GITLAB_TOKEN`.
+- Reconstructed PyPI snapshots are a proxy: PEP 658 metadata coverage is
+  partial and historical metadata can list fewer maintainers than the registry.
+  Missing keys are not a risk by themselves.
 - GPG coverage depends on keyserver publication and matching UIDs; missing keys
   are not a risk by themselves.
 - `scorecard` and `dependency_risk` are not applicable when the repository or

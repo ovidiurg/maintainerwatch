@@ -34,6 +34,7 @@ class Config(BaseModel):
     ecosystems: list[str] = Field(default_factory=lambda: ["npm", "pypi"])
     top_n: int = 2000
     github_token_env: str = "GITHUB_TOKEN"
+    gitlab_token_env: str = "GITLAB_TOKEN"
     http: HttpConfig = Field(default_factory=HttpConfig)
     weights: dict[str, int] = Field(
         default_factory=lambda: {
@@ -50,7 +51,7 @@ class Config(BaseModel):
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.4.0"
+    model_version: str = "0.4.1"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",
@@ -72,6 +73,10 @@ class Config(BaseModel):
     @property
     def github_token(self) -> str | None:
         return os.environ.get(self.github_token_env) or _gh_cli_token()
+
+    @property
+    def gitlab_token(self) -> str | None:
+        return os.environ.get(self.gitlab_token_env) or None
 
 
 @lru_cache(maxsize=1)

@@ -6,6 +6,7 @@ ecosystems:
 top_n: 2000
 
 github_token_env: GITHUB_TOKEN
+gitlab_token_env: GITLAB_TOKEN
 
 http:
   timeout_s: 20
@@ -41,7 +42,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.4.0"
+model_version: "0.4.1"
 
 osint:
   # Minimal, passive, role-related sources only.

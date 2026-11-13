@@ -405,7 +405,7 @@ def get_snapshot_before(
     return conn.execute(
         """SELECT * FROM snapshots
            WHERE system=? AND name=? AND captured_at <= ?
-           ORDER BY captured_at ASC LIMIT 1""",
+           ORDER BY captured_at DESC LIMIT 1""",
         (system, name, cutoff_iso),
     ).fetchone()
 

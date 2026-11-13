@@ -2,21 +2,20 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
-from . import db
+from . import db, snapshots
 from .config import Config
-from .ingest import crates, downloads, github, github_repo, maven, npm, osv, pypi
-from .ingest.github import fetch_repo_license, fetch_repo_stats
+from .ingest import crates, downloads, forge, github, github_repo, maven, npm, osv, pypi
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
 from .models import Maintainer, Version
 from .resolve import identity_map, resolve_package
 from .score import band_for, compute_score, computed_at
 from .signals import compute_all
-from .signals.base import Context
+from .signals.base import Context, parse_ts
 
 
 def make_client(cfg: Config) -> CachedClient:
@@ -124,12 +123,14 @@ def ingest_system(
             for pkg in packages:
                 if not pkg.repo_url:
                     continue
-                stats = fetch_repo_stats(
-                    client, system, pkg.name, pkg.repo_url, cfg.github_token
+                stats = forge.fetch_repo_stats(
+                    client, system, pkg.name, pkg.repo_url,
+                    cfg.github_token, cfg.gitlab_token,
                 )
                 if not stats:
                     continue
-                stats.scorecard_score = fetch_score(client, pkg.repo_url)
+                if github.parse_github_repo(pkg.repo_url):
+                    stats.scorecard_score = fetch_score(client, pkg.repo_url)
                 db.upsert_repo_stats(conn, [stats])
                 github_count += 1
             conn.commit()
@@ -249,8 +250,8 @@ def backfill_licenses(
                 if doc:
                     classifier = pypi._classifier(doc.get("info") or {})
             repo_license = (
-                fetch_repo_license(
-                    client, r["repo_url"], cfg.github_token,
+                forge.fetch_repo_license(
+                    client, r["repo_url"], cfg.github_token, cfg.gitlab_token,
                     use_cache=not refresh,
                 )
                 if r["repo_url"]
@@ -289,8 +290,8 @@ def backfill_commits(
         for r in rows:
             if not r["repo_url"]:
                 continue
-            commits = github.fetch_commits(
-                client, r["repo_url"], cfg.github_token,
+            commits = forge.fetch_commits(
+                client, r["repo_url"], cfg.github_token, cfg.gitlab_token,
                 until=until, pages=pages,
             )
             if not commits:
@@ -311,6 +312,98 @@ def backfill_commits(
     return {"packages": len(rows), "commits": total}
 
 
+def backfill_snapshots(
+    cfg: Config,
+    source: str | None = None,
+    limit: int | None = None,
+) -> dict:
+    conn = _open(cfg)
+
+    if source:
+        path = Path(source)
+        text = path.read_text(encoding="utf-8")
+        if path.suffix == ".jsonl":
+            records = [json.loads(line) for line in text.splitlines() if line.strip()]
+        elif path.suffix == ".json":
+            records = json.loads(text)
+        else:
+            import csv
+
+            records = []
+            for row in csv.DictReader(text.splitlines()):
+                records.append(
+                    {
+                        "system": row.get("system"),
+                        "name": row.get("name"),
+                        "captured_at": row.get("captured_at"),
+                        "maintainers": [
+                            item.strip()
+                            for item in (row.get("maintainers") or "").split(";")
+                            if item.strip()
+                        ],
+                    }
+                )
+        count = snapshots.import_snapshot_records(conn, records)
+        conn.close()
+        return {"source": source, "snapshots": count}
+
+    rows = [r for r in db.list_packages(conn) if r["system"] == "pypi"]
+    if limit:
+        rows = rows[:limit]
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=180)
+    floor = now - timedelta(days=365)
+    count = 0
+    with make_client(cfg) as client:
+        for r in rows:
+            doc = client.get_json(
+                f"https://pypi.org/pypi/{quote(r['name'], safe='')}/json"
+            )
+            if not doc:
+                continue
+            candidates = []
+            for version, files in (doc.get("releases") or {}).items():
+                times = [
+                    f.get("upload_time_iso_8601") or f.get("upload_time")
+                    for f in (files or [])
+                ]
+                times = [t for t in times if t]
+                if not times:
+                    continue
+                published = parse_ts(min(times))
+                if published is not None and floor <= published <= cutoff:
+                    candidates.append((published, version, files))
+            candidates.sort(key=lambda item: item[0], reverse=True)
+            for published, _version, files in candidates:
+                identities: list[str] = []
+                for file_info in files[:3]:
+                    url = file_info.get("url")
+                    if not url:
+                        continue
+                    metadata = client.get_text(url + ".metadata")
+                    if metadata:
+                        identities = snapshots.parse_metadata_identities(metadata)
+                        if identities:
+                            break
+                if identities:
+                    payload = json.dumps(sorted(set(identities)), sort_keys=True)
+                    db.record_snapshot(
+                        conn,
+                        "pypi",
+                        r["name"],
+                        published.isoformat(),
+                        payload,
+                        hashlib.sha256(payload.encode("utf-8")).hexdigest(),
+                    )
+                    count += 1
+                    break
+
+    conn.commit()
+    conn.close()
+    return {"packages": len(rows), "snapshots": count}
+
+
 def resolve_all(cfg: Config, limit: int | None = None) -> dict:
     conn = _open(cfg)
     rows = db.list_packages(conn)
@@ -326,6 +419,7 @@ def resolve_all(cfg: Config, limit: int | None = None) -> dict:
             links = resolve_package(
                 conn, client, system, name, r["repo_url"], maintainers, versions,
                 token=cfg.github_token,
+                gitlab_token=cfg.gitlab_token,
                 use_keybase=cfg.osint.keybase,
                 use_github_email=cfg.osint.github_email,
                 use_pypi_provenance=cfg.osint.pypi_provenance,

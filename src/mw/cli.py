@@ -110,6 +110,19 @@ def backfill_commits(
     ))
 
 
+@app.command("backfill-snapshots")
+def backfill_snapshots(
+    source: Optional[str] = typer.Option(None, help="JSONL, JSON or CSV snapshot file."),
+    limit: Optional[int] = typer.Option(None, help="Limit PyPI packages."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Import or reconstruct historical maintainer snapshots."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.backfill_snapshots(cfg, source=source, limit=limit)
+    ))
+
+
 @app.command()
 def scan(
     name: str = typer.Argument(..., help="Package name."),

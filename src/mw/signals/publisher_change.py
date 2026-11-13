@@ -11,6 +11,7 @@ from .base import Context, clamp, days_between, now_utc, parse_ts
 
 WINDOW_DAYS = 365
 SNAPSHOT_MIN_AGE_DAYS = 180
+SNAPSHOT_MAX_AGE_DAYS = 365
 
 
 def _is_automation(value: str | None, auto_ids: set[str], auto_res: list[re.Pattern]) -> bool:
@@ -55,21 +56,31 @@ def _snapshot_changes(ctx: Context, reference) -> dict | None:
     if snapshot is None:
         return None
 
-    previous = set(json.loads(snapshot["maintainer_set_json"] or "[]"))
+    previous = {
+        str(item).strip().lower()
+        for item in json.loads(snapshot["maintainer_set_json"] or "[]")
+        if item
+    }
     current = {
-        row["identity"]
+        str(row["identity"]).strip().lower()
         for row in db.get_maintainers(ctx.conn, ctx.system, ctx.name)
         if row["identity"]
     }
     if not current:
         latest = db.get_latest_snapshot(ctx.conn, ctx.system, ctx.name)
         if latest is not None:
-            current = set(json.loads(latest["maintainer_set_json"] or "[]"))
+            current = {
+                str(item).strip().lower()
+                for item in json.loads(latest["maintainer_set_json"] or "[]")
+                if item
+            }
 
     added = sorted(current - previous)
     removed = sorted(previous - current)
     captured = parse_ts(snapshot["captured_at"])
     age = round(days_between(captured, reference), 1) if captured else None
+    if age is None or age > SNAPSHOT_MAX_AGE_DAYS:
+        return None
     return {
         "snapshot_at": snapshot["captured_at"],
         "snapshot_age_days": age,
@@ -120,14 +131,14 @@ def compute(ctx: Context) -> SignalEvidence:
             applicable=False,
             evidence={
                 "reason": (
-                    "no per-release publisher and no snapshot older than "
-                    f"{SNAPSHOT_MIN_AGE_DAYS} days"
+                    "no per-release publisher and no snapshot between "
+                    f"{SNAPSHOT_MIN_AGE_DAYS} and {SNAPSHOT_MAX_AGE_DAYS} days old"
                 )
             },
         )
 
     return SignalEvidence(
-        value=clamp(snapshot["n_changed"] / 2.0),
+        value=min(0.5, clamp(snapshot["n_changed"] / 2.0)),
         evidence={
             "source": "snapshot",
             **snapshot,

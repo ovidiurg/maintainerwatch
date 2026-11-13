@@ -51,6 +51,7 @@ def resolve_package(
     versions: list[Version],
     *,
     token: str | None,
+    gitlab_token: str | None = None,
     use_keybase: bool = True,
     use_github_email: bool = True,
     use_pypi_provenance: bool = True,
@@ -67,6 +68,7 @@ def resolve_package(
         links.extend(
             github_email.links_from_commits(
                 client, system, name, repo_url, emails, token,
+                gitlab_token=gitlab_token,
                 owner=max((m.identity for m in maintainers if m.identity), default=None),
             )
         )

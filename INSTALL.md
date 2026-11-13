@@ -76,6 +76,7 @@ mw ingest --system maven --top 50
 mw backfill-deps
 mw backfill-licenses
 mw backfill-commits
+mw backfill-snapshots
 mw resolve --limit 150
 mw score-all
 mw report --out data/report.html
@@ -90,6 +91,10 @@ Maven uses a curated seed list by default; pass `--seed-file` with
 
 `backfill-commits` fetches the last two GitHub commit pages per repository; for
 historical replay use `--until` (see `scripts/incident_check.py`).
+`backfill-snapshots` reconstructs PyPI maintainer snapshots from PEP 658
+release metadata (or imports a JSONL/JSON/CSV file with `--source`).
+GitLab forges are supported too: set `GITLAB_TOKEN` to raise the GitLab.com API
+rate limit.
 
 ## Alerts and REST API
 
