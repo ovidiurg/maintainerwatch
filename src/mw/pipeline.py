@@ -329,6 +329,7 @@ def resolve_all(cfg: Config, limit: int | None = None) -> dict:
                 use_keybase=cfg.osint.keybase,
                 use_github_email=cfg.osint.github_email,
                 use_pypi_provenance=cfg.osint.pypi_provenance,
+                use_gpg=cfg.osint.gpg,
             )
             total_links += len(links)
 
@@ -357,6 +358,8 @@ def score_all(cfg: Config) -> dict:
             license=r["license"],
             license_classifier=r["license_classifier"],
             license_repo=repo["license"] if repo else None,
+            dependencies_count=int(r["dependencies_count"] or 0),
+            fan_in_transitive=int(r["fan_in_transitive"] or 0),
             identity_mapping=identity_map(
                 conn, system, name, cfg.min_identity_confidence
             ),

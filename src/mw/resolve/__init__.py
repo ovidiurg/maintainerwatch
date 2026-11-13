@@ -7,7 +7,7 @@ from typing import Iterable
 from ..ingest.github import fetch_commit_emails
 from ..ingest.http import CachedClient
 from ..models import IdentityLink, Maintainer, Version
-from . import github_email, keybase, pypi_provenance
+from . import github_email, gpg, keybase, pypi_provenance
 
 CONFIDENCE_RANK = {"low": 1, "medium": 2, "high": 3}
 
@@ -54,6 +54,7 @@ def resolve_package(
     use_keybase: bool = True,
     use_github_email: bool = True,
     use_pypi_provenance: bool = True,
+    use_gpg: bool = True,
 ) -> list[IdentityLink]:
     links: list[IdentityLink] = []
 
@@ -78,6 +79,20 @@ def resolve_package(
         for handle in sorted(handles)[:5]:
             links.extend(keybase.lookup(client, system, name, handle))
 
+    if use_gpg:
+        emails = {
+            (v.publisher_email or "").strip().lower()
+            for v in versions
+            if v.publisher_email
+        }
+        emails.update(
+            m.identity.strip().lower()
+            for m in maintainers
+            if m.identity and "@" in m.identity
+        )
+        for email in sorted(emails)[:5]:
+            links.extend(gpg.lookup(client, system, name, email))
+
     if use_pypi_provenance and repo_url:
         links.extend(
             pypi_provenance.links_from_repo(system, name, repo_url, versions)
@@ -94,12 +109,33 @@ def identity_map(conn: sqlite3.Connection, system: str, name: str,
     rows = conn.execute(
         "SELECT * FROM identity_links WHERE system=? AND name=?", (system, name)
     ).fetchall()
-    mapping: dict[str, str] = {}
+
+    graph: dict[str, set[str]] = {}
     for r in rows:
         if CONFIDENCE_RANK.get(r["confidence"], 0) < threshold:
             continue
-        mapping[r["id_a"]] = r["id_b"]
-        mapping.setdefault(r["id_b"], r["id_a"])
+        left = r["id_a"].strip().lower()
+        right = r["id_b"].strip().lower()
+        graph.setdefault(left, set()).add(right)
+        graph.setdefault(right, set()).add(left)
+
+    mapping: dict[str, str] = {}
+    visited: set[str] = set()
+    for node in graph:
+        if node in visited:
+            continue
+        component: set[str] = set()
+        stack = [node]
+        while stack:
+            current = stack.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            component.add(current)
+            stack.extend(graph.get(current, set()) - visited)
+        canonical_id = min(component)
+        for member in component:
+            mapping[member] = canonical_id
     return mapping
 
 

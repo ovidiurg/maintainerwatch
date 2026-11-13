@@ -17,6 +17,7 @@ be recomputed from stored signal values and evidence.
 | OSV (`api.osv.dev`) | vulnerability context |
 | GitHub REST API | repo owner, owner account age, contributor share, commit emails |
 | GitHub commits API | commit authors and dates for `commit_anomaly` |
+| keyserver.ubuntu.com (HKP) | GPG key IDs linked to publisher emails |
 | GitHub releases API | release timeline for non-package projects such as xz |
 | OpenSSF Scorecard | repository security score (context) |
 | Keybase public API | self-declared identity proofs |
@@ -40,7 +41,10 @@ aliases) are skipped, because a transition to automation is a security
 improvement, not a takeover. For PyPI, crates.io and Maven, where a per-release
 publisher is not available, the signal falls back to comparing current
 maintainers with the oldest snapshot at least 180 days old; it stays not
-applicable until such a snapshot exists.
+applicable until such a snapshot exists. GPG keys are looked up on
+keyserver.ubuntu.com by publisher email and accepted only when a UID matches;
+all identity links are unioned per package, so two emails that share a key map
+to the same canonical identity.
 
 ## Signals
 
@@ -54,6 +58,8 @@ applicable until such a snapshot exists.
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
 | `commit_anomaly` | 15 | New-author share in a 90-day window and commit burst (30 days vs the previous 90 days) from sampled GitHub commits. |
+| `scorecard` | 10 | Low OpenSSF Scorecard repository score; value = max(0, (7 - score) / 7). |
+| `dependency_risk` | 15 | Log-scaled transitive fan-in (200+ dependents = 1.0) plus a smaller fan-out component. |
 
 ## License sources
 
@@ -87,15 +93,15 @@ of packages and vulnerability IDs), in addition to `parquet` and `csv`.
 
 ## Context
 
-`scorecard_score` (OpenSSF Scorecard) and dependency counts are stored as
-context, not part of the weighted score. `dependencies_count` is the number of
-direct runtime/build dependencies of the latest ingested version. `fan_in` is
-the number of ingested packages that depend directly on the package;
-`fan_in_transitive` is the number of distinct packages that reach it through
-any dependency path inside the ingested graph (cycle-safe). Both are lower
-bounds because only ingested packages are counted. PyPI `requires_dist`
-entries gated by an `extra ==` marker (test/dev extras) are excluded from the
-graph.
+`scorecard_score` (OpenSSF Scorecard) is scored by the `scorecard` signal;
+`dependencies_count` and `fan_in_transitive` feed `dependency_risk`.
+`dependencies_count` is the number of direct runtime/build dependencies of the
+latest ingested version. `fan_in` is the number of ingested packages that depend
+directly on the package; `fan_in_transitive` is the number of distinct packages
+that reach it through any dependency path inside the ingested graph
+(cycle-safe). Both are lower bounds because only ingested packages are counted.
+PyPI `requires_dist` entries gated by an `extra ==` marker (test/dev extras) are
+excluded from the graph.
 
 A signal that cannot be computed (for example, no repository data) is marked
 `applicable = false` and excluded from the score rather than counted as zero.
@@ -143,6 +149,13 @@ evidence and model version, so a score can be verified.
   "new", and an account hijack that keeps the same author can still be missed.
 - `commit_anomaly` is high-recall/low-precision and should be used as a triage
   aid, not as a standalone alarm.
+- GPG coverage depends on keyserver publication and matching UIDs; missing keys
+  are not a risk by themselves.
+- `scorecard` and `dependency_risk` are not applicable when the repository or
+  dependency data is absent.
+- Publisher-level signing-key history is not implemented: npm signatures are
+  registry-level, so the experimental `signing_key_change` signal is not
+  weighted.
 - Scores are risk indicators, not proof of compromise. They must be reviewed
   with the underlying evidence.
 

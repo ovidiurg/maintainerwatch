@@ -117,6 +117,8 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
     for ver, meta in (doc.get("versions") or {}).items():
         dist = meta.get("dist") or {}
         user = meta.get("_npmUser") or {}
+        signatures = dist.get("signatures") or []
+        key_id = signatures[0].get("keyid") if signatures else None
         versions.append(
             Version(
                 system="npm",
@@ -125,7 +127,8 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
                 published_at=times.get(ver),
                 publisher_name=user.get("name"),
                 publisher_email=user.get("email"),
-                has_sig=bool(dist.get("signatures")),
+                publisher_key_id=key_id,
+                has_sig=bool(signatures),
                 has_provenance=bool(dist.get("attestations")),
                 is_yanked=bool(meta.get("deprecated")),
             )

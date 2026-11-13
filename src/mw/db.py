@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS packages (
 CREATE TABLE IF NOT EXISTS versions (
   system TEXT NOT NULL, name TEXT NOT NULL, version TEXT NOT NULL,
   published_at TEXT, publisher_name TEXT, publisher_email TEXT,
+  publisher_key_id TEXT,
   has_sig INTEGER DEFAULT 0, has_provenance INTEGER DEFAULT 0,
   is_yanked INTEGER DEFAULT 0,
   PRIMARY KEY (system, name, version)
@@ -104,6 +105,7 @@ def init_db(conn: sqlite3.Connection) -> None:
     _ensure_column(conn, "packages", "fan_in_transitive", "INTEGER DEFAULT 0")
     _ensure_column(conn, "packages", "license_classifier", "TEXT")
     _ensure_column(conn, "repo_stats", "license", "TEXT")
+    _ensure_column(conn, "versions", "publisher_key_id", "TEXT")
     conn.commit()
 
 
@@ -143,18 +145,20 @@ def upsert_packages(conn: sqlite3.Connection, packages: Iterable[Package]) -> No
 def upsert_versions(conn: sqlite3.Connection, versions: Iterable[Version]) -> None:
     rows = [
         (v.system, v.name, v.version, v.published_at, v.publisher_name,
-         v.publisher_email, int(v.has_sig), int(v.has_provenance), int(v.is_yanked))
+         v.publisher_email, v.publisher_key_id, int(v.has_sig),
+         int(v.has_provenance), int(v.is_yanked))
         for v in versions
     ]
     conn.executemany(
         """INSERT INTO versions
              (system, name, version, published_at, publisher_name,
-              publisher_email, has_sig, has_provenance, is_yanked)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              publisher_email, publisher_key_id, has_sig, has_provenance, is_yanked)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(system, name, version) DO UPDATE SET
              published_at=COALESCE(excluded.published_at, versions.published_at),
              publisher_name=COALESCE(excluded.publisher_name, versions.publisher_name),
              publisher_email=COALESCE(excluded.publisher_email, versions.publisher_email),
+             publisher_key_id=COALESCE(excluded.publisher_key_id, versions.publisher_key_id),
              has_sig=MAX(excluded.has_sig, versions.has_sig),
              has_provenance=MAX(excluded.has_provenance, versions.has_provenance),
              is_yanked=excluded.is_yanked""",

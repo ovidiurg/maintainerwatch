@@ -27,6 +27,7 @@ class Version(BaseModel):
     published_at: str | None = None
     publisher_name: str | None = None
     publisher_email: str | None = None
+    publisher_key_id: str | None = None
     has_sig: bool = False
     has_provenance: bool = False
     is_yanked: bool = False

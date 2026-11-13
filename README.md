@@ -8,7 +8,7 @@ describe packages (`deps.dev`), vulnerabilities (`OSV`) or repository practices
 (`OpenSSF Scorecard`), but not the people behind packages across ecosystems.
 
 MaintainerWatch ingests public package metadata, resolves maintainer identities
-with explicit confidence levels, derives eight explainable risk signals and
+with explicit confidence levels, derives ten explainable risk signals and
 publishes a versioned open dataset plus a CLI/report.
 
 ## Scope
@@ -24,10 +24,11 @@ publishes a versioned open dataset plus a CLI/report.
   6. `typosquat` — name close to a top package, with low downloads
   7. `license_inconsistency` — missing or non-SPDX license metadata
   8. `commit_anomaly` — new-author share and commit burst relative to the baseline
-- Context: OSV vulnerabilities, OpenSSF Scorecard, dependency fan-in/out
-  (direct and transitive).
+  9. `scorecard` — low OpenSSF Scorecard repository score
+  10. `dependency_risk` — high transitive fan-in / dependency footprint
+- Context: OSV vulnerability counts and the dependency graph.
 - Identity resolution (minimal, passive): Keybase proofs, GitHub commit
-  emails / GPG keys, PyPI PEP 740 provenance. No social-media scraping.
+  emails, GPG keyservers and PyPI PEP 740 provenance. No social-media scraping.
 
 ## Install
 
@@ -85,14 +86,15 @@ falls back to `gh auth token` automatically.
   GitHub repository.
 - 207,252 versions, 210,185 commits, 2,396 maintainers, 1,122 repositories,
   3,229 OSV records, 2,638 runtime dependency edges (PyPI extras excluded).
-- 2,034 identity links (1,211 high, 162 medium, 661 low confidence).
-- Risk bands: 8 high, 570 medium, 591 low. OIDC/bot publishers are ignored.
+- 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
+- Risk bands: 1 high, 497 medium, 671 low. OIDC/bot publishers are ignored.
 - License cross-check: 1,148 compatible/recognised, 10 non-SPDX, 7 missing and
   4 declared-vs-repository conflicts (pathspec, uvloop, eslint-visitor-keys,
   opencv-python-headless).
 - PyPI `publisher_change` is not applicable until 180 days of snapshot history
   exist; PyPI scores use the remaining signals until then.
-- Highest: antd 58.7, path-to-regexp 55.9, graphql 53.6, fqdn 53.1, json5 52.4.
+- Highest: antd 50.0, editables 49.9, duckdb 49.6, graphql 49.5,
+  path-to-regexp 48.4.
 - Pre-incident replay: event-stream 59.5, colors 40.0, node-ipc 38.0,
   ua-parser-js 25.0, xz-utils 42.8. At threshold 40 the 27-package benign
   sample gives precision 0.300, recall 0.600, false-positive rate 0.259.

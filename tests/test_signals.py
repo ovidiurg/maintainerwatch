@@ -14,10 +14,13 @@ from mw.signals import (
     account_age,
     bus_factor,
     commit_anomaly,
+    dependency_risk,
     license_inconsistency,
     publisher_change,
     release_anomaly,
+    scorecard,
     signing_gap,
+    signing_key_change,
     typosquat,
 )
 from mw.signals.base import Context
@@ -485,6 +488,73 @@ def test_commit_anomaly_not_applicable(conn):
     _add_commit(conn, 20, "alice", "two")
     ev = commit_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
     assert ev.applicable is False
+
+
+def test_signing_key_change(conn):
+    _add_package(conn)
+    conn.execute(
+        """INSERT INTO versions (system, name, version, published_at, publisher_key_id)
+           VALUES ('npm', 'pkg', '1.0.0', '2024-01-01', 'KEY1')"""
+    )
+    conn.execute(
+        """INSERT INTO versions (system, name, version, published_at, publisher_key_id)
+           VALUES ('npm', 'pkg', '1.1.0', '2024-02-01', 'KEY1')"""
+    )
+    ev = signing_key_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is True
+    assert ev.value == 0.0
+    conn.execute(
+        """INSERT INTO versions (system, name, version, published_at, publisher_key_id)
+           VALUES ('npm', 'pkg', '1.2.0', '2024-03-01', 'KEY2')"""
+    )
+    ev = signing_key_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 1.0
+    assert ev.evidence["keys"] == ["KEY1", "KEY2"]
+
+
+def test_signing_key_change_without_data(conn):
+    _add_package(conn)
+    conn.execute(
+        """INSERT INTO versions (system, name, version, published_at)
+           VALUES ('npm', 'pkg', '1.0.0', '2024-01-01')"""
+    )
+    ev = signing_key_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_scorecard_signal(conn):
+    _add_package(conn)
+    conn.execute(
+        """INSERT INTO repo_stats (system, name, scorecard_score)
+           VALUES ('npm', 'pkg', 8.0)"""
+    )
+    ev = scorecard.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is True
+    assert ev.value == 0.0
+    conn.execute("UPDATE repo_stats SET scorecard_score=0 WHERE system='npm' AND name='pkg'")
+    ev = scorecard.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 1.0
+
+
+def test_scorecard_without_data(conn):
+    _add_package(conn)
+    ev = scorecard.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_dependency_risk(conn):
+    _add_package(conn)
+    ev = dependency_risk.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+    ev = dependency_risk.compute(
+        Context(conn=conn, system="npm", name="pkg", fan_in_transitive=200)
+    )
+    assert ev.value == 1.0
+    ev = dependency_risk.compute(
+        Context(conn=conn, system="npm", name="pkg",
+                fan_in_transitive=0, dependencies_count=20)
+    )
+    assert 0.0 < ev.value <= 0.3
 
 
 def test_pypi_license_prefers_expression():

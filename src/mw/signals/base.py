@@ -65,6 +65,8 @@ class Context:
     license: str | None = None
     license_classifier: str | None = None
     license_repo: str | None = None
+    dependencies_count: int = 0
+    fan_in_transitive: int = 0
     as_of: str | None = None
     automation_identities: list[str] = field(default_factory=list)
     automation_patterns: list[str] = field(default_factory=list)

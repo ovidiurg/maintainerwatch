@@ -5,9 +5,11 @@ from . import (
     account_age,
     bus_factor,
     commit_anomaly,
+    dependency_risk,
     license_inconsistency,
     publisher_change,
     release_anomaly,
+    scorecard,
     signing_gap,
     typosquat,
 )
@@ -22,6 +24,8 @@ SIGNALS = {
     "typosquat": typosquat.compute,
     "license_inconsistency": license_inconsistency.compute,
     "commit_anomaly": commit_anomaly.compute,
+    "scorecard": scorecard.compute,
+    "dependency_risk": dependency_risk.compute,
 }
 
 

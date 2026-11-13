@@ -27,6 +27,7 @@ class OsintConfig(BaseModel):
     keybase: bool = True
     github_email: bool = True
     pypi_provenance: bool = True
+    gpg: bool = True
 
 
 class Config(BaseModel):
@@ -44,10 +45,12 @@ class Config(BaseModel):
             "typosquat": 10,
             "license_inconsistency": 5,
             "commit_anomaly": 15,
+            "scorecard": 10,
+            "dependency_risk": 15,
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.3.0"
+    model_version: str = "0.4.0"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",

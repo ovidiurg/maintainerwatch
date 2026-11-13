@@ -23,6 +23,8 @@ weights:
   typosquat: 10
   license_inconsistency: 5
   commit_anomaly: 15
+  scorecard: 10
+  dependency_risk: 15
 
 # Confidence levels accepted for identity-gated signals.
 min_identity_confidence: medium
@@ -39,10 +41,11 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.3.0"
+model_version: "0.4.0"
 
 osint:
   # Minimal, passive, role-related sources only.
   keybase: true
   github_email: true
   pypi_provenance: true
+  gpg: true
