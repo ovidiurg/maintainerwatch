@@ -13,10 +13,12 @@ import httpx
 
 from . import db, snapshots
 from .config import Config
+from .export import export_dataset
 from .ingest import crates, downloads, forge, github, github_repo, maven, npm, osv, pypi
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
 from .models import Maintainer, Version
+from .report import build_report
 from .resolve import identity_map, resolve_package
 from .score import band_for, compute_score, computed_at
 from .signals import compute_all
@@ -407,6 +409,66 @@ def backfill_snapshots(
     conn.commit()
     conn.close()
     return {"packages": len(rows), "snapshots": count}
+
+
+def maintain(
+    cfg: Config,
+    with_commits: bool = True,
+    limit: int | None = None,
+    export: bool = True,
+) -> dict:
+    results: dict = {}
+    results["deps"] = backfill_dependencies(cfg, limit=limit)
+    results["licenses"] = backfill_licenses(cfg, limit=limit)
+    if with_commits:
+        results["commits"] = backfill_commits(cfg, limit=limit)
+    results["resolve"] = resolve_all(cfg, limit=limit)
+    results["snapshots"] = record_current_snapshots(cfg, limit=limit)
+    results["scores"] = score_all(cfg)
+
+    if export:
+        exported = {}
+        for fmt in ("parquet", "csv", "json", "spdx", "cyclonedx", "osv"):
+            path, count = export_dataset(cfg, fmt)
+            exported[fmt] = {"path": str(path), "records": count}
+        results["export"] = exported
+        path, count = build_report(cfg)
+        results["report"] = {"path": str(path), "records": count}
+
+    return results
+
+
+def record_current_snapshots(
+    cfg: Config, system: str | None = None, limit: int | None = None
+) -> dict:
+    conn = _open(cfg)
+    rows = db.list_packages(conn, system)
+    if limit:
+        rows = rows[:limit]
+
+    captured_at = datetime.now(timezone.utc).isoformat()
+    for row in rows:
+        identities = sorted(
+            {
+                maintainer["identity"]
+                for maintainer in db.get_maintainers(
+                    conn, row["system"], row["name"]
+                )
+                if maintainer["identity"]
+            }
+        )
+        payload = json.dumps(identities, sort_keys=True)
+        db.record_snapshot(
+            conn,
+            row["system"],
+            row["name"],
+            captured_at,
+            payload,
+            hashlib.sha256(payload.encode("utf-8")).hexdigest(),
+        )
+    conn.commit()
+    conn.close()
+    return {"packages": len(rows), "snapshots": len(rows)}
 
 
 def resolve_all(cfg: Config, limit: int | None = None) -> dict:

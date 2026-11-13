@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from mw import db
+from mw.config import load_config
+from mw.models import Maintainer, Package
+from mw.pipeline import record_current_snapshots
 from mw.snapshots import import_snapshot_records, parse_metadata_identities
 
 
@@ -41,4 +44,31 @@ def test_import_snapshot_records():
     ).fetchone()
     assert row is not None
     assert "alice@example.org" in row["maintainer_set_json"]
+    conn.close()
+
+
+def test_record_current_snapshots(tmp_path):
+    cfg = load_config()
+    cfg.db_path = tmp_path / "db.sqlite"
+    cfg.data_dir = tmp_path
+
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    db.upsert_packages(conn, [Package(system="npm", name="pkg")])
+    db.upsert_maintainers(
+        conn,
+        [Maintainer(system="npm", name="pkg", identity="alice")],
+    )
+    conn.commit()
+    conn.close()
+
+    result = record_current_snapshots(cfg)
+    assert result["snapshots"] == 1
+
+    conn = db.connect(cfg.db_path)
+    row = conn.execute(
+        "SELECT * FROM snapshots WHERE system='npm' AND name='pkg'"
+    ).fetchone()
+    assert row is not None
+    assert "alice" in row["maintainer_set_json"]
     conn.close()

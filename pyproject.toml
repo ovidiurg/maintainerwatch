@@ -4,13 +4,26 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "maintainerwatch"
-version = "0.4.2"
+version = "0.4.3"
 description = "Open maintainer-level software supply-chain risk intelligence"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "AGPL-3.0-or-later" }
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 authors = [{ name = "MaintainerWatch contributors" }]
 keywords = ["supply-chain", "security", "osint", "sbom", "open-source"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = [
   "httpx>=0.27",
   "pydantic>=2.6",
@@ -24,12 +37,24 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+release = ["build>=1", "twine>=5"]
+
+[project.urls]
+Homepage = "https://github.com/ovidiurg/maintainerwatch"
+Repository = "https://github.com/ovidiurg/maintainerwatch"
+Issues = "https://github.com/ovidiurg/maintainerwatch/issues"
 
 [project.scripts]
 mw = "mw.cli:app"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+mw = ["data/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -64,6 +64,36 @@ def score_all(config: Optional[str] = typer.Option(None, help="Config file path.
     typer.echo(json.dumps(pipeline.score_all(cfg)))
 
 
+@app.command()
+def maintain(
+    with_commits: bool = typer.Option(True, help="Refresh GitHub/GitLab commits."),
+    limit: Optional[int] = typer.Option(None, help="Limit packages per backfill."),
+    export: bool = typer.Option(True, help="Export datasets and build the report."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Run the recurring post-ingest pipeline (cron-friendly)."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.maintain(
+            cfg, with_commits=with_commits, limit=limit, export=export
+        ),
+        indent=2,
+    ))
+
+
+@app.command()
+def snapshot(
+    system: Optional[str] = typer.Option(None, help="Limit to one ecosystem."),
+    limit: Optional[int] = typer.Option(None, help="Limit packages."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Record a maintainer snapshot for the current database state."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.record_current_snapshots(cfg, system=system, limit=limit)
+    ))
+
+
 @app.command("backfill-deps")
 def backfill_deps(
     system: Optional[str] = typer.Option(None, help="npm, pypi, crates or maven."),

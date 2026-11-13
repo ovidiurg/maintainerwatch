@@ -82,6 +82,25 @@ See [docs/api.md](docs/api.md) for endpoints, pagination headers, the optional
 `MAINTAINERWATCH_API_KEY`, rate limiting and alert-rule webhook/email delivery.
 Alert rules and delivery targets live in `config/default.yaml` under `alerts`.
 
+## Packaging and operations
+
+```bash
+make install          # editable install with dev extras
+make test             # pytest
+make build            # sdist + wheel
+make check            # tests, build and twine check
+./scripts/build_reproducible.sh   # builds twice and compares hashes
+make docker           # container image
+docker compose up -d --build      # serve on :8000 with ./data mounted
+```
+
+`mw maintain` runs the recurring post-ingest pipeline (backfills, identity
+resolution, snapshots, scoring, exports and the report); `mw snapshot` records
+just the current maintainer snapshots. `docs/operations.md` has cron, systemd
+timer, Docker, backup and monitoring examples.
+
+For a release, run `make check` and upload with `twine upload dist/*`.
+
 Data lives in `data/maintainerwatch.sqlite`; exports in `data/`.
 
 Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool

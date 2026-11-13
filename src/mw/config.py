@@ -11,7 +11,15 @@ import yaml
 from pydantic import BaseModel, Field
 
 
-DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "default.yaml"
+def _default_config_path() -> Path:
+    repo = Path(__file__).resolve().parents[2] / "config" / "default.yaml"
+    if repo.exists():
+        return repo
+    packaged = Path(__file__).resolve().parent / "data" / "default.yaml"
+    return packaged if packaged.exists() else repo
+
+
+DEFAULT_CONFIG_PATH = _default_config_path()
 DEFAULT_DATA_DIR = Path("data")
 DEFAULT_DB_PATH = DEFAULT_DATA_DIR / "maintainerwatch.sqlite"
 

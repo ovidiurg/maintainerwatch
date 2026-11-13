@@ -145,6 +145,22 @@ python -m compileall src
 The test suite does not hit the network; it uses an in-memory SQLite database
 and synthetic fixtures.
 
+## Packaging and operations
+
+```bash
+make install              # pip install -e ".[dev]"
+make test
+make build                # sdist + wheel in dist/
+make check                # tests, build, twine check
+./scripts/build_reproducible.sh
+make docker               # docker build -t maintainerwatch:latest .
+docker compose up -d --build
+```
+
+`mw maintain` is the cron-friendly post-ingest pipeline; `mw snapshot` records
+the current maintainer snapshots. See [docs/operations.md](docs/operations.md)
+for cron, systemd timer, Docker, backup and monitoring examples.
+
 ## Troubleshooting
 
 - **GitHub 403 / rate limit** — run `gh auth login`, set `GITHUB_TOKEN`, or use
