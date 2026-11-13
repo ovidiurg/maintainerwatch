@@ -136,16 +136,13 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
-See [docs/nlnet-proposal.md](docs/nlnet-proposal.md) and
-[docs/incident-validation.md](docs/incident-validation.md).
+See [docs/incident-validation.md](docs/incident-validation.md).
 
 ## Scoring
 
 A weighted sum of applicable signals, normalised to 0–100, with an
 `inputs_hash` for reproducibility. Every signal stores its evidence.
-See [docs/methodology.md](docs/methodology.md) and
-[docs/roadmap.md](docs/roadmap.md) for the model and remaining broader-scope
-work.
+See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy
 
