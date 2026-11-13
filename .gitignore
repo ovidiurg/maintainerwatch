@@ -11,3 +11,5 @@ data/
 *.parquet
 *.csv
 report.html
+
+.opencode/
