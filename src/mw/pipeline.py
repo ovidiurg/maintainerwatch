@@ -203,7 +203,6 @@ def backfill_dependencies(
         "maven": maven,
         "github": github_repo,
     }
-    db.clear_dependencies(conn, system)
     dependency_rows = 0
     with make_client(cfg) as client:
         for r in rows:
@@ -223,6 +222,7 @@ def backfill_dependencies(
                 )
                 for dep in deps
             ]
+            db.clear_package_dependencies(conn, r["system"], r["name"])
             if payload:
                 db.upsert_dependencies(conn, payload)
                 dependency_rows += len(payload)
