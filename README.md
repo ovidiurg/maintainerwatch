@@ -67,6 +67,7 @@ mw scan serde --system crates
 
 # Alerts and the read-only API.
 mw alerts --min-score 40 --signal publisher_change --min-signal 0.5
+mw alerts --rules --dry-run
 mw serve --host 127.0.0.1 --port 8000
 
 # Export the dataset and build the report.
@@ -76,6 +77,10 @@ mw export --format cyclonedx
 mw export --format osv
 mw report --out report.html
 ```
+
+See [docs/api.md](docs/api.md) for endpoints, pagination headers, the optional
+`MAINTAINERWATCH_API_KEY`, rate limiting and alert-rule webhook/email delivery.
+Alert rules and delivery targets live in `config/default.yaml` under `alerts`.
 
 Data lives in `data/maintainerwatch.sqlite`; exports in `data/`.
 

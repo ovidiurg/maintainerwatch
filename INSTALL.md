@@ -101,6 +101,8 @@ rate limit.
 ```bash
 mw alerts --min-score 40 --signal publisher_change --min-signal 0.5
 mw alerts --min-score 50 --out data/alerts.json
+mw alerts --rules --dry-run          # rules from config/default.yaml
+mw alerts --rules --out data/alerts.json
 mw serve --host 127.0.0.1 --port 8000
 ```
 
@@ -108,12 +110,18 @@ The API is read-only:
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /health` | status and model version |
+| `GET /health` | status, app version and model version |
 | `GET /systems` | package counts per ecosystem |
-| `GET /packages?system=&band=&min_score=&limit=` | ranked packages |
+| `GET /packages?system=&band=&min_score=&limit=&offset=` | paginated ranked packages |
 | `GET /packages/{system}/{name}` | score, signals, context, dependencies |
-| `GET /top?system=&limit=` | top risk |
-| `GET /alerts?min_score=&signal=&min_signal=` | threshold alerts |
+| `GET /top?system=&limit=&offset=` | top risk |
+| `GET /alerts?min_score=&signal=&min_signal=` | ad-hoc alerts |
+| `GET /alert-rules` | run configured rules without delivery |
+
+Pagination uses the `X-Total-Count`, `X-Limit`, `X-Offset` and `X-Next-Offset`
+headers. Set `MAINTAINERWATCH_API_KEY` to require `X-API-Key`; set
+`api.rate_limit_rpm` in the config to enable the in-memory rate limit. See
+[docs/api.md](docs/api.md) for webhook/email delivery and examples.
 
 ## Where data lives
 

@@ -12,7 +12,7 @@ http:
   timeout_s: 20
   cache_ttl_h: 24
   rate_limit_qps: 5
-  user_agent: "MaintainerWatch/0.1 (+https://example.org/maintainerwatch)"
+  user_agent: "MaintainerWatch/0.4 (+https://example.org/maintainerwatch)"
 
 # Signal weights used by the 0-100 explainable score.
 weights:
@@ -43,6 +43,34 @@ automation_patterns:
   - 'no-reply@github\.com$'
 
 model_version: "0.4.1"
+
+alerts:
+  rules:
+    - name: high-risk
+      min_score: 45
+      min_signal: 0.5
+      limit: 100
+    - name: publisher-change
+      min_score: 30
+      signal: publisher_change
+      min_signal: 0.5
+      limit: 100
+  webhook: null
+  webhook_format: generic   # generic | slack | discord
+  email: null
+  timeout_s: 10
+  smtp:
+    host: null
+    port: 587
+    username: null
+    password_env: SMTP_PASSWORD
+    sender: null
+    use_tls: true
+
+api:
+  api_key_env: MAINTAINERWATCH_API_KEY
+  # 0 disables the in-memory per-client rate limit.
+  rate_limit_rpm: 0
 
 osint:
   # Minimal, passive, role-related sources only.

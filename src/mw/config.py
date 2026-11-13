@@ -30,12 +30,47 @@ class OsintConfig(BaseModel):
     gpg: bool = True
 
 
+class AlertRule(BaseModel):
+    name: str
+    min_score: float = 40.0
+    signal: str | None = None
+    min_signal: float = 0.5
+    limit: int = 100
+    webhook: str | None = None
+    email: str | None = None
+
+
+class SmtpConfig(BaseModel):
+    host: str | None = None
+    port: int = 587
+    username: str | None = None
+    password_env: str = "SMTP_PASSWORD"
+    sender: str | None = None
+    use_tls: bool = True
+
+
+class AlertsConfig(BaseModel):
+    rules: list[AlertRule] = Field(default_factory=list)
+    webhook: str | None = None
+    webhook_format: str = "generic"
+    email: str | None = None
+    timeout_s: float = 10.0
+    smtp: SmtpConfig = Field(default_factory=SmtpConfig)
+
+
+class ApiConfig(BaseModel):
+    api_key_env: str = "MAINTAINERWATCH_API_KEY"
+    rate_limit_rpm: int = 0
+
+
 class Config(BaseModel):
     ecosystems: list[str] = Field(default_factory=lambda: ["npm", "pypi"])
     top_n: int = 2000
     github_token_env: str = "GITHUB_TOKEN"
     gitlab_token_env: str = "GITLAB_TOKEN"
     http: HttpConfig = Field(default_factory=HttpConfig)
+    alerts: AlertsConfig = Field(default_factory=AlertsConfig)
+    api: ApiConfig = Field(default_factory=ApiConfig)
     weights: dict[str, int] = Field(
         default_factory=lambda: {
             "publisher_change": 30,

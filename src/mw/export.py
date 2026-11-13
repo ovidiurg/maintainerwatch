@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
-from . import db
+from . import __version__, db
 from .config import Config
 
 PRIORITY = [
@@ -298,13 +298,13 @@ def export_dataset(cfg: Config, fmt: str = "parquet") -> tuple[Path, int]:
 
     if fmt == "spdx":
         path = cfg.data_dir / f"maintainerwatch-{stamp}.spdx.json"
-        document = _spdx_document(records, cfg.model_version)
+        document = _spdx_document(records, __version__)
         path.write_text(json.dumps(document, indent=2), encoding="utf-8")
         return path, len(records)
 
     if fmt == "cyclonedx":
         path = cfg.data_dir / f"maintainerwatch-{stamp}.cdx.json"
-        document = _cyclonedx_document(records, cfg.model_version)
+        document = _cyclonedx_document(records, __version__)
         path.write_text(json.dumps(document, indent=2), encoding="utf-8")
         return path, len(records)
 

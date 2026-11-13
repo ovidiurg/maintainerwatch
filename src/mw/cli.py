@@ -170,11 +170,31 @@ def alerts(
     signal: Optional[str] = typer.Option(None, help="Require this signal."),
     min_signal: float = typer.Option(0.5, help="Minimum signal value."),
     limit: int = typer.Option(100, help="Maximum number of alerts."),
+    rules: bool = typer.Option(False, help="Run the alert rules from config."),
+    webhook: Optional[str] = typer.Option(None, help="Webhook URL override."),
+    email: Optional[str] = typer.Option(None, help="Email recipient override."),
+    dry_run: bool = typer.Option(False, help="Match rules without delivering."),
     out: Optional[str] = typer.Option(None, help="Write JSON to this path."),
     config: Optional[str] = typer.Option(None, help="Config file path."),
 ) -> None:
-    """List packages above a score and optional signal threshold."""
+    """List packages above a score, or run configured alert rules."""
     cfg = load_config(config)
+    if rules:
+        result = pipeline.run_alert_rules(
+            cfg, out=out, webhook=webhook, email=email, dry_run=dry_run
+        )
+        summary = [
+            {
+                "rule": item["rule"],
+                "count": item["count"],
+                "webhook": item.get("webhook"),
+                "email": item.get("email"),
+            }
+            for item in result
+        ]
+        typer.echo(json.dumps(summary, indent=2))
+        return
+
     result = pipeline.alerts(
         cfg, min_score=min_score, signal=signal,
         min_signal=min_signal, limit=limit,

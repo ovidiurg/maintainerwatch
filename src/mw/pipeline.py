@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import smtplib
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from pathlib import Path
 from urllib.parse import quote
+
+import httpx
 
 from . import db, snapshots
 from .config import Config
@@ -510,6 +515,90 @@ def alerts(
     rows = conn.execute(sql, args).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def _webhook_payload(rule, alerts: list[dict], fmt: str = "generic") -> dict:
+    summary = f"MaintainerWatch: {rule.name} matched {len(alerts)} package(s)"
+    lines = [
+        f"{item['system']}/{item['name']} score={item['score']} band={item['band']}"
+        for item in alerts[:20]
+    ]
+    if fmt == "slack":
+        return {"text": "\n".join([summary, *lines])}
+    if fmt == "discord":
+        return {"content": "\n".join([summary, *lines])}
+    return {"rule": rule.name, "count": len(alerts), "text": summary, "alerts": alerts}
+
+
+def _send_webhook(url: str, payload: dict, timeout: float) -> dict:
+    try:
+        response = httpx.post(url, json=payload, timeout=timeout)
+        return {"ok": response.status_code < 400, "status_code": response.status_code}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def _send_email(cfg: Config, recipient: str, rule, alerts: list[dict]) -> dict:
+    smtp = cfg.alerts.smtp
+    if not smtp.host or not smtp.sender:
+        return {"ok": False, "error": "SMTP not configured"}
+    password = os.environ.get(smtp.password_env)
+    message = EmailMessage()
+    message["Subject"] = f"MaintainerWatch alert: {rule.name} ({len(alerts)})"
+    message["From"] = smtp.sender
+    message["To"] = recipient
+    body = "\n".join(
+        f"{item['system']}/{item['name']} score={item['score']} band={item['band']}"
+        for item in alerts
+    )
+    message.set_content(f"Rule {rule.name} matched {len(alerts)} packages.\n\n{body}")
+    try:
+        with smtplib.SMTP(smtp.host, smtp.port, timeout=cfg.alerts.timeout_s) as server:
+            if smtp.use_tls:
+                server.starttls()
+            if smtp.username and password:
+                server.login(smtp.username, password)
+            server.send_message(message)
+        return {"ok": True}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def run_alert_rules(
+    cfg: Config,
+    out: str | None = None,
+    webhook: str | None = None,
+    email: str | None = None,
+    dry_run: bool = False,
+) -> list[dict]:
+    results = []
+    for rule in cfg.alerts.rules:
+        matched = alerts(
+            cfg,
+            min_score=rule.min_score,
+            signal=rule.signal,
+            min_signal=rule.min_signal,
+            limit=rule.limit,
+        )
+        entry = {"rule": rule.name, "count": len(matched), "alerts": matched}
+        if not dry_run and matched:
+            target_webhook = webhook or rule.webhook or cfg.alerts.webhook
+            if target_webhook:
+                entry["webhook"] = _send_webhook(
+                    target_webhook,
+                    _webhook_payload(rule, matched, cfg.alerts.webhook_format),
+                    cfg.alerts.timeout_s,
+                )
+            target_email = email or rule.email or cfg.alerts.email
+            if target_email:
+                entry["email"] = _send_email(cfg, target_email, rule, matched)
+        results.append(entry)
+
+    if out:
+        path = Path(out)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(results, indent=2), encoding="utf-8")
+    return results
 
 
 def scan(cfg: Config, system: str, name: str) -> dict | None:
