@@ -1,0 +1,135 @@
+{
+  "dataset_version": "v1",
+  "schema_version": "1.0",
+  "generated_at": "2026-11-13T15:08:27.539496+00:00",
+  "builder": "scripts/build_validation_dataset.py",
+  "recent_from": "2024-01-01",
+  "counts": {
+    "incidents": 620,
+    "incident_packages": 31485,
+    "controls": 1148
+  },
+  "incidents_by_year": {
+    "2026": 408,
+    "2025": 68,
+    "2024": 55,
+    "2023": 18,
+    "2022": 11,
+    "2019": 9,
+    "2018": 9,
+    "2021": 8,
+    "2020": 6,
+    "2002": 5,
+    "2016": 4,
+    "2017": 2,
+    "2011": 2,
+    "2010": 2,
+    "2007": 2,
+    "1999": 2,
+    "1994": 2,
+    "2013": 1,
+    "2012": 1,
+    "2009": 1,
+    "2008": 1,
+    "2003": 1,
+    "1983": 1,
+    "1976": 1
+  },
+  "incidents_by_attack_type": {
+    "malicious_package": 309,
+    "typosquat": 188,
+    "dependency_confusion": 52,
+    "worm": 35,
+    "account_takeover": 26,
+    "maintainer_sabotage": 6,
+    "protestware": 4
+  },
+  "incidents_by_priority": {
+    "high": 531,
+    "normal": 89
+  },
+  "packages_by_system": {
+    "npm": 22828,
+    "pypi": 8510,
+    "rubygems": 81,
+    "crates": 60,
+    "maven": 5,
+    "github": 1
+  },
+  "packages_by_source": {
+    "osv": 21224,
+    "dependencywatch": 6377,
+    "datadog": 3000,
+    "tstromberg": 754,
+    "maloss": 125,
+    "manual": 5
+  },
+  "packages_by_confidence": {
+    "high": 27606,
+    "medium": 3879
+  },
+  "controls_by_system": {
+    "npm": 500,
+    "pypi": 498,
+    "crates": 100,
+    "maven": 50
+  },
+  "sources": {
+    "ossf-malicious-packages": {
+      "name": "OpenSSF Malicious Packages",
+      "url": "https://github.com/ossf/malicious-packages",
+      "license": "Apache-2.0",
+      "access": "public",
+      "usage": "positive"
+    },
+    "osv": {
+      "name": "OSV.dev",
+      "url": "https://osv.dev",
+      "license": "public data",
+      "access": "public",
+      "usage": "positive"
+    },
+    "dependencywatch": {
+      "name": "DependencyWatch.io",
+      "url": "https://dependencywatch.io",
+      "license": "free reuse with attribution",
+      "access": "public",
+      "usage": "positive + incident context"
+    },
+    "datadog": {
+      "name": "Datadog Malicious Software Packages Dataset",
+      "url": "https://github.com/DataDog/malicious-software-packages-dataset",
+      "license": "Apache-2.0",
+      "access": "public metadata; encrypted samples",
+      "usage": "positive snapshot"
+    },
+    "tstromberg": {
+      "name": "upstream-supplychain-attacks",
+      "url": "https://github.com/tstromberg/upstream-supplychain-attacks",
+      "license": "Apache-2.0",
+      "access": "public",
+      "usage": "incident context"
+    },
+    "maloss": {
+      "name": "MalOSS",
+      "url": "https://github.com/osssanitizer/maloss",
+      "license": "MIT (code/lists); samples restricted",
+      "access": "public metadata",
+      "usage": "positive historical"
+    },
+    "manual": {
+      "name": "MaintainerWatch curated dossiers",
+      "url": "docs/incident-validation.md",
+      "license": "public reports",
+      "access": "public",
+      "usage": "curated takeover/sabotage"
+    }
+  },
+  "files": {
+    "incidents.jsonl": "80affb8a429252b8827fe9027d188ec057e2039a5c20a6be45d694157eb47efc",
+    "incident_packages.jsonl": "ada6d8119cc62871559b435a4ea64f64c4063e82138016f4b1d79f67e5e81151",
+    "controls.jsonl": "ef9cd68e70debde5eac3dcf118309afa986c53c3e906a61291dccec88d4b11a0",
+    "sources.yaml": "f68b7044d75edf64b4c861f153ba5bd6953966c0843b6a44582af580bfd4b622"
+  },
+  "notes": "Metadata only. Malicious samples are not included or redistributed. Some incidents are synthetic groupings of OSV MAL records; snapshot sources have no per-package discovery date. Controls are matched from the local MaintainerWatch database and are not guaranteed benign."
+}

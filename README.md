@@ -99,6 +99,10 @@ resolution, snapshots, scoring, exports and the report); `mw snapshot` records
 just the current maintainer snapshots. `docs/operations.md` has cron, systemd
 timer, Docker, backup and monitoring examples.
 
+The calibration metadata lives in [`validation/v1/`](validation/README.md).
+Rebuild with `python scripts/build_validation_dataset.py` and validate with
+`python scripts/check_validation_dataset.py` (or `make dataset-check`).
+
 For a release, run `make check` and upload with `twine upload dist/*`.
 
 Data lives in `data/maintainerwatch.sqlite`; exports in `data/`.
