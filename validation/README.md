@@ -19,6 +19,24 @@ Current counts (2026-11-13): **620 incidents**, **31,485 incident packages**,
 **1,148 controls**. Recent incidents (2024+) are prioritised: 529 of 620
 incidents are high priority.
 
+## Preliminary evaluation (2026-11-13)
+
+A case-control sample was ingested into `data/validation` (120 positives plus
+120 matched controls per npm/PyPI seed list). 354 packages were scored; the
+database retained **114 positives** and **240 controls** (most PyPI malicious
+packages had already been removed).
+
+| Metric | Value |
+|---|---|
+| AUC | 0.819 |
+| Precision@10 / @25 / @50 | 0.90 / 0.96 / 0.98 |
+| Threshold 40: precision / recall / FPR | 0.822 / 0.649 / 0.067 |
+| Threshold 50: precision / recall / FPR | 0.958 / 0.596 / 0.013 |
+
+The sample is npm-heavy and dominated by `malicious_package`; the takeover
+slice is reported separately in `docs/incident-validation.md`. See
+`docs/validation/evaluation.md` for the generated report and caveats.
+
 ## Schema (summary)
 
 ### `incidents.jsonl`

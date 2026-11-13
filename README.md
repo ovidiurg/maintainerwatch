@@ -102,6 +102,9 @@ timer, Docker, backup and monitoring examples.
 The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
+A preliminary case-control evaluation on the validation database gives AUC
+0.819, precision@25 0.96, and at threshold 40 precision 0.822 / recall 0.649 /
+FPR 0.067. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
 

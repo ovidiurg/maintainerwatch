@@ -6,7 +6,7 @@ from typing import Optional
 
 import typer
 
-from . import db, pipeline
+from . import db, pipeline, validation
 from .config import load_config
 from .export import export_dataset
 from .report import build_report
@@ -92,6 +92,28 @@ def snapshot(
     typer.echo(json.dumps(
         pipeline.record_current_snapshots(cfg, system=system, limit=limit)
     ))
+
+
+@app.command("evaluate-validation")
+def evaluate_validation(
+    dataset: str = typer.Option("validation/v1", help="Validation dataset directory."),
+    max_positives: Optional[int] = typer.Option(None, help="Limit positives."),
+    max_controls: Optional[int] = typer.Option(None, help="Limit controls."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Evaluate the current model on the validation dataset."""
+    cfg = load_config(config)
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    result = validation.evaluate(
+        conn, cfg, dataset,
+        max_positives=max_positives, max_controls=max_controls,
+    )
+    conn.close()
+    typer.echo(json.dumps({
+        "coverage": result["coverage"],
+        "metrics": result["metrics"],
+    }, indent=2))
 
 
 @app.command("backfill-deps")

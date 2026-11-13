@@ -1,0 +1,8 @@
+ecosystems:
+  - npm
+  - pypi
+
+data_dir: data/validation
+db_path: data/validation/maintainerwatch.sqlite
+
+top_n: 2000

@@ -1,6 +1,6 @@
 PYTHON ?= python3
 
-.PHONY: install install-release test lint build check dataset-check docker docker-run maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -37,6 +37,12 @@ snapshot:
 
 dataset-check:
 	$(PYTHON) scripts/check_validation_dataset.py
+
+validation-sample:
+	$(PYTHON) scripts/prepare_validation_sample.py
+
+validation-eval:
+	$(PYTHON) -m mw.cli evaluate-validation --config config/validation.yaml
 
 validate:
 	$(PYTHON) scripts/incident_check.py
