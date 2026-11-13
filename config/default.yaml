@@ -63,12 +63,12 @@ alerts:
     host: null
     port: 587
     username: null
-    password_env: SMTP_PASSWORD
+    password_env: SMTP_PASSWORD  # pragma: allowlist secret
     sender: null
     use_tls: true
 
 api:
-  api_key_env: MAINTAINERWATCH_API_KEY
+  api_key_env: MAINTAINERWATCH_API_KEY  # pragma: allowlist secret
   # 0 disables the in-memory per-client rate limit.
   rate_limit_rpm: 0
 

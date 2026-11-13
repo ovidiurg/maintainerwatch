@@ -79,8 +79,8 @@ def test_alert_rules(tmp_path):
 
 def test_api_key(tmp_path, monkeypatch):
     cfg = _setup(tmp_path)
-    cfg.api.api_key_env = "MW_TEST_API_KEY"
-    monkeypatch.setenv("MW_TEST_API_KEY", "secret")
+    cfg.api.api_key_env = "MW_TEST_API_KEY"  # pragma: allowlist secret
+    monkeypatch.setenv("MW_TEST_API_KEY", "secret")  # pragma: allowlist secret
     client = TestClient(create_app(cfg))
 
     assert client.get("/health").status_code == 200
