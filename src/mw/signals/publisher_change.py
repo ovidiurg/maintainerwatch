@@ -8,6 +8,7 @@ from .. import db
 from ..models import SignalEvidence
 from ..resolve import canonical
 from .base import Context, clamp, days_between, now_utc, parse_ts
+from .legitimacy import assess_change
 
 WINDOW_DAYS = 365
 SNAPSHOT_MIN_AGE_DAYS = 180
@@ -23,7 +24,7 @@ def _is_automation(value: str | None, auto_ids: set[str], auto_res: list[re.Patt
 
 def _release_changes(ctx: Context, versions, reference, is_automation):
     changes: list[dict] = []
-    prev: tuple[str, str] | None = None
+    prev: tuple[str, str, str] | None = None
     for v in versions:
         raw = v["publisher_email"] or v["publisher_name"]
         ident = canonical(raw, ctx.identity_mapping)
@@ -34,11 +35,13 @@ def _release_changes(ctx: Context, versions, reference, is_automation):
                 {
                     "from": prev[0],
                     "to": ident,
+                    "from_raw": prev[1],
+                    "to_raw": raw,
                     "version": v["version"],
                     "at": v["published_at"],
                 }
             )
-        prev = (ident, v["version"])
+        prev = (ident, raw, v["version"])
 
     recent = []
     for change in changes:
@@ -74,6 +77,8 @@ def _snapshot_changes(ctx: Context, reference) -> dict | None:
                 for item in json.loads(latest["maintainer_set_json"] or "[]")
                 if item
             }
+    if not current:
+        return None
 
     added = sorted(current - previous)
     removed = sorted(previous - current)
@@ -87,6 +92,9 @@ def _snapshot_changes(ctx: Context, reference) -> dict | None:
         "added": added,
         "removed": removed,
         "n_changed": len(added) + len(removed),
+        "overlap": len(previous & current),
+        "previous_count": len(previous),
+        "current_count": len(current),
     }
 
 
@@ -112,12 +120,28 @@ def compute(ctx: Context) -> SignalEvidence:
                 applicable=False,
                 evidence={"reason": "fewer than 2 dated versions"},
             )
+        effective = 0.0
+        recent_with_context = []
+        for change in recent:
+            context = assess_change(
+                ctx.conn, ctx.system, ctx.name,
+                change["from"], change["to"],
+                change.get("from_raw"), change.get("to_raw"), change.get("at"),
+                ctx.identity_mapping,
+            )
+            effective += context["discount"]
+            recent_with_context.append({**change, "legitimacy": context})
         return SignalEvidence(
-            value=clamp(len(recent) / 2.0),
+            value=clamp(effective / 2.0),
             evidence={
                 "source": "releases",
                 "n_changes": len(changes),
                 "n_recent": len(recent),
+                "n_legitimate": sum(
+                    1 for change in recent_with_context
+                    if change["legitimacy"]["discount"] < 1.0
+                ),
+                "recent_changes": recent_with_context[-10:],
                 "changes": changes[-10:],
             },
         )
@@ -137,11 +161,17 @@ def compute(ctx: Context) -> SignalEvidence:
             },
         )
 
+    discount = 0.7 if snapshot["overlap"] else 1.0
     return SignalEvidence(
-        value=min(0.5, clamp(snapshot["n_changed"] / 2.0)),
+        value=min(0.5, clamp(snapshot["n_changed"] / 2.0)) * discount,
         evidence={
             "source": "snapshot",
             **snapshot,
             "n_recent": 1 if snapshot["n_changed"] else 0,
+            "legitimacy": {
+                "overlap": snapshot["overlap"],
+                "discount": discount,
+                "reason": "some maintainers remain" if snapshot["overlap"] else "full replacement",
+            },
         },
     )

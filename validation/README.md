@@ -28,10 +28,10 @@ packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.819 |
-| Precision@10 / @25 / @50 | 0.90 / 0.96 / 0.98 |
-| Threshold 40: precision / recall / FPR | 0.822 / 0.649 / 0.067 |
-| Threshold 50: precision / recall / FPR | 0.958 / 0.596 / 0.013 |
+| AUC | 0.850 |
+| Precision@10 / @25 / @50 / @100 | 0.90 / 0.96 / 0.98 / 0.74 |
+| Threshold 40: precision / recall / FPR | 0.919 / 0.596 / 0.025 |
+| Threshold 50: precision / recall / FPR | 0.979 / 0.404 / 0.004 |
 
 The sample is npm-heavy and dominated by `malicious_package`; the takeover
 slice is reported separately in `docs/incident-validation.md`. See

@@ -42,7 +42,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.4.1"
+model_version: "0.4.3"
 
 alerts:
   rules:

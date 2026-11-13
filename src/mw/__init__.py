@@ -1,4 +1,4 @@
 """MaintainerWatch: open maintainer-level supply-chain risk intelligence."""
 
-__version__ = "0.4.3"
-MODEL_VERSION = "0.4.1"
+__version__ = "0.4.5"
+MODEL_VERSION = "0.4.3"

@@ -131,11 +131,50 @@ def test_release_anomaly_maven_not_applicable(conn):
     assert ev.applicable is False
 
 
-def test_signing_gap_npm_no_provenance(conn):
+def test_signing_gap_npm_no_provenance_is_baseline(conn):
     _add_package(conn)
-    _add_versions(conn, [("1.0.0", "2020-01-01T00:00:00+00:00", "a")])
+    _add_versions(conn, [("1.0.0", _iso(10), "a")])
+    ev = signing_gap.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is True
+    assert ev.value == 1.0
+    assert ev.evidence["baseline_unsigned"] is True
+
+
+def test_signing_gap_npm_mature_popular_baseline(conn):
+    _add_package(conn, downloads=500_000)
+    _add_versions(conn, [("1.0.0", _iso(2000), "a")])
+    ev = signing_gap.compute(Context(conn=conn, system="npm", name="pkg",
+                                     downloads_weekly=500_000))
+    assert ev.value == 0.3
+
+
+def test_signing_gap_npm_regression(conn):
+    _add_package(conn)
+    _add_versions(conn, [
+        ("1.0.0", "2020-01-01T00:00:00+00:00", "a"),
+        ("1.1.0", "2020-02-01T00:00:00+00:00", "a"),
+        ("1.2.0", "2020-03-01T00:00:00+00:00", "a"),
+        ("1.3.0", "2020-04-01T00:00:00+00:00", "a"),
+        ("1.4.0", "2020-05-01T00:00:00+00:00", "a"),
+        ("1.5.0", "2020-06-01T00:00:00+00:00", "a"),
+    ])
+    conn.execute("UPDATE versions SET has_provenance=1 WHERE version='1.0.0'")
     ev = signing_gap.compute(Context(conn=conn, system="npm", name="pkg"))
     assert ev.value == 1.0
+
+
+def test_signing_gap_npm_partial_coverage(conn):
+    _add_package(conn)
+    _add_versions(conn, [
+        ("1.0.0", "2020-01-01T00:00:00+00:00", "a"),
+        ("1.1.0", "2020-02-01T00:00:00+00:00", "a"),
+        ("1.2.0", "2020-03-01T00:00:00+00:00", "a"),
+        ("1.3.0", "2020-04-01T00:00:00+00:00", "a"),
+        ("1.4.0", "2020-05-01T00:00:00+00:00", "a"),
+    ])
+    conn.execute("UPDATE versions SET has_provenance=1 WHERE version IN ('1.0.0','1.1.0')")
+    ev = signing_gap.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.6
 
 
 def test_signing_gap_pypi_signed(conn):
@@ -247,7 +286,7 @@ def test_pypi_snapshot_detects_added_maintainer(conn):
                        json.dumps(["alice"]), "hash-old")
     ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.applicable is True
-    assert ev.value == 0.5
+    assert ev.value == 0.35
     assert ev.evidence["source"] == "snapshot"
     assert ev.evidence["added"] == ["bob"]
     assert ev.evidence["removed"] == []
@@ -293,6 +332,87 @@ def test_pypi_old_snapshot_is_ignored(conn):
     _add_maintainer(conn, "alice")
     db.record_snapshot(conn, "pypi", "pkg", _iso(400),
                        json.dumps(["bob"]), "hash-old")
+    ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_publisher_change_old_maintainer_still_present(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(90), "alice@example.org"),
+                         ("1.0.1", _iso(30), "bob@example.org")])
+    _add_maintainer(conn, "alice@example.org", system="npm")
+    _add_maintainer(conn, "bob@example.org", system="npm")
+    ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.25
+    assert ev.evidence["n_legitimate"] == 1
+    assert "old maintainer still has maintainer access" in (
+        ev.evidence["recent_changes"][0]["legitimacy"]["reasons"]
+    )
+
+
+def test_publisher_change_shared_packages(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(90), "alice@example.org"),
+                         ("1.0.1", _iso(30), "bob@example.org")])
+    _add_package(conn, name="shared")
+    _add_maintainer(conn, "alice@example.org", system="npm", name="shared")
+    _add_maintainer(conn, "bob@example.org", system="npm", name="shared")
+    ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.3
+    assert ev.evidence["recent_changes"][0]["legitimacy"]["shared_package_count"] == 1
+
+
+def test_publisher_change_young_package(conn):
+    _add_package(conn)
+    conn.execute("UPDATE packages SET first_seen=? WHERE system='npm' AND name='pkg'", (_iso(30),))
+    _add_versions(conn, [("1.0.0", _iso(20), "alice@example.org"),
+                         ("1.0.1", _iso(10), "bob@example.org")])
+    ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.4
+    assert "package is younger than one year" in (
+        ev.evidence["recent_changes"][0]["legitimacy"]["reasons"]
+    )
+
+
+def test_publisher_change_new_publisher_seen_before(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(500), "bob@example.org"),
+                         ("1.1.0", _iso(400), "alice@example.org"),
+                         ("1.2.0", _iso(200), "alice@example.org"),
+                         ("1.3.0", _iso(30), "bob@example.org")])
+    ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.3
+    change = ev.evidence["recent_changes"][-1]
+    assert change["legitimacy"]["new_publisher_seen_before"] is True
+
+
+def test_publisher_change_same_email_domain(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(90), "typescript@microsoft.com"),
+                         ("1.0.1", _iso(30), "npmjs@microsoft.com")])
+    ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.3
+    assert ev.evidence["n_legitimate"] == 1
+    assert "old and new publishers share an email domain" in (
+        ev.evidence["recent_changes"][0]["legitimacy"]["reasons"]
+    )
+
+
+def test_publisher_change_public_email_domain_not_legitimate(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(90), "alice@gmail.com"),
+                         ("1.0.1", _iso(30), "bob@gmail.com")])
+    ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.5
+    assert ev.evidence["n_legitimate"] == 0
+
+
+def test_pypi_snapshot_without_current_maintainers_not_applicable(conn):
+    _add_package(conn)
+    db.record_snapshot(conn, "pypi", "pkg", _iso(300),
+                       json.dumps(["alice"]), "hash-old")
+    db.record_snapshot(conn, "pypi", "pkg", _iso(0),
+                       json.dumps([]), "hash-new")
     ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.applicable is False
 

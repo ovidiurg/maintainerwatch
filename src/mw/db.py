@@ -89,6 +89,9 @@ CREATE INDEX IF NOT EXISTS idx_signals_pkg ON signals (system, name);
 CREATE INDEX IF NOT EXISTS idx_scores_pkg ON scores (system, name);
 CREATE INDEX IF NOT EXISTS idx_deps_dep ON dependencies (dep_system, dep_name);
 CREATE INDEX IF NOT EXISTS idx_commits_pkg ON commits (system, name, committed_at);
+CREATE INDEX IF NOT EXISTS idx_maintainers_identity ON maintainers (identity);
+CREATE INDEX IF NOT EXISTS idx_versions_publisher_email ON versions (publisher_email);
+CREATE INDEX IF NOT EXISTS idx_versions_publisher_name ON versions (publisher_name);
 """
 
 

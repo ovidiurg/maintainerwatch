@@ -14,6 +14,7 @@ from . import (
     typosquat,
 )
 from .base import Context
+from .guards import apply_cross_signal_guards
 
 SIGNALS = {
     "publisher_change": publisher_change.compute,
@@ -30,4 +31,5 @@ SIGNALS = {
 
 
 def compute_all(ctx: Context) -> dict[str, SignalEvidence]:
-    return {name: fn(ctx) for name, fn in SIGNALS.items()}
+    signals = {name: fn(ctx) for name, fn in SIGNALS.items()}
+    return apply_cross_signal_guards(signals)

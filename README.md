@@ -103,8 +103,8 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.819, precision@25 0.96, and at threshold 40 precision 0.822 / recall 0.649 /
-FPR 0.067. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.850, precision@25 0.96, and at threshold 40 precision 0.919 / recall 0.596 /
+FPR 0.025. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
 
@@ -121,18 +121,18 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 207,252 versions, 210,185 commits, 2,396 maintainers, 1,122 repositories,
   3,229 OSV records, 2,638 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 1 high, 609 medium, 559 low. OIDC/bot publishers are ignored.
+- Risk bands: 1 high, 416 medium, 752 low. OIDC/bot publishers are ignored.
 - License cross-check: 1,148 compatible/recognised, 10 non-SPDX, 7 missing and
   4 declared-vs-repository conflicts (pathspec, uvloop, eslint-visitor-keys,
   opencv-python-headless).
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
   packages; PyPI `publisher_change` is now applicable (298 high, 20 low, 182
   not applicable) and its snapshot value is capped at 0.5.
-- Highest: antd 50.0, editables 49.9, graphql 49.5, path-to-regexp 48.4,
-  json5 48.1.
-- Pre-incident replay: event-stream 59.5, colors 40.0, node-ipc 38.0,
+- Highest: antd 50.0, editables 49.9, json5 47.4, aiohappyeyeballs 46.9,
+  py 46.7, annotated-types 45.1, smallvec 44.9, path-to-regexp 44.3.
+- Pre-incident replay: event-stream 59.5, colors 27.3, node-ipc 25.2,
   ua-parser-js 25.0, xz-utils 42.8. At threshold 40 the 27-package benign
-  sample gives precision 0.300, recall 0.600, false-positive rate 0.259.
+  sample gives precision 0.333, recall 0.400, false-positive rate 0.148.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
