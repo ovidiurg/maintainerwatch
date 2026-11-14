@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MaintainerWatch — open, cross-ecosystem maintainer-level supply-chain risk intelligence.">
+  <title>MaintainerWatch — maintainer-level supply-chain risk intelligence</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero">
+  <nav>
+    <a class="brand" href="./">MaintainerWatch</a>
+    <div class="nav-links">
+      <a href="#signals">Signals</a>
+      <a href="#quickstart">Quick start</a>
+      <a href="#validation">Validation</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch">GitHub</a>
+    </div>
+  </nav>
+  <div class="hero-copy">
+    <p class="eyebrow">Open source · Python · SQLite · FastAPI</p>
+    <h1>Risk intelligence for the people behind packages.</h1>
+    <p class="lede">
+      MaintainerWatch ingests public registry metadata, resolves maintainer
+      identities, and computes explainable signals for maintainer-level
+      supply-chain risk across npm, PyPI, crates.io and Maven Central.
+    </p>
+    <div class="cta">
+      <a class="button primary" href="https://github.com/ovidiurg/maintainerwatch">View the repository</a>
+      <a class="button" href="#quickstart">Try the CLI</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="stats" aria-label="Project at a glance">
+    <div><strong>6,063</strong><span>packages scored</span></div>
+    <div><strong>14</strong><span>explainable signals</span></div>
+    <div><strong>0.864</strong><span>validation ROC-AUC</span></div>
+    <div><strong>869</strong><span>impact-enriched packages</span></div>
+  </section>
+
+  <section id="why">
+    <h2>Why maintainer-level?</h2>
+    <p class="section-lede">
+      Recent incidents such as xz-utils, event-stream, ua-parser-js and colors
+      were not primarily CVE-driven. Attackers gained control of package
+      maintainership. MaintainerWatch focuses on that layer: publisher changes,
+      release behaviour, maintainer concentration, provenance, advisories,
+      repository practices and package content.
+    </p>
+    <div class="grid three">
+      <article class="card">
+        <h3>Explainable by design</h3>
+        <p>Every score stores its weighted signal values, evidence and an <code>inputs_hash</code>.</p>
+      </article>
+      <article class="card">
+        <h3>Cross-ecosystem</h3>
+        <p>One model for npm, PyPI, crates.io, Maven Central and GitHub/GitLab release timelines.</p>
+      </article>
+      <article class="card">
+        <h3>Impact-aware</h3>
+        <p>deps.dev dependent counts, downloads and transitive fan-in are reported separately from risk.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="signals">
+    <h2>Signals</h2>
+    <div class="grid two">
+      <ul class="signal-list">
+        <li><code>publisher_change</code> — maintainer or publisher changed</li>
+        <li><code>bus_factor</code> — commits concentrated in one author</li>
+        <li><code>account_age</code> — young maintainer account</li>
+        <li><code>release_anomaly</code> — dormancy, burst or unusual cadence</li>
+        <li><code>signing_gap</code> — missing signatures or provenance</li>
+        <li><code>typosquat</code> — name close to a popular package, including homoglyphs</li>
+        <li><code>license_inconsistency</code> — missing or conflicting license metadata</li>
+      </ul>
+      <ul class="signal-list">
+        <li><code>commit_anomaly</code> — new-author share and commit burst</li>
+        <li><code>scorecard</code> — low OpenSSF Scorecard score</li>
+        <li><code>dependency_risk</code> — transitive fan-in and dependency footprint</li>
+        <li><code>osv_risk</code> — version-aware MAL/CVE advisory</li>
+        <li><code>depsdev_findings</code> — malicious/deprecated/low-usage findings</li>
+        <li><code>maintainer_continuity</code> — author handover or newcomer dominance</li>
+        <li><code>install_script</code> — suspicious npm install/postinstall content</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="quickstart">
+    <h2>Quick start</h2>
+    <p class="section-lede">The default database and caches stay local under <code>data/</code>.</p>
+    <pre><code>git clone https://github.com/ovidiurg/maintainerwatch.git
+cd maintainerwatch
+
+python -m venv .venv
+. .venv/bin/activate
+pip install -e ".[dev]"
+
+mw init
+mw ingest --system npm --top 20 --no-github
+mw score-all
+mw scan lodash --system npm
+mw report --out data/report.html</code></pre>
+    <p>
+      Then run <code>mw serve --host 127.0.0.1 --port 8000</code> for the
+      read-only API, or <code>mw alerts --min-score 40</code> for a first triage list.
+    </p>
+  </section>
+
+  <section id="validation">
+    <h2>Validation, not vibes</h2>
+    <p class="section-lede">
+      The project publishes a case-control dataset and a reproducible evaluation
+      harness. Current-state metrics are a calibration baseline, not a claim of
+      predictive performance.
+    </p>
+    <div class="metrics">
+      <div><strong>0.864</strong><span>ROC-AUC</span></div>
+      <div><strong>0.839</strong><span>PR-AUC / average precision</span></div>
+      <div><strong>0.935</strong><span>precision @ threshold 40</span></div>
+      <div><strong>0.021</strong><span>false-positive rate @ 40</span></div>
+    </div>
+    <p class="note">
+      Pre-incident replay is harder: AUC 0.485, because many malicious packages
+      are new at the cutoff and have no usable history. The report includes
+      temporal slices, calibration bins and leave-one-signal-out ablations.
+    </p>
+  </section>
+
+  <section id="safety">
+    <h2>Safety and responsible use</h2>
+    <div class="grid two">
+      <article class="card">
+        <h3>Dual-use by nature</h3>
+        <p>
+          Risk ranking can help defenders triage, but also lowers the cost of
+          offensive reconnaissance. Do not publish ranked target lists or
+          maintainer dossiers. High scores are review candidates, not proof of
+          compromise.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Isolation boundary</h3>
+        <p>
+          Static scans never execute package code. Dynamic analysis is delegated
+          to an isolated gVisor/Kata/Docker worker; the analyst process and CI
+          never run untrusted packages.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section id="docs">
+    <h2>Documentation</h2>
+    <div class="links">
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/README.md">README</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/INSTALL.md">Install</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/api.md">API</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/methodology.md">Methodology</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/gdpr.md">Privacy</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/AGENTS.md">For AI agents</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>MaintainerWatch · AGPL-3.0-or-later · Built as an independent open-source project.</p>
+</footer>
+</body>
+</html>
