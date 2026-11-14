@@ -9,7 +9,7 @@ from jinja2 import Template
 
 from . import db
 from .config import Config
-from .risk import describe_risk
+from .risk import describe_risk, impact_tier
 
 INCIDENTS = [
     ("npm", "event-stream"),
@@ -53,7 +53,7 @@ TEMPLATE = """<!doctype html>
 
 <h2>Top risk</h2>
 <table>
-  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Risk type</th><th>Short description</th><th>Next step</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Fan-in trans.</th><th>Scorecard</th><th>Repo</th></tr>
+  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Risk type</th><th>Short description</th><th>Next step</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Fan-in trans.</th><th>Dependents</th><th>Impact</th><th>Scorecard</th><th>Repo</th></tr>
   {% for r in top %}
   <tr>
     <td>{{ r.system }}</td>
@@ -67,6 +67,8 @@ TEMPLATE = """<!doctype html>
     <td>{{ r.osv_count or 0 }}</td>
     <td>{{ r.fan_in or 0 }}</td>
     <td>{{ r.fan_in_transitive or 0 }}</td>
+    <td>{{ r.dependent_count if r.dependent_count is not none else "-" }}</td>
+    <td>{{ r.impact_tier }}</td>
     <td>{{ "%.1f"|format(r.scorecard_score) if r.scorecard_score is not none else "-" }}</td>
     <td>{% if r.repo_url %}<a href="{{ r.repo_url }}">source</a>{% endif %}</td>
   </tr>
@@ -105,10 +107,11 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
         """SELECT s.system, s.name, s.score, s.band,
                   p.downloads_weekly, p.osv_count, p.repo_url,
                   p.fan_in, p.fan_in_transitive, p.dependencies_count, p.license,
-                  r.scorecard_score
+                  r.scorecard_score, i.dependent_count
            FROM scores s
            LEFT JOIN packages p ON p.system = s.system AND p.name = s.name
            LEFT JOIN repo_stats r ON r.system = s.system AND r.name = s.name
+           LEFT JOIN package_impact i ON i.system = s.system AND i.name = s.name
            WHERE s.model_version = ?
            ORDER BY s.score DESC, s.name ASC""",
         (cfg.model_version,),
@@ -134,6 +137,7 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
         record["risk_type"] = ""
         record["risk_note"] = ""
         record["next_step"] = ""
+        record["impact_tier"] = impact_tier(record.get("dependent_count"))
         if record["band"] in {"medium", "high"}:
             record["risk_type"], record["risk_note"], record["next_step"] = describe_risk(
                 signals[(record["system"], record["name"])]

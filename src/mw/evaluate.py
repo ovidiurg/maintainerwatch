@@ -7,6 +7,7 @@ from .config import Config
 from .models import SignalEvidence
 from .resolve import identity_map
 from .signals import compute_all
+from .signals import package_age
 from .signals.base import Context
 from .signals.typosquat import TARGET_MIN_DOWNLOADS
 
@@ -15,6 +16,8 @@ REPLAY_SIGNALS = [
     "release_anomaly",
     "signing_gap",
     "commit_anomaly",
+    "install_script",
+    "package_age",
 ]
 
 
@@ -70,6 +73,7 @@ def replay(
         automation_patterns=cfg.automation_patterns,
     )
     signals = compute_all(ctx)
+    signals["package_age"] = package_age.compute(ctx)
     return ReplayResult(
         system=system,
         name=name,

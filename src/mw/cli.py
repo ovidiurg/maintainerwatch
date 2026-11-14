@@ -116,6 +116,32 @@ def evaluate_validation(
     }, indent=2))
 
 
+@app.command("prioritize-impact")
+def prioritize_impact_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    limit: int = typer.Option(50, help="Ranked packages to print."),
+    missing_deps_limit: int = typer.Option(200, help="Missing dependency seeds to write."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Rank packages by dependents, downloads and transitive fan-in."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.prioritize_impact(cfg, system, limit, missing_deps_limit),
+        indent=2,
+    ))
+
+
+@app.command("enrich-impact")
+def enrich_impact_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    limit: int = typer.Option(500, help="Maximum packages to enrich."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Fetch deps.dev dependent counts for high-download packages."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.enrich_impact(cfg, system, limit)))
+
+
 @app.command("enrich-github")
 def enrich_github_cmd(
     system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
@@ -185,6 +211,38 @@ def backfill_snapshots(
     typer.echo(json.dumps(
         pipeline.backfill_snapshots(cfg, source=source, limit=limit)
     ))
+
+
+@app.command("delete-package")
+def delete_package_cmd(
+    system: str = typer.Option(..., help="npm, pypi, crates, maven or github."),
+    name: str = typer.Option(..., help="Package name."),
+    yes: bool = typer.Option(False, "--yes", help="Actually delete; otherwise dry-run."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Remove a package and its records/links for privacy or correction requests."""
+    cfg = load_config(config)
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    tables = (
+        "versions", "maintainers", "repo_stats", "osv", "signals",
+        "scores", "snapshots", "identity_links", "dependencies",
+        "commits", "package_impact", "packages",
+    )
+    if not yes:
+        counts = {
+            table: conn.execute(
+                f"SELECT COUNT(*) FROM {table} WHERE system=? AND name=?",
+                (system, name),
+            ).fetchone()[0]
+            for table in tables
+        }
+        conn.close()
+        typer.echo(json.dumps({"dry_run": True, "system": system, "name": name, **counts}))
+        return
+    counts = db.delete_package(conn, system, name)
+    conn.close()
+    typer.echo(json.dumps({"deleted": True, "system": system, "name": name, **counts}))
 
 
 @app.command()

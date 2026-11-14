@@ -41,15 +41,20 @@ def compute(ctx: Context) -> SignalEvidence:
     combined = "\n".join(scripts)
     high = sorted({match.group(0).lower() for pattern in HIGH_RISK for match in pattern.finditer(combined)})
     medium = sorted({match.group(0).lower() for pattern in MEDIUM_RISK for match in pattern.finditer(combined)})
-    if high:
-        value = 1.0
-    elif medium:
-        value = 0.5
-    else:
-        value = 0.3
+    if not high:
+        return SignalEvidence(
+            value=0.0,
+            applicable=False,
+            evidence={
+                "reason": "no high-risk install-script patterns",
+                "versions_checked": len(versions),
+                "medium_risk_patterns": medium,
+                "scripts": [script[:500] for script in scripts],
+            },
+        )
 
     return SignalEvidence(
-        value=value,
+        value=1.0,
         evidence={
             "versions_checked": len(versions),
             "high_risk_patterns": high,

@@ -62,6 +62,7 @@ to the same canonical identity.
 | `scorecard` | 10 | Low OpenSSF Scorecard repository score; value = max(0, (7 - score) / 7). |
 | `dependency_risk` | 15 | Log-scaled transitive fan-in (200+ dependents = 1.0) plus a smaller fan-out component. |
 | `install_script` | 15 | npm preinstall/install/postinstall/prepare scripts: high-risk download/eval/child-process patterns score 1.0; other scripts score 0.3-0.5. |
+| `package_age` | 10 | Replay-only signal: age of the first release before the cutoff; younger packages score higher. |
 
 ## License sources
 
@@ -117,6 +118,19 @@ excluded from the graph.
 
 A signal that cannot be computed (for example, no repository data) is marked
 `applicable = false` and excluded from the score rather than counted as zero.
+
+## Impact
+
+Impact is separate from risk. `mw enrich-impact` reads deps.dev dependent
+counts for the latest version of high-download packages (`dependentCount`,
+`directDependentCount`, `indirectDependentCount`) and the report shows an impact
+tier: `critical` ≥1000, `high` ≥100, `medium` ≥10, otherwise `low`.
+
+This is a public-ecosystem proxy, not corporate attribution: deps.dev counts
+public dependents, not whether Microsoft, Google, Amazon, Meta or a security
+vendor ships the package. For prioritisation, combine dependent count with
+weekly downloads, transitive fan-in and the package's risk score; impact alone
+is not evidence of compromise.
 
 ## Score
 

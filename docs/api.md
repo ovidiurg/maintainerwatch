@@ -24,13 +24,13 @@ mw serve --host 127.0.0.1 --port 8000
 ## Response shapes
 
 `/packages` items contain `system`, `name`, `score`, `band`, `downloads_weekly`,
-`osv_count`, `fan_in`, `fan_in_transitive`, `dependencies_count`, `repo_url`
-and `license`.
+`osv_count`, `fan_in`, `fan_in_transitive`, `dependencies_count`, `dependent_count`,
+`repo_url` and `license`.
 
 `/packages/{system}/{name}` returns the score, `inputs_hash`, `computed_at`,
 `evidence_coverage`, `risk_type`, `risk_note`, `next_step`, the `context` block
-and every signal with its `value` and `evidence` (including `install_script`
-scripts for npm). The risk fields are populated for medium/high scores and are
+(which includes `dependent_count` when deps.dev enrichment ran) and every signal
+with its `value` and `evidence` (including `install_script` scripts for npm). The risk fields are populated for medium/high scores and are
 empty for low scores. Run `mw score-all` before querying.
 
 ## Pagination

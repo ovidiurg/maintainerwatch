@@ -1,0 +1,9 @@
+ecosystems:
+  - npm
+  - pypi
+
+data_dir: data/validation
+db_path: data/validation/replay.sqlite
+
+top_n: 2000
+model_version: "0.4.6"

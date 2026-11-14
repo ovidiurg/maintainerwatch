@@ -56,6 +56,26 @@ be completed before any public deployment.
 - Do not publish the raw database, maintainer dossiers or ranked target lists.
   Share aggregate findings with identities minimised.
 
+## Contact and removal requests
+
+Use GitHub's private security advisory channel for privacy or correction
+requests: <https://github.com/ovidiurg/maintainerwatch/security/advisories/new>.
+Include the ecosystem, package name and, if applicable, the identity link or
+field you want reviewed; do not post personal data in a public issue.
+
+For a local deployment, remove a package and its versions, maintainers,
+signals, scores, snapshots, commits, OSV rows, repository stats, dependencies
+and identity links with:
+
+```bash
+mw delete-package --system npm --name PACKAGE --yes
+```
+
+Run the same command without `--yes` for a dry-run count. Package-level
+deletion also removes the package's identity links; inbound dependency edges
+from other packages are removed as well. Keep a backup if the removal may need
+to be audited. We aim to acknowledge removal requests within 30 days.
+
 ## Dual-use
 
 MaintainerWatch is dual-use: the same risk ranking that supports defensive

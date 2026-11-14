@@ -28,14 +28,34 @@ packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.849 |
-| Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 1.0 / 0.75 |
+| AUC | 0.847 |
+| Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 0.98 / 0.75 |
 | Threshold 40: precision / recall / FPR | 0.932 / 0.605 / 0.021 |
-| Threshold 50: precision / recall / FPR | 1.0 / 0.386 / 0.0 |
+| Threshold 50: precision / recall / FPR | 0.978 / 0.386 / 0.004 |
 
 The sample is npm-heavy and dominated by `malicious_package`; the takeover
 slice is reported separately in `docs/incident-validation.md`. See
 `docs/validation/evaluation.md` for the generated report and caveats.
+
+## Pre-incident replay
+
+`python scripts/validation_replay.py` rebuilds each package using only versions
+and commits before its incident cutoff. Historical commits are backfilled with
+`scripts/backfill_validation_commits.py`.
+
+| Replay metric | Value |
+|---|---|
+| Positives / controls replayable | 114 / 240 |
+| Positives with any applicable signal | 63 |
+| Positives with no pre-cutoff history | 51 |
+| AUC | 0.485 |
+| Threshold 40: precision / recall / FPR | 0.596 / 0.272 / 0.087 |
+| Threshold 50: precision / recall / FPR | 0.660 / 0.272 / 0.067 |
+
+This is much lower than the current-state evaluation because many malicious
+packages are new at the incident cutoff and have no usable release/commit
+history. The current-state numbers must not be read as predictive performance.
+Replay output is written to `data/validation/replay.json` (git-ignored).
 
 ## Schema (summary)
 

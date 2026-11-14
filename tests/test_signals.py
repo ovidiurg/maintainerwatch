@@ -17,6 +17,7 @@ from mw.signals import (
     dependency_risk,
     install_script,
     license_inconsistency,
+    package_age,
     publisher_change,
     release_anomaly,
     scorecard,
@@ -255,7 +256,7 @@ def test_install_script_benign(conn):
     _add_versions(conn, [("1.0.0", _iso(10), "a")])
     _add_install_script(conn, "postinstall: node-gyp rebuild")
     ev = install_script.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.3
+    assert ev.applicable is False
 
 
 def test_install_script_high_risk(conn):
@@ -272,7 +273,27 @@ def test_install_script_medium_risk(conn):
     _add_versions(conn, [("1.0.0", _iso(10), "a")])
     _add_install_script(conn, "postinstall: node ./uses-process.env.js")
     ev = install_script.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.5
+    assert ev.applicable is False
+
+
+def test_package_age_young(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(10), "a")])
+    ev = package_age.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 1.0
+
+
+def test_package_age_mature(conn):
+    _add_package(conn)
+    _add_versions(conn, [("1.0.0", _iso(500), "a")])
+    ev = package_age.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_package_age_not_applicable_without_versions(conn):
+    _add_package(conn)
+    ev = package_age.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
 
 
 def test_account_age_young(conn):

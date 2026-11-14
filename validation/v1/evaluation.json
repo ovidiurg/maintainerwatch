@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T08:29:16.318071+00:00",
+  "generated_at": "2026-11-14T12:40:09.733219+00:00",
   "model_version": "0.4.6",
   "dataset_dir": "validation/v1",
   "coverage": {
@@ -11,18 +11,18 @@
   "metrics": {
     "precision_at_10": 1.0,
     "precision_at_25": 1.0,
-    "precision_at_50": 1.0,
+    "precision_at_50": 0.98,
     "precision_at_100": 0.75,
-    "auc": 0.849,
+    "auc": 0.847,
     "thresholds": [
       {
         "threshold": 25.0,
-        "tp": 76,
+        "tp": 75,
         "fp": 26,
-        "fn": 38,
+        "fn": 39,
         "tn": 214,
-        "precision": 0.745,
-        "recall": 0.667,
+        "precision": 0.743,
+        "recall": 0.658,
         "false_positive_rate": 0.108
       },
       {
@@ -38,12 +38,12 @@
       {
         "threshold": 50.0,
         "tp": 44,
-        "fp": 0,
+        "fp": 1,
         "fn": 70,
-        "tn": 240,
-        "precision": 1.0,
+        "tn": 239,
+        "precision": 0.978,
         "recall": 0.386,
-        "false_positive_rate": 0.0
+        "false_positive_rate": 0.004
       },
       {
         "threshold": 60.0,
@@ -60,7 +60,7 @@
   "positives_by_attack_type": {
     "malicious_package": {
       "count": 110,
-      "mean_score": 40.8,
+      "mean_score": 40.7,
       "median_score": 48.0,
       "high_band": 44
     },
@@ -72,15 +72,15 @@
     },
     "worm": {
       "count": 2,
-      "mean_score": 25.1,
-      "median_score": 25.1,
+      "mean_score": 22.5,
+      "median_score": 22.5,
       "high_band": 0
     }
   },
   "positives_by_priority": {
     "high": {
       "count": 114,
-      "mean_score": 40.1,
+      "mean_score": 39.9,
       "median_score": 48.0,
       "high_band": 44
     }
@@ -88,7 +88,7 @@
   "positives_by_system": {
     "npm": {
       "count": 113,
-      "mean_score": 40.4,
+      "mean_score": 40.3,
       "median_score": 48.0,
       "high_band": 44
     },
@@ -102,9 +102,9 @@
   "negatives_by_system": {
     "npm": {
       "count": 120,
-      "mean_score": 13.0,
-      "median_score": 10.3,
-      "high_band": 0
+      "mean_score": 12.5,
+      "median_score": 9.4,
+      "high_band": 1
     },
     "pypi": {
       "count": 120,

@@ -13,6 +13,7 @@ mw ingest --system pypi --top 500
 mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw ingest --system github --top 1
+mw enrich-impact --limit 500
 
 # 2. Rebuild derived data, record snapshots, rescore, export.
 mw maintain
@@ -126,8 +127,10 @@ Back up `data/` (database, exports, report) and the `logs/` directory.
 - Use findings for defence, maintenance and coordinated disclosure, not for
   automated accusations or harassment of maintainers.
 
-See the dual-use section in [README.md](../README.md) and
-[docs/gdpr.md](gdpr.md).
+For a removal request, use the private channel in [docs/gdpr.md](gdpr.md);
+operators can run `mw delete-package --system SYSTEM --name PACKAGE --yes`
+(without `--yes` for a dry-run). See the dual-use section in
+[README.md](../README.md).
 
 ## Retention
 

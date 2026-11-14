@@ -73,6 +73,9 @@ mw ingest --system npm --seed-file data/mvp/seeds/npm.txt --no-github
 # that do not have repo stats yet. Defaults: --limit 100, --pages 2.
 mw enrich-github [--system SYSTEM] [--limit N] [--pages N] [--config PATH]
 
+# Fetch deps.dev dependent counts for high-download packages.
+mw enrich-impact [--system SYSTEM] [--limit N] [--config PATH]
+
 # Resolve maintainer identities (Keybase, GitHub email/GPG, PyPI provenance).
 mw resolve [--limit N] [--config PATH]
 ```
@@ -153,7 +156,8 @@ mw report [--out report.html] [--config PATH]
 
 `mw export` writes under the configured `data_dir`; `mw report` builds a static
 HTML report. Rows with medium/high scores include a short risk type, description
-and next investigation step. Standard outputs are JSON, SPDX 2.3, CycloneDX 1.5
+and next investigation step; impact is shown separately as deps.dev dependent
+count plus a tier (low/medium/high/critical). Standard outputs are JSON, SPDX 2.3, CycloneDX 1.5
 and OSV-compatible JSON.
 
 ### Make targets
@@ -200,7 +204,7 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.849, precision@25 1.0, and at threshold 40 precision 0.932 / recall 0.605 /
+0.847, precision@25 1.0, and at threshold 40 precision 0.932 / recall 0.605 /
 FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
@@ -211,35 +215,34 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 13 November 2026)
+## Results (MVP, 14 November 2026)
 
-- 1,713 packages scored: 908 npm, 533 PyPI, 191 crates.io, 80 Maven (30 of 124 expansion seeds)
-  and 1 GitHub repository. The expansion adds 544 registry-metadata packages across
-  ecosystems, mixing popular and obscure packages.
-- 231,281 versions, 221,675 commits, 3,524 maintainers, 1,212 repositories,
-  3,286 OSV records, 3,940 runtime dependency edges (PyPI extras excluded).
+- 6,063 packages scored: 3,192 npm, 1,943 PyPI, 816 crates.io, 102 Maven
+  and 10 GitHub repositories. The expansion mixes high-usage packages,
+  transitive dependencies and a usage-stratified obscure sample.
+- 582,496 versions, 242,652 commits, 11,018 maintainers, 1,375 repositories,
+  4,967 OSV records, 18,612 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 1 high, 407 medium, 1,305 low. OIDC/bot publishers are ignored.
-- License cross-check: 1,652 compatible/recognised, 13 non-SPDX, 43 missing and
-  4 declared-vs-repository conflicts.
+- Risk bands: 32 high, 1,656 medium, 4,375 low. OIDC/bot publishers are ignored.
+- License metadata is cross-checked across registry, classifier and repository
+  sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
-  packages; PyPI `publisher_change` is now applicable (298 high, 20 low, 182
-  not applicable) and its snapshot value is capped at 0.5.
-- Highest risk scores: jeepney 51.4 (single-maintainer concentration and
-  dormancy, not a malware label), bincode 48.5, b-plus-tree-ts 48.0,
-  b-side 48.0, py 46.7, proc-macro2 45.2, configparser 45.2.
+  packages; PyPI `publisher_change` uses a capped snapshot value.
+- deps.dev impact enrichment covers 869 packages. Top impact: tslib 1.62M
+  dependents, inherits 1.33M, function-bind 1.30M, es-errors 1.26M, hasown 1.24M.
+- Highest risk scores are currently dominated by obscure low-adoption packages
+  (b.js, 4a, b4, b5, b7 at 68.0); they are triage candidates, not malware labels.
 - Pre-incident replay: event-stream 59.0, colors 27.3, node-ipc 24.1,
   ua-parser-js 25.0, xz-utils 39.3. At threshold 40 the 27-package benign
   sample gives precision 0.333, recall 0.400, false-positive rate 0.148.
 - Validation sample: 69 of 114 known positives at threshold 40 (precision
   0.932, FPR 0.021); 44 at threshold 50. The main MVP DB has no labelled
   positives; validation is the true-positive evidence.
-- GitHub enrichment covered the 100 highest-risk unenriched packages: 80
-  repositories and 11,443 commits, with a bounded two-page commit window.
-  Install-script scanning found 180 npm packages with install scripts; none
-  reached the high-risk pattern band (core-js is medium at 0.5).
-- Bulk package ingestion used `--no-github`, so new metadata did not trigger
-  GitHub requests. SQLite is 175 MB and the request cache is 3.0 GB.
+- GitHub enrichment is impact-ranked and bounded: the latest pass covered 90
+  repositories and 11,335 commits with a two-page commit window.
+  Install-script scanning flags only high-risk npm install scripts.
+- Bulk package ingestion used `--no-github`; SQLite is 307 MB and the request
+  cache is 4.4 GB.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
@@ -291,8 +294,10 @@ Responsible use expectations:
 - If you deploy a public instance, add terms of use, access logging that
   minimises personal data, and a data-protection review.
 
-If you are a maintainer and want a link or record corrected or removed, see the
-contact process in [docs/gdpr.md](docs/gdpr.md).
+If you are a maintainer and want a link or record corrected or removed, use the
+private contact process in [docs/gdpr.md](docs/gdpr.md); local operators can run
+`mw delete-package --system SYSTEM --name PACKAGE --yes` to remove a package,
+its records and its identity links.
 
 ## License
 

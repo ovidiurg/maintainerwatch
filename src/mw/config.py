@@ -92,6 +92,7 @@ class Config(BaseModel):
             "scorecard": 10,
             "dependency_risk": 15,
             "install_script": 15,
+            "package_age": 10,
         }
     )
     min_identity_confidence: str = "medium"

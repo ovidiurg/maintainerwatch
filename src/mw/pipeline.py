@@ -13,8 +13,9 @@ import httpx
 
 from . import db, snapshots
 from .config import Config
+from .impact import impact_score
 from .export import export_dataset
-from .ingest import crates, downloads, forge, github, github_repo, maven, npm, osv, pypi
+from .ingest import crates, depsdev, downloads, forge, github, github_repo, maven, npm, osv, pypi
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
 from .models import Maintainer, Version
@@ -22,7 +23,7 @@ from .report import build_report
 from .resolve import identity_map, resolve_package
 from .risk import describe_risk
 from .score import band_for, compute_score, computed_at
-from .signals import compute_all
+from .signals import SIGNALS, compute_all
 from .signals.base import Context, parse_ts
 from .signals.typosquat import TARGET_MIN_DOWNLOADS
 
@@ -275,6 +276,132 @@ def backfill_licenses(
 
     conn.close()
     return {"packages": len(rows), "updated": updated}
+
+
+def prioritize_impact(
+    cfg: Config,
+    system: str | None = None,
+    limit: int = 50,
+    missing_deps_limit: int = 200,
+) -> dict:
+    conn = _open(cfg)
+    where = ["p.downloads_weekly > 0"]
+    params: list[object] = []
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT p.system, p.name, p.downloads_weekly, p.fan_in_transitive,
+                   i.dependent_count
+            FROM packages p
+            LEFT JOIN package_impact i
+              ON i.system = p.system AND i.name = p.name
+            WHERE {' AND '.join(where)}""",
+        params,
+    ).fetchall()
+    ranked = sorted(
+        (
+            {
+                **dict(row),
+                "impact_score": impact_score(
+                    row["dependent_count"],
+                    row["downloads_weekly"],
+                    row["fan_in_transitive"],
+                ),
+            }
+            for row in rows
+        ),
+        key=lambda row: row["impact_score"],
+        reverse=True,
+    )[:limit]
+
+    dep_where = ["dp.name IS NULL"]
+    dep_params: list[object] = []
+    if system:
+        dep_where.append("d.dep_system = ?")
+        dep_params.append(system)
+    deps = conn.execute(
+        f"""SELECT d.dep_system AS system, d.dep_name AS name,
+                   COUNT(*) AS uses,
+                   SUM(COALESCE(i.dependent_count, 0)) AS parent_dependents,
+                   SUM(COALESCE(p.downloads_weekly, 0)) AS parent_downloads
+            FROM dependencies d
+            JOIN packages p ON p.system = d.system AND p.name = d.name
+            LEFT JOIN package_impact i
+              ON i.system = p.system AND i.name = p.name
+            LEFT JOIN packages dp
+              ON dp.system = d.dep_system AND dp.name = d.dep_name
+            WHERE {' AND '.join(dep_where)}
+            GROUP BY d.dep_system, d.dep_name
+            ORDER BY parent_dependents DESC, uses DESC, name ASC
+            LIMIT ?""",
+        [*dep_params, missing_deps_limit],
+    ).fetchall()
+    conn.close()
+
+    paths: list[str] = []
+    if deps:
+        base = Path(cfg.data_dir) / "mvp" / "seeds"
+        base.mkdir(parents=True, exist_ok=True)
+        for dep_system in sorted({row["system"] for row in deps}):
+            names = [row["name"] for row in deps if row["system"] == dep_system]
+            path = base / f"impact-deps-{dep_system}.txt"
+            path.write_text("\n".join(names) + ("\n" if names else ""), encoding="utf-8")
+            paths.append(str(path))
+
+    return {
+        "top": ranked,
+        "missing_dependency_candidates": [dict(row) for row in deps],
+        "seed_files": paths,
+    }
+
+
+def enrich_impact(
+    cfg: Config,
+    system: str | None = None,
+    limit: int = 500,
+) -> dict:
+    conn = _open(cfg)
+    where = ["i.name IS NULL", "p.downloads_weekly > 0"]
+    params: list[object] = []
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT p.system, p.name, p.downloads_weekly,
+                   (SELECT v.version FROM versions v
+                    WHERE v.system = p.system AND v.name = p.name
+                    ORDER BY COALESCE(v.published_at, '') DESC LIMIT 1) AS version
+            FROM packages p
+            LEFT JOIN package_impact i
+              ON i.system = p.system AND i.name = p.name
+            WHERE {' AND '.join(where)}
+            ORDER BY p.downloads_weekly DESC, p.fan_in_transitive DESC
+            LIMIT ?""",
+        [*params, limit],
+    ).fetchall()
+    updated = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            if not row["version"]:
+                continue
+            impact = depsdev.fetch_dependents(
+                client, row["system"], row["name"], row["version"]
+            )
+            if impact is None:
+                continue
+            db.upsert_impact(
+                conn,
+                [(
+                    row["system"], row["name"], row["version"],
+                    impact["dependent_count"], impact["direct_dependent_count"],
+                    impact["indirect_dependent_count"], "deps.dev",
+                    datetime.now(timezone.utc).isoformat(),
+                )],
+            )
+            updated += 1
+    conn.close()
+    return {"requested": len(rows), "updated": updated}
 
 
 def enrich_github(
@@ -749,6 +876,7 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     ).fetchall()
     pkg = db.get_package(conn, system, name)
     repo = db.get_repo_stats(conn, system, name)
+    impact = db.get_impact(conn, system, name)
     deps = db.get_dependencies(conn, system, name)
     conn.close()
 
@@ -768,7 +896,9 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
         for row in signal_rows
         if row["band"]
     )
-    total_weight = sum(cfg.weights.values())
+    total_weight = sum(
+        cfg.weights.get(name, 0) for name in SIGNALS
+    )
     return {
         "system": system,
         "name": name,
@@ -792,6 +922,9 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "fan_in": int(pkg["fan_in"] or 0) if pkg else 0,
             "fan_in_transitive": int(pkg["fan_in_transitive"] or 0) if pkg else 0,
             "scorecard_score": repo["scorecard_score"] if repo else None,
+            "dependent_count": int(impact["dependent_count"] or 0) if impact else None,
+            "direct_dependent_count": int(impact["direct_dependent_count"] or 0) if impact else None,
+            "indirect_dependent_count": int(impact["indirect_dependent_count"] or 0) if impact else None,
             "dependencies": sorted({d["dep_name"] for d in deps}),
         },
         "signals": signal_map,

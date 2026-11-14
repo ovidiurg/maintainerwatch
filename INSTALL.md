@@ -74,6 +74,7 @@ mw ingest --system pypi --top 200
 mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw enrich-github --limit 100       # bounded repo stats, Scorecard and commits
+mw enrich-impact --limit 500       # deps.dev dependent counts for impact ranking
 mw backfill-deps
 mw backfill-licenses
 mw backfill-commits

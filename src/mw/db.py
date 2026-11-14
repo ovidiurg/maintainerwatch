@@ -78,6 +78,13 @@ CREATE TABLE IF NOT EXISTS dependencies (
   PRIMARY KEY (system, name, version, dep_system, dep_name)
 );
 
+CREATE TABLE IF NOT EXISTS package_impact (
+  system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
+  dependent_count INTEGER, direct_dependent_count INTEGER,
+  indirect_dependent_count INTEGER, source TEXT, updated_at TEXT,
+  PRIMARY KEY (system, name)
+);
+
 CREATE TABLE IF NOT EXISTS commits (
   system TEXT NOT NULL, name TEXT NOT NULL, sha TEXT NOT NULL,
   committed_at TEXT, author_login TEXT, author_email TEXT,
@@ -495,6 +502,52 @@ def get_maintainers(conn: sqlite3.Connection, system: str, name: str) -> list[sq
     return conn.execute(
         "SELECT * FROM maintainers WHERE system=? AND name=?", (system, name)
     ).fetchall()
+
+
+def delete_package(conn: sqlite3.Connection, system: str, name: str) -> dict[str, int]:
+    """Delete a package and all records keyed to it; returns affected counts."""
+    counts: dict[str, int] = {}
+    tables = (
+        "versions", "maintainers", "repo_stats", "osv", "signals", "scores",
+        "snapshots", "identity_links", "dependencies", "commits", "package_impact",
+        "packages",
+    )
+    for table in tables:
+        cur = conn.execute(
+            f"DELETE FROM {table} WHERE system=? AND name=?", (system, name)
+        )
+        counts[table] = cur.rowcount
+    cur = conn.execute(
+        "DELETE FROM dependencies WHERE dep_system=? AND dep_name=?",
+        (system, name),
+    )
+    counts["inbound_dependencies"] = cur.rowcount
+    conn.commit()
+    return counts
+
+
+def upsert_impact(conn: sqlite3.Connection, rows: list[tuple]) -> None:
+    conn.executemany(
+        """INSERT INTO package_impact
+             (system, name, version, dependent_count, direct_dependent_count,
+              indirect_dependent_count, source, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name) DO UPDATE SET
+             version=excluded.version,
+             dependent_count=excluded.dependent_count,
+             direct_dependent_count=excluded.direct_dependent_count,
+             indirect_dependent_count=excluded.indirect_dependent_count,
+             source=excluded.source,
+             updated_at=excluded.updated_at""",
+        rows,
+    )
+    conn.commit()
+
+
+def get_impact(conn: sqlite3.Connection, system: str, name: str):
+    return conn.execute(
+        "SELECT * FROM package_impact WHERE system=? AND name=?", (system, name)
+    ).fetchone()
 
 
 def get_identity_links(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
