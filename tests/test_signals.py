@@ -17,6 +17,7 @@ from mw.signals import (
     dependency_risk,
     install_script,
     license_inconsistency,
+    maintainer_continuity,
     package_age,
     publisher_change,
     release_anomaly,
@@ -93,6 +94,15 @@ def test_typosquat_flags_close_name(conn):
     ev = typosquat.compute(ctx)
     assert ev.value == 1.0
     assert ev.evidence["nearest"] == "requests"
+
+
+def test_typosquat_homoglyph_normalization(conn):
+    _add_package(conn, name="l0d4sh", downloads=10)
+    ctx = Context(conn=conn, system="npm", name="l0d4sh",
+                  downloads_weekly=10, top_names=["lodash"])
+    ev = typosquat.compute(ctx)
+    assert ev.value == 1.0
+    assert ev.evidence["homoglyph"] is True
 
 
 def test_typosquat_ignores_existing_top_package(conn):
@@ -736,6 +746,41 @@ def test_commit_anomaly_not_applicable(conn):
     _add_commit(conn, 20, "alice", "two")
     ev = commit_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
     assert ev.applicable is False
+
+
+def test_maintainer_continuity_new_author(conn):
+    _add_package(conn)
+    for index in range(10):
+        _add_commit(conn, 600 - index * 20, "alice", f"old-{index}")
+    for index in range(8):
+        _add_commit(conn, 30 - index, "bob", f"new-{index}")
+    ev = maintainer_continuity.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.9
+    assert ev.evidence["recent_top"] == "bob"
+
+
+def test_maintainer_continuity_handover(conn):
+    _add_package(conn)
+    for index in range(8):
+        _add_commit(conn, 600 - index * 20, "alice", f"old-a-{index}")
+    for index in range(2):
+        _add_commit(conn, 500 - index, "bob", f"old-b-{index}")
+    for index in range(6):
+        _add_commit(conn, 30 - index, "bob", f"new-{index}")
+    ev = maintainer_continuity.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.7
+    assert ev.evidence["historical_top"] == "alice"
+
+
+def test_maintainer_continuity_single_maintainer(conn):
+    _add_package(conn)
+    _add_maintainer(conn, "alice", system="npm")
+    for index in range(10):
+        _add_commit(conn, 600 - index * 20, "alice", f"c-{index}")
+    for index in range(5):
+        _add_commit(conn, 30 - index, "alice", f"recent-{index}")
+    ev = maintainer_continuity.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.value == 0.3
 
 
 def test_signing_key_change(conn):

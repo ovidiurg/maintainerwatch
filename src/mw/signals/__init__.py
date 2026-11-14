@@ -9,6 +9,7 @@ from . import (
     depsdev_findings,
     install_script,
     license_inconsistency,
+    maintainer_continuity,
     osv_risk,
     publisher_change,
     release_anomaly,
@@ -33,6 +34,7 @@ SIGNALS = {
     "commit_anomaly": commit_anomaly.compute,
     "scorecard": scorecard.compute,
     "dependency_risk": dependency_risk.compute,
+    "maintainer_continuity": maintainer_continuity.compute,
 }
 
 

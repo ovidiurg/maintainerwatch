@@ -4,6 +4,17 @@ from ..models import SignalEvidence
 from .base import Context
 
 TARGET_MIN_DOWNLOADS = 100_000
+HOMOGLYPHS = str.maketrans({
+    "0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t",
+    "@": "a", "$": "s", "!": "i", "|": "l",
+})
+
+
+def normalize_homoglyphs(name: str) -> str:
+    if name.startswith("@") and "/" in name:
+        scope, package = name.split("/", 1)
+        return scope + "/" + package.translate(HOMOGLYPHS)
+    return name.translate(HOMOGLYPHS)
 
 
 def levenshtein(a: str, b: str) -> int:
@@ -47,19 +58,25 @@ def compute(ctx: Context) -> SignalEvidence:
         )
 
     name = ctx.name.lower()
-    best: tuple[int, str | None] = (999, None)
+    normalized_name = normalize_homoglyphs(name)
+    best: tuple[int, str | None, bool] = (999, None, False)
     for candidate in ctx.top_names:
         other = candidate.lower()
         if other == name or abs(len(other) - len(name)) > 2:
             continue
-        distance = levenshtein(name, other)
+        normalized_other = normalize_homoglyphs(other)
+        distance = min(
+            levenshtein(name, other),
+            levenshtein(normalized_name, normalized_other),
+        )
+        homoglyph = normalized_name == normalized_other and name != other
         if distance < best[0]:
-            best = (distance, other)
+            best = (distance, other, homoglyph)
             if distance == 1:
                 break
 
-    distance, nearest = best
-    suspicious = distance == 1 or (distance == 2 and len(name) > 8)
+    distance, nearest, homoglyph = best
+    suspicious = homoglyph or distance == 1 or (distance == 2 and len(name) > 8)
     if suspicious and ctx.downloads_weekly < 1000:
         value = 1.0
     elif suspicious:
@@ -72,6 +89,7 @@ def compute(ctx: Context) -> SignalEvidence:
         evidence={
             "distance": distance,
             "nearest": nearest,
+            "homoglyph": homoglyph,
             "downloads_weekly": ctx.downloads_weekly,
         },
     )

@@ -3,7 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import smtplib
+import subprocess
+import tempfile
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
@@ -356,6 +359,89 @@ def prioritize_impact(
         "missing_dependency_candidates": [dict(row) for row in deps],
         "seed_files": paths,
     }
+
+
+def scan_guarddog(
+    cfg: Config,
+    system: str | None = None,
+    min_score: float = 40.0,
+    limit: int = 50,
+    timeout: int = 300,
+) -> dict:
+    guarddog = shutil.which("guarddog")
+    if not guarddog:
+        return {
+            "error": "guarddog is not installed",
+            "hint": "pip install guarddog",
+        }
+    conn = _open(cfg)
+    where = ["s.model_version = ?", "s.score >= ?"]
+    params: list[object] = [cfg.model_version, min_score]
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT s.system, s.name
+            FROM scores s
+            JOIN packages p ON p.system = s.system AND p.name = s.name
+            WHERE {' AND '.join(where)}
+            ORDER BY s.score DESC, s.name ASC LIMIT ?""",
+        [*params, limit],
+    ).fetchall()
+    scanned = 0
+    errors = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            ecosystem = {"npm": "npm", "pypi": "pypi"}.get(row["system"])
+            if ecosystem is None:
+                continue
+            versions = [
+                version for version in db.get_versions(conn, row["system"], row["name"])
+                if not version["is_yanked"]
+            ]
+            if not versions:
+                errors += 1
+                continue
+            version = versions[-1]["version"]
+            fetched = tarball.fetch_archive(
+                client, row["system"], row["name"], version
+            )
+            if fetched is None:
+                errors += 1
+                continue
+            data, filename = fetched
+            suffix = Path(filename).suffix or ".tgz"
+            handle = tempfile.NamedTemporaryFile(prefix="mw-guarddog-", suffix=suffix, delete=False)
+            try:
+                handle.write(data)
+                handle.close()
+                completed = subprocess.run(
+                    [guarddog, ecosystem, "scan", handle.name, "--output-format=json"],
+                    capture_output=True, text=True, timeout=timeout,
+                )
+                if completed.returncode != 0:
+                    errors += 1
+                    continue
+                doc = json.loads(completed.stdout or "{}")
+                db.upsert_guarddog_scan(
+                    conn,
+                    (
+                        row["system"], row["name"], version,
+                        str(doc.get("risk_score") or doc.get("riskScore") or "unknown"),
+                        json.dumps(doc, sort_keys=True),
+                        datetime.now(timezone.utc).isoformat(),
+                    ),
+                )
+                scanned += 1
+            except (OSError, ValueError, subprocess.TimeoutExpired):
+                errors += 1
+            finally:
+                try:
+                    Path(handle.name).unlink(missing_ok=True)
+                except OSError:
+                    pass
+    conn.close()
+    return {"requested": len(rows), "scanned": scanned, "errors": errors}
 
 
 def scan_content(
@@ -1024,6 +1110,14 @@ def run_alert_rules(
     return results
 
 
+def _commit_span_days(rows) -> float | None:
+    dates = [parse_ts(row["committed_at"]) for row in rows]
+    dates = [date for date in dates if date is not None]
+    if len(dates) < 2:
+        return None
+    return round((max(dates) - min(dates)).total_seconds() / 86400, 1)
+
+
 def _failed_scorecard_checks(repo) -> list[str]:
     try:
         checks = json.loads(repo["scorecard_checks_json"] or "[]")
@@ -1039,6 +1133,17 @@ def _failed_scorecard_checks(repo) -> list[str]:
         if isinstance(item, dict) and item.get("name") in critical
         and int(item.get("score") or 0) == 0
     ]
+
+
+def _guarddog_finding_count(row) -> int | None:
+    if row is None:
+        return None
+    try:
+        doc = json.loads(row["findings_json"] or "{}")
+        results = doc.get("results") or {}
+        return len(results) if isinstance(results, (dict, list)) else 0
+    except (TypeError, ValueError):
+        return None
 
 
 def scan(cfg: Config, system: str, name: str) -> dict | None:
@@ -1058,7 +1163,10 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     pkg = db.get_package(conn, system, name)
     repo = db.get_repo_stats(conn, system, name)
     impact = db.get_impact(conn, system, name)
+    maintainer_rows = db.get_maintainers(conn, system, name)
+    commit_rows = db.get_commits(conn, system, name)
     content = db.get_content_scan(conn, system, name)
+    guarddog = db.get_guarddog_scan(conn, system, name)
     deps = db.get_dependencies(conn, system, name)
     conn.close()
 
@@ -1118,6 +1226,11 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "scorecard_failed_checks": _failed_scorecard_checks(repo) if repo else None,
             "content_risk": int(content["risk_score"] or 0) if content else None,
             "content_flags": json.loads(content["flags_json"] or "{}").get("flags", []) if content else None,
+            "guarddog_risk_score": guarddog["risk_score"] if guarddog else None,
+            "guarddog_findings": _guarddog_finding_count(guarddog),
+            "maintainer_count": len(maintainer_rows),
+            "commit_author_count": len({row["author_login"] or row["author_email"] for row in commit_rows}),
+            "commit_span_days": _commit_span_days(commit_rows),
             "dependent_count": int(impact["dependent_count"] or 0) if impact else None,
             "direct_dependent_count": int(impact["direct_dependent_count"] or 0) if impact else None,
             "indirect_dependent_count": int(impact["indirect_dependent_count"] or 0) if impact else None,

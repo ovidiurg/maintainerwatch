@@ -91,6 +91,7 @@ class Config(BaseModel):
             "commit_anomaly": 15,
             "scorecard": 10,
             "dependency_risk": 15,
+            "maintainer_continuity": 10,
             "install_script": 15,
             "osv_risk": 10,
             "depsdev_findings": 10,
@@ -98,7 +99,7 @@ class Config(BaseModel):
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.4.8"
+    model_version: str = "0.4.9"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",

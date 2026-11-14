@@ -17,6 +17,7 @@ mw enrich-impact --limit 500
 mw enrich-findings --limit 500
 mw enrich-scorecard --limit 500
 mw scan-content --limit 50
+# mw scan-guarddog --limit 20  # requires guarddog
 mw backfill-osv --limit 500 --malicious-only
 
 # 2. Rebuild derived data, record snapshots, rescore, export.

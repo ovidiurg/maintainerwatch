@@ -145,6 +145,21 @@ def enrich_findings_cmd(
     typer.echo(json.dumps(pipeline.enrich_findings(cfg, system, limit)))
 
 
+@app.command("scan-guarddog")
+def scan_guarddog_cmd(
+    system: Optional[str] = typer.Option(None, help="Only npm or pypi."),
+    min_score: float = typer.Option(40.0, help="Minimum risk score."),
+    limit: int = typer.Option(50, help="Maximum packages to scan."),
+    timeout: int = typer.Option(300, help="Timeout per package, seconds."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Run GuardDog static analysis on selected package tarballs."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.scan_guarddog(
+        cfg, system, min_score, limit, timeout
+    )))
+
+
 @app.command("scan-content")
 def scan_content_cmd(
     system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
@@ -306,7 +321,8 @@ def delete_package_cmd(
     tables = (
         "versions", "maintainers", "repo_stats", "osv", "signals",
         "scores", "snapshots", "identity_links", "dependencies",
-        "commits", "package_impact", "packages",
+        "commits", "package_impact", "package_findings", "content_scan",
+        "guarddog_scan", "packages",
     )
     if not yes:
         counts = {

@@ -8,7 +8,7 @@ describe packages (`deps.dev`), vulnerabilities (`OSV`) or repository practices
 (`OpenSSF Scorecard`), but not the people behind packages across ecosystems.
 
 MaintainerWatch ingests public package metadata, resolves maintainer identities
-with explicit confidence levels, derives thirteen explainable risk signals and
+with explicit confidence levels, derives fourteen explainable risk signals and
 publishes a versioned open dataset plus a CLI/report.
 
 ## Scope
@@ -22,14 +22,15 @@ publishes a versioned open dataset plus a CLI/report.
   3. `account_age` — young maintainer account on a popular package
   4. `release_anomaly` — dormancy followed by a burst, or sudden release bursts
   5. `signing_gap` — missing provenance / signatures on recent releases
-  6. `typosquat` — name close to a top package, with low downloads
+  6. `typosquat` — name close to a top package (including homoglyphs), with low downloads
   7. `license_inconsistency` — missing or non-SPDX license metadata
   8. `commit_anomaly` — new-author share and commit burst relative to the baseline
   9. `scorecard` — low OpenSSF Scorecard repository score
   10. `dependency_risk` — high transitive fan-in / dependency footprint
   11. `osv_risk` — version-aware MAL/CVE advisory affecting the current release
   12. `depsdev_findings` — version-aware malicious/deprecated/low-usage findings
-  13. `install_script` — suspicious npm install/postinstall content
+  13. `maintainer_continuity` — recent author handover or newcomer dominance
+  14. `install_script` — suspicious npm install/postinstall content
 - Context: OSV vulnerability counts and the dependency graph.
 - Identity resolution (minimal, passive): Keybase proofs, GitHub commit
   emails, GPG keyservers and PyPI PEP 740 provenance. No social-media scraping.
@@ -86,6 +87,9 @@ mw enrich-scorecard [--system SYSTEM] [--limit N] [--config PATH]
 
 # Statically scan package tarballs for risky content.
 mw scan-content [--system SYSTEM] [--min-score 40] [--limit N] [--dry-run]
+
+# Optional GuardDog static analysis (pip install guarddog).
+mw scan-guarddog [--system npm|pypi] [--min-score 40] [--limit N]
 
 # Fetch affected-version ranges for OSV advisories (version-aware signal).
 mw backfill-osv [--system SYSTEM] [--limit N] [--malicious-only] [--config PATH]
@@ -248,7 +252,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 582,496 versions, 242,652 commits, 11,018 maintainers, 1,375 repositories,
   4,967 OSV records, 18,612 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 38 high, 1,648 medium, 4,377 low. OIDC/bot publishers are ignored.
+- Risk bands: 37 high, 1,675 medium, 4,351 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -280,10 +284,14 @@ A weighted sum of applicable signals, normalised to 0–100, with an
 `mw scan` also reports `evidence_coverage`; low-coverage, hygiene-only scores
 are review candidates rather than confirmed high risk. High-band scores are
 reserved for packages with behavioural evidence; obscure low-adoption packages
-use a medium-capped unsigned baseline. Repository metadata (archived, owner
+use a medium-capped unsigned baseline. `scan`/API also expose maintainer count,
+commit-author count/span, GuardDog findings and static content flags as context. Repository metadata (archived, owner
 type, stars/forks/issues), individual Scorecard checks and static tarball scan
 flags are exposed as context in `scan`/API; scored `repo_health`/content
 experiments are not in the model because the validation gain was not safe.
+GuardDog results are optional context too (`guarddog_risk_score`,
+`guarddog_findings`); dynamic execution must run only in an isolated gVisor/
+Docker worker, never in the analyst process.
 See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy
