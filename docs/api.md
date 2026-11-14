@@ -15,33 +15,38 @@ mw serve --host 127.0.0.1 --port 8000
 |---|---|---|
 | GET | `/health` | Status, app version and model version. |
 | GET | `/systems` | Package counts per ecosystem. |
-| GET | `/packages` | Paginated scored packages (`system`, `band`, `min_score`, `limit`, `offset`). |
+| GET | `/packages` | Paginated scored packages (`system`, `band`, `min_score`, `min_dependents`, `limit`, `offset`). |
 | GET | `/packages/{system}/{name}` | Score, signal evidence, context and dependencies for one package. |
 | GET | `/top` | First page of the highest-risk packages (`system`, `limit`, `offset`). |
+| GET | `/impact` | Impact-ranked packages (`system`, `min_dependents`, `limit`, `offset`). |
 | GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). |
 | GET | `/alert-rules` | Runs the alert rules from `config/default.yaml` without delivering them. |
 
 ## Response shapes
 
-`/packages` items contain `system`, `name`, `score`, `band`, `downloads_weekly`,
-`osv_count`, `fan_in`, `fan_in_transitive`, `dependencies_count`, `dependent_count`,
+`/packages`, `/top` and `/impact` items contain `system`, `name`, `score`,
+`band`, `downloads_weekly`, `osv_count`, `fan_in`, `fan_in_transitive`,
+`dependencies_count`, `dependent_count`, `impact_score`, `impact_tier`,
 `repo_url` and `license`.
 
 `/packages/{system}/{name}` returns the score, `inputs_hash`, `computed_at`,
-`evidence_coverage`, `risk_type`, `risk_note`, `next_step`, the `context` block
-(which includes `dependent_count` when deps.dev enrichment ran) and every signal
-with its `value` and `evidence` (including `install_script` scripts for npm). The risk fields are populated for medium/high scores and are
-empty for low scores. Run `mw score-all` before querying.
+`evidence_coverage`, `risk_type`, `risk_note`, `next_step`, `impact_score`,
+`impact_tier`, the `context` block (which includes `dependent_count` when
+deps.dev enrichment ran) and every signal with its `value` and `evidence`
+(including `install_script` scripts for npm). The risk fields are populated for
+medium/high scores and are empty for low scores. Run `mw score-all` and
+`mw enrich-impact` before querying.
 
 ## Pagination
 
-`/packages` and `/top` accept `limit` (1–500) and `offset` (0-based).
-`/packages` additionally accepts `system`, `band` and `min_score`; `/top` only
-accepts `system`, `limit` and `offset`. The response body is a JSON array;
-pagination metadata is returned in headers:
+`/packages`, `/top` and `/impact` accept `limit` (1–500) and `offset` (0-based).
+`/packages` additionally accepts `system`, `band`, `min_score` and
+`min_dependents`; `/top` accepts `system`; `/impact` accepts `system` and
+`min_dependents`. The response body is a JSON array; pagination metadata is
+returned in headers:
 
 ```
-X-Total-Count: 1713
+X-Total-Count: 6063
 X-Limit: 50
 X-Offset: 0
 X-Next-Offset: 50
@@ -52,6 +57,19 @@ X-Next-Offset: 50
 ```bash
 curl 'http://127.0.0.1:8000/packages?system=npm&band=high&limit=20&offset=0'
 ```
+
+## Impact
+
+Impact ranking uses deps.dev public dependent counts plus weekly downloads and
+transitive fan-in:
+
+- `impact_score` = 50% dependent count + 30% downloads + 20% transitive fan-in
+  (log-scaled), rounded 0–100.
+- `impact_tier`: `critical` ≥1000 dependents, `high` ≥100, `medium` ≥10,
+  otherwise `low`/`unknown`.
+
+Run `mw enrich-impact --limit 500` to populate missing dependent counts. This is
+a public-ecosystem proxy, not proof that a company or product uses the package.
 
 ## Authentication
 
@@ -147,8 +165,12 @@ is a request for review, not proof of compromise.
 
 - The API reads the same SQLite database as the CLI; run `mw score-all` first.
 - Scores are filtered by the configured `model_version` from `config/default.yaml`.
-- It is read-only: there are no write endpoints.
-- `install_script`, `evidence_coverage` and the other model additions are
-  returned automatically; no endpoint change is needed.
+- It is read-only: there are no write endpoints. Package removal is CLI-only:
+  `mw delete-package --system SYSTEM --name PACKAGE --yes`.
+- `/alerts` returns the alert fields only (`system`, `name`, `score`, `band`,
+  downloads, OSV, repo URL); use `/packages/{system}/{name}` for risk summaries
+  and impact context.
+- `install_script`, `evidence_coverage`, risk summaries and impact fields are
+  returned automatically; no separate endpoint is needed.
 - The OpenAPI schema includes parameter descriptions and examples; `/docs`
   renders it interactively.

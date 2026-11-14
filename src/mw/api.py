@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 
 from . import __version__, db, pipeline
+from .impact import impact_score, impact_tier
 from .config import Config, load_config
 
 TAGS_METADATA = [
@@ -27,6 +28,7 @@ def _query_packages(
     system: str | None,
     band: str | None,
     min_score: float | None,
+    min_dependents: int | None,
     limit: int,
     offset: int,
 ) -> tuple[list[dict], int]:
@@ -41,26 +43,80 @@ def _query_packages(
     if min_score is not None:
         where.append("s.score >= ?")
         args.append(min_score)
+    if min_dependents is not None:
+        where.append("i.dependent_count >= ?")
+        args.append(min_dependents)
     where_sql = " AND ".join(where)
+    from_sql = """FROM scores s
+                  JOIN packages p ON p.system = s.system AND p.name = s.name
+                  LEFT JOIN package_impact i
+                    ON i.system = s.system AND i.name = s.name"""
 
     total = conn.execute(
-        f"SELECT COUNT(*) FROM scores s WHERE {where_sql}", args
+        f"SELECT COUNT(*) {from_sql} WHERE {where_sql}", args
     ).fetchone()[0]
-    items = _rows(
-        conn.execute(
-            f"""SELECT s.system, s.name, s.score, s.band,
-                       p.downloads_weekly, p.osv_count, p.fan_in,
-                       p.fan_in_transitive, p.dependencies_count,
-                       p.repo_url, p.license
-                FROM scores s
-                JOIN packages p ON p.system = s.system AND p.name = s.name
-                WHERE {where_sql}
-                ORDER BY s.score DESC, s.name ASC
-                LIMIT ? OFFSET ?""",
-            args + [limit, offset],
-        ).fetchall()
-    )
+    rows = conn.execute(
+        f"""SELECT s.system, s.name, s.score, s.band,
+                   p.downloads_weekly, p.osv_count, p.fan_in,
+                   p.fan_in_transitive, p.dependencies_count,
+                   p.repo_url, p.license, i.dependent_count
+            {from_sql}
+            WHERE {where_sql}
+            ORDER BY s.score DESC, s.name ASC
+            LIMIT ? OFFSET ?""",
+        args + [limit, offset],
+    ).fetchall()
+    items = []
+    for row in rows:
+        item = dict(row)
+        item["impact_score"] = impact_score(
+            item["dependent_count"], item["downloads_weekly"], item["fan_in_transitive"]
+        )
+        item["impact_tier"] = impact_tier(item["dependent_count"])
+        items.append(item)
     return items, total
+
+
+def _query_impact(
+    conn,
+    cfg: Config,
+    system: str | None,
+    min_dependents: int | None,
+    limit: int,
+    offset: int,
+) -> tuple[list[dict], int]:
+    where = ["s.model_version = ?"]
+    args: list[object] = [cfg.model_version]
+    if system:
+        where.append("s.system = ?")
+        args.append(system)
+    if min_dependents is not None:
+        where.append("i.dependent_count >= ?")
+        args.append(min_dependents)
+    where_sql = " AND ".join(where)
+    rows = conn.execute(
+        f"""SELECT s.system, s.name, s.score, s.band,
+                   p.downloads_weekly, p.osv_count, p.fan_in,
+                   p.fan_in_transitive, p.dependencies_count,
+                   p.repo_url, p.license, i.dependent_count
+            FROM scores s
+            JOIN packages p ON p.system = s.system AND p.name = s.name
+            LEFT JOIN package_impact i
+              ON i.system = s.system AND i.name = s.name
+            WHERE {where_sql}""",
+        args,
+    ).fetchall()
+    items = []
+    for row in rows:
+        item = dict(row)
+        item["impact_score"] = impact_score(
+            item["dependent_count"], item["downloads_weekly"], item["fan_in_transitive"]
+        )
+        item["impact_tier"] = impact_tier(item["dependent_count"])
+        items.append(item)
+    items.sort(key=lambda item: (-item["impact_score"], -item["score"], item["name"]))
+    total = len(items)
+    return items[offset:offset + limit], total
 
 
 def create_app(cfg: Config | None = None) -> FastAPI:
@@ -139,13 +195,16 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         min_score: float | None = Query(
             None, ge=0, le=100, description="Minimum score."
         ),
+        min_dependents: int | None = Query(
+            None, ge=0, description="Minimum deps.dev dependent count."
+        ),
         limit: int = Query(50, ge=1, le=500, description="Page size."),
         offset: int = Query(0, ge=0, description="Number of rows to skip."),
     ) -> list[dict]:
         conn = open_db()
         try:
             items, total = _query_packages(
-                conn, cfg, system, band, min_score, limit, offset
+                conn, cfg, system, band, min_score, min_dependents, limit, offset
             )
         finally:
             conn.close()
@@ -179,8 +238,34 @@ def create_app(cfg: Config | None = None) -> FastAPI:
     ) -> list[dict]:
         return list_packages(
             response=response, system=system, band=None, min_score=None,
-            limit=limit, offset=offset,
+            min_dependents=None, limit=limit, offset=offset,
         )
+
+    @app.get("/impact", tags=["packages"], summary="Top impact packages")
+    def impact(
+        response: Response,
+        system: str | None = Query(None, description="Filter by ecosystem."),
+        min_dependents: int | None = Query(
+            None, ge=0, description="Minimum deps.dev dependent count."
+        ),
+        limit: int = Query(20, ge=1, le=500, description="Page size."),
+        offset: int = Query(0, ge=0, description="Number of rows to skip."),
+    ) -> list[dict]:
+        conn = open_db()
+        try:
+            items, total = _query_impact(
+                conn, cfg, system, min_dependents, limit, offset
+            )
+        finally:
+            conn.close()
+        response.headers["X-Total-Count"] = str(total)
+        response.headers["X-Limit"] = str(limit)
+        response.headers["X-Offset"] = str(offset)
+        next_offset = offset + limit
+        response.headers["X-Next-Offset"] = (
+            str(next_offset) if next_offset < total else ""
+        )
+        return items
 
     @app.get("/alerts", tags=["alerts"], summary="Ad-hoc alert query")
     def alerts(

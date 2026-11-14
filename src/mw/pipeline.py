@@ -13,7 +13,7 @@ import httpx
 
 from . import db, snapshots
 from .config import Config
-from .impact import impact_score
+from .impact import impact_score, impact_tier
 from .export import export_dataset
 from .ingest import crates, depsdev, downloads, forge, github, github_repo, maven, npm, osv, pypi
 from .ingest.http import CachedClient
@@ -908,6 +908,12 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
         "risk_type": risk_type,
         "risk_note": risk_note,
         "next_step": next_step,
+        "impact_score": impact_score(
+            impact["dependent_count"] if impact else None,
+            pkg["downloads_weekly"] if pkg else None,
+            pkg["fan_in_transitive"] if pkg else None,
+        ),
+        "impact_tier": impact_tier(impact["dependent_count"] if impact else None),
         "model_version": score_row["model_version"],
         "inputs_hash": score_row["inputs_hash"],
         "computed_at": score_row["computed_at"],

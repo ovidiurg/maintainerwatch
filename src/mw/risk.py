@@ -2,18 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-
-def impact_tier(count: int | None) -> str:
-    if not count:
-        return "unknown"
-    if count >= 1000:
-        return "critical"
-    if count >= 100:
-        return "high"
-    if count >= 10:
-        return "medium"
-    return "low"
-
+from .impact import impact_tier
 
 def _value(signals: dict[str, dict[str, Any]], name: str) -> float:
     return float(signals.get(name, {}).get("value") or 0.0)

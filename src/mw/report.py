@@ -9,7 +9,8 @@ from jinja2 import Template
 
 from . import db
 from .config import Config
-from .risk import describe_risk, impact_tier
+from .impact import impact_tier
+from .risk import describe_risk
 
 INCIDENTS = [
     ("npm", "event-stream"),

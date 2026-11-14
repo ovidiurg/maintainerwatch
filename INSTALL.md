@@ -139,14 +139,16 @@ The API is read-only:
 |---|---|
 | `GET /health` | status, app version and model version |
 | `GET /systems` | package counts per ecosystem |
-| `GET /packages?system=&band=&min_score=&limit=&offset=` | paginated ranked packages |
-| `GET /packages/{system}/{name}` | score, signals, context, dependencies |
+| `GET /packages?system=&band=&min_score=&min_dependents=&limit=&offset=` | paginated ranked packages |
+| `GET /packages/{system}/{name}` | score, signals, context, dependencies, risk summary, impact |
 | `GET /top?system=&limit=&offset=` | top risk |
+| `GET /impact?system=&min_dependents=&limit=&offset=` | impact-ranked packages |
 | `GET /alerts?min_score=&signal=&min_signal=` | ad-hoc alerts |
 | `GET /alert-rules` | run configured rules without delivery |
 
 Pagination uses the `X-Total-Count`, `X-Limit`, `X-Offset` and `X-Next-Offset`
-headers. Set `MAINTAINERWATCH_API_KEY` to require `X-API-Key`; set
+headers. Run `mw enrich-impact --limit 500` to populate deps.dev dependent
+counts used by `/impact` and the impact fields. Set `MAINTAINERWATCH_API_KEY` to require `X-API-Key`; set
 `api.rate_limit_rpm` in the config to enable the in-memory rate limit. See
 [docs/api.md](docs/api.md) for webhook/email delivery and examples.
 
