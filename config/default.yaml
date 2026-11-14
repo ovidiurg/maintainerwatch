@@ -26,6 +26,7 @@ weights:
   commit_anomaly: 15
   scorecard: 10
   dependency_risk: 15
+  install_script: 15
 
 # Confidence levels accepted for identity-gated signals.
 min_identity_confidence: medium
@@ -42,7 +43,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.4.5"
+model_version: "0.4.6"
 
 alerts:
   rules:

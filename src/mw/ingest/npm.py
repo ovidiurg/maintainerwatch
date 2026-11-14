@@ -119,6 +119,12 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
         user = meta.get("_npmUser") or {}
         signatures = dist.get("signatures") or []
         key_id = signatures[0].get("keyid") if signatures else None
+        scripts = meta.get("scripts") or {}
+        install_script = " ; ".join(
+            f"{key}: {scripts[key]}"
+            for key in ("preinstall", "install", "postinstall", "prepare")
+            if isinstance(scripts.get(key), str)
+        ) or None
         versions.append(
             Version(
                 system="npm",
@@ -131,6 +137,7 @@ def fetch_package(client: CachedClient, name: str) -> tuple[Package, list[Versio
                 has_sig=bool(signatures),
                 has_provenance=bool(dist.get("attestations")),
                 is_yanked=bool(meta.get("deprecated")),
+                install_script=install_script[:2000] if install_script else None,
             )
         )
 

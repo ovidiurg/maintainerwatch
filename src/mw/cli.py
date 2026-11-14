@@ -116,6 +116,18 @@ def evaluate_validation(
     }, indent=2))
 
 
+@app.command("enrich-github")
+def enrich_github_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    limit: int = typer.Option(100, help="Maximum packages to enrich."),
+    pages: int = typer.Option(2, help="GitHub commit pages per repository."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Fetch repo stats, Scorecard and recent commits for selected packages."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.enrich_github(cfg, system, limit, pages)))
+
+
 @app.command("backfill-deps")
 def backfill_deps(
     system: Optional[str] = typer.Option(None, help="npm, pypi, crates or maven."),

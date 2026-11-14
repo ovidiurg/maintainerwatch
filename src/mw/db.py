@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS versions (
   published_at TEXT, publisher_name TEXT, publisher_email TEXT,
   publisher_key_id TEXT,
   has_sig INTEGER DEFAULT 0, has_provenance INTEGER DEFAULT 0,
-  is_yanked INTEGER DEFAULT 0,
+  is_yanked INTEGER DEFAULT 0, install_script TEXT,
   PRIMARY KEY (system, name, version)
 );
 
@@ -109,6 +109,7 @@ def init_db(conn: sqlite3.Connection) -> None:
     _ensure_column(conn, "packages", "license_classifier", "TEXT")
     _ensure_column(conn, "repo_stats", "license", "TEXT")
     _ensure_column(conn, "versions", "publisher_key_id", "TEXT")
+    _ensure_column(conn, "versions", "install_script", "TEXT")
     conn.commit()
 
 
@@ -149,14 +150,15 @@ def upsert_versions(conn: sqlite3.Connection, versions: Iterable[Version]) -> No
     rows = [
         (v.system, v.name, v.version, v.published_at, v.publisher_name,
          v.publisher_email, v.publisher_key_id, int(v.has_sig),
-         int(v.has_provenance), int(v.is_yanked))
+         int(v.has_provenance), int(v.is_yanked), v.install_script)
         for v in versions
     ]
     conn.executemany(
         """INSERT INTO versions
              (system, name, version, published_at, publisher_name,
-              publisher_email, publisher_key_id, has_sig, has_provenance, is_yanked)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              publisher_email, publisher_key_id, has_sig, has_provenance, is_yanked,
+              install_script)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(system, name, version) DO UPDATE SET
              published_at=COALESCE(excluded.published_at, versions.published_at),
              publisher_name=COALESCE(excluded.publisher_name, versions.publisher_name),
@@ -164,7 +166,8 @@ def upsert_versions(conn: sqlite3.Connection, versions: Iterable[Version]) -> No
              publisher_key_id=COALESCE(excluded.publisher_key_id, versions.publisher_key_id),
              has_sig=MAX(excluded.has_sig, versions.has_sig),
              has_provenance=MAX(excluded.has_provenance, versions.has_provenance),
-             is_yanked=excluded.is_yanked""",
+             is_yanked=excluded.is_yanked,
+             install_script=COALESCE(excluded.install_script, versions.install_script)""",
         rows,
     )
     conn.commit()

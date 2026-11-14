@@ -31,6 +31,7 @@ class Version(BaseModel):
     has_sig: bool = False
     has_provenance: bool = False
     is_yanked: bool = False
+    install_script: str | None = None
 
 
 class Maintainer(BaseModel):

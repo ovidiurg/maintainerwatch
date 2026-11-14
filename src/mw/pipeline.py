@@ -276,6 +276,72 @@ def backfill_licenses(
     return {"packages": len(rows), "updated": updated}
 
 
+def enrich_github(
+    cfg: Config,
+    system: str | None = None,
+    limit: int = 100,
+    pages: int = 2,
+) -> dict:
+    conn = _open(cfg)
+    params: list[str] = []
+    where = [
+        "p.repo_url IS NOT NULL",
+        "p.repo_url != ''",
+        "r.name IS NULL",
+    ]
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT p.system, p.name, p.repo_url, COALESCE(s.score, 0) AS score
+            FROM packages p
+            LEFT JOIN repo_stats r
+              ON r.system = p.system AND r.name = p.name
+            LEFT JOIN scores s
+              ON s.system = p.system AND s.name = p.name
+             AND s.model_version = ?
+            WHERE {' AND '.join(where)}
+            ORDER BY score DESC, p.downloads_weekly DESC
+            LIMIT ?""",
+        [cfg.model_version, *params, limit],
+    ).fetchall()
+
+    repos = 0
+    commits = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            stats = forge.fetch_repo_stats(
+                client, row["system"], row["name"], row["repo_url"],
+                cfg.github_token, cfg.gitlab_token,
+            )
+            if stats is None:
+                continue
+            if github.parse_github_repo(row["repo_url"]):
+                stats.scorecard_score = fetch_score(client, row["repo_url"])
+            db.upsert_repo_stats(conn, [stats])
+            repos += 1
+            package_commits = forge.fetch_commits(
+                client, row["repo_url"], cfg.github_token, cfg.gitlab_token,
+                pages=pages,
+            )
+            if package_commits:
+                db.upsert_commits(
+                    conn,
+                    [
+                        (
+                            row["system"], row["name"], c["sha"], c["committed_at"],
+                            c["author_login"], c["author_email"],
+                        )
+                        for c in package_commits
+                    ],
+                )
+                commits += len(package_commits)
+            conn.commit()
+
+    conn.close()
+    return {"requested": len(rows), "repos": repos, "commits": commits}
+
+
 def backfill_commits(
     cfg: Config,
     system: str | None = None,
