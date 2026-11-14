@@ -83,3 +83,8 @@ osint:
   github_email: true
   pypi_provenance: true
   gpg: true
+
+dynamic:
+  worker_url: null
+  token_env: MAINTAINERWATCH_DYNAMIC_TOKEN
+  timeout_s: 600

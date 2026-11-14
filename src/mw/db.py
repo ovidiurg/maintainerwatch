@@ -81,6 +81,12 @@ CREATE TABLE IF NOT EXISTS dependencies (
   PRIMARY KEY (system, name, version, dep_system, dep_name)
 );
 
+CREATE TABLE IF NOT EXISTS dynamic_scan (
+  system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
+  worker TEXT, risk_score TEXT, findings_json TEXT, updated_at TEXT,
+  PRIMARY KEY (system, name)
+);
+
 CREATE TABLE IF NOT EXISTS guarddog_scan (
   system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
   risk_score TEXT, findings_json TEXT, updated_at TEXT,
@@ -613,7 +619,8 @@ def delete_package(conn: sqlite3.Connection, system: str, name: str) -> dict[str
     tables = (
         "versions", "maintainers", "repo_stats", "osv", "signals", "scores",
         "snapshots", "identity_links", "dependencies", "commits", "package_impact",
-        "package_findings", "content_scan", "guarddog_scan", "packages",
+        "package_findings", "content_scan", "guarddog_scan", "dynamic_scan",
+        "packages",
     )
     for table in tables:
         cur = conn.execute(
@@ -627,6 +634,28 @@ def delete_package(conn: sqlite3.Connection, system: str, name: str) -> dict[str
     counts["inbound_dependencies"] = cur.rowcount
     conn.commit()
     return counts
+
+
+def upsert_dynamic_scan(conn: sqlite3.Connection, row: tuple) -> None:
+    conn.execute(
+        """INSERT INTO dynamic_scan
+             (system, name, version, worker, risk_score, findings_json, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name) DO UPDATE SET
+             version=excluded.version,
+             worker=excluded.worker,
+             risk_score=excluded.risk_score,
+             findings_json=excluded.findings_json,
+             updated_at=excluded.updated_at""",
+        row,
+    )
+    conn.commit()
+
+
+def get_dynamic_scan(conn: sqlite3.Connection, system: str, name: str):
+    return conn.execute(
+        "SELECT * FROM dynamic_scan WHERE system=? AND name=?", (system, name)
+    ).fetchone()
 
 
 def upsert_guarddog_scan(conn: sqlite3.Connection, row: tuple) -> None:

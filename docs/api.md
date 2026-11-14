@@ -34,7 +34,8 @@ mw serve --host 127.0.0.1 --port 8000
 `impact_tier`, the `context` block (which includes `dependent_count` when
 deps.dev enrichment ran, repository `repo_archived`/owner/stars/forks/open-issues
 metadata, `scorecard_failed_checks`, `content_risk`, `content_flags`,
-`guarddog_risk_score`, `guarddog_findings`, `maintainer_count`,
+`guarddog_risk_score`, `guarddog_findings`, `dynamic_risk_score`,
+`dynamic_findings`, `maintainer_count`,
 `commit_author_count` and `commit_span_days`) and every signal with its `value`
 and `evidence` (including `install_script` scripts
 for npm). The risk fields are populated for

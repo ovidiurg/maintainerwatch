@@ -71,6 +71,12 @@ class ApiConfig(BaseModel):
     rate_limit_rpm: int = 0
 
 
+class DynamicConfig(BaseModel):
+    worker_url: str | None = None
+    token_env: str = "MAINTAINERWATCH_DYNAMIC_TOKEN"
+    timeout_s: float = 600.0
+
+
 class Config(BaseModel):
     ecosystems: list[str] = Field(default_factory=lambda: ["npm", "pypi"])
     top_n: int = 2000
@@ -79,6 +85,7 @@ class Config(BaseModel):
     http: HttpConfig = Field(default_factory=HttpConfig)
     alerts: AlertsConfig = Field(default_factory=AlertsConfig)
     api: ApiConfig = Field(default_factory=ApiConfig)
+    dynamic: DynamicConfig = Field(default_factory=DynamicConfig)
     weights: dict[str, int] = Field(
         default_factory=lambda: {
             "publisher_change": 30,

@@ -126,8 +126,9 @@ A signal that cannot be computed (for example, no repository data) is marked
 
 `mw scan-guarddog` optionally runs GuardDog static rules on a local tarball
 when the `guarddog` CLI is installed; results are context, not model weights.
-Dynamic sandbox execution belongs in an isolated worker and is not run by the
-analyst process.
+Dynamic sandbox execution belongs in the isolated `worker/` service and is not
+run by the analyst process. Configure `dynamic.worker_url`; if no worker is
+configured, `mw scan-dynamic` returns a clear error.
 
 `mw scan-content` downloads a bounded tarball/wheel, never executes it, and
 stores flags from static checks (install hooks, network/exec patterns, wallet/

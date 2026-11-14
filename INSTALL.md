@@ -80,6 +80,8 @@ mw enrich-scorecard --limit 500    # individual OpenSSF Scorecard checks
 mw scan-content --limit 50          # static tarball content scan
 # optional: pip install guarddog
 mw scan-guarddog --limit 20          # GuardDog static analysis
+# Optional isolated dynamic worker: see worker/README.md
+mw scan-dynamic --limit 20
 mw backfill-osv --limit 500        # version-aware OSV affected ranges
 mw backfill-deps
 mw backfill-licenses

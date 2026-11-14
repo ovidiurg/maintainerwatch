@@ -91,6 +91,9 @@ mw scan-content [--system SYSTEM] [--min-score 40] [--limit N] [--dry-run]
 # Optional GuardDog static analysis (pip install guarddog).
 mw scan-guarddog [--system npm|pypi] [--min-score 40] [--limit N]
 
+# Send selected packages to an isolated dynamic worker (configure dynamic.worker_url).
+mw scan-dynamic [--system npm|pypi] [--min-score 40] [--limit N]
+
 # Fetch affected-version ranges for OSV advisories (version-aware signal).
 mw backfill-osv [--system SYSTEM] [--limit N] [--malicious-only] [--config PATH]
 
@@ -290,8 +293,9 @@ type, stars/forks/issues), individual Scorecard checks and static tarball scan
 flags are exposed as context in `scan`/API; scored `repo_health`/content
 experiments are not in the model because the validation gain was not safe.
 GuardDog results are optional context too (`guarddog_risk_score`,
-`guarddog_findings`); dynamic execution must run only in an isolated gVisor/
-Docker worker, never in the analyst process.
+`guarddog_findings`). Dynamic execution is delegated to `worker/` and runs only
+in an isolated gVisor/Docker sandbox; it is never executed in the analyst
+process. Set `dynamic.worker_url` and run the worker separately.
 See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy

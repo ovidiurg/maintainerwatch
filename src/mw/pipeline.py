@@ -14,7 +14,7 @@ from urllib.parse import quote
 
 import httpx
 
-from . import db, snapshots
+from . import db, dynamic, snapshots
 from .config import Config
 from .impact import impact_score, impact_tier
 from .export import export_dataset
@@ -359,6 +359,63 @@ def prioritize_impact(
         "missing_dependency_candidates": [dict(row) for row in deps],
         "seed_files": paths,
     }
+
+
+def scan_dynamic(
+    cfg: Config,
+    system: str | None = None,
+    min_score: float = 40.0,
+    limit: int = 50,
+) -> dict:
+    if not cfg.dynamic.worker_url:
+        return {
+            "error": "dynamic worker is not configured",
+            "hint": "set dynamic.worker_url to an isolated gVisor/Docker worker",
+        }
+    conn = _open(cfg)
+    where = ["s.model_version = ?", "s.score >= ?"]
+    params: list[object] = [cfg.model_version, min_score]
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT s.system, s.name
+            FROM scores s
+            JOIN packages p ON p.system = s.system AND p.name = s.name
+            WHERE {' AND '.join(where)}
+            ORDER BY s.score DESC, s.name ASC LIMIT ?""",
+        [*params, limit],
+    ).fetchall()
+    scanned = 0
+    errors = 0
+    for row in rows:
+        if row["system"] not in {"npm", "pypi"}:
+            continue
+        versions = [
+            version for version in db.get_versions(conn, row["system"], row["name"])
+            if not version["is_yanked"]
+        ]
+        if not versions:
+            errors += 1
+            continue
+        version = versions[-1]["version"]
+        try:
+            result = dynamic.scan_remote(cfg, row["system"], row["name"], version)
+        except dynamic.DynamicWorkerError:
+            errors += 1
+            continue
+        db.upsert_dynamic_scan(
+            conn,
+            (
+                row["system"], row["name"], version, cfg.dynamic.worker_url,
+                str(result.get("risk_score") or result.get("riskScore") or "unknown"),
+                json.dumps(result, sort_keys=True),
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+        scanned += 1
+    conn.close()
+    return {"requested": len(rows), "scanned": scanned, "errors": errors}
 
 
 def scan_guarddog(
@@ -1110,6 +1167,17 @@ def run_alert_rules(
     return results
 
 
+def _dynamic_finding_count(row) -> int | None:
+    if row is None:
+        return None
+    try:
+        doc = json.loads(row["findings_json"] or "{}")
+        findings = doc.get("findings") or doc.get("results") or []
+        return len(findings) if isinstance(findings, (dict, list)) else 0
+    except (TypeError, ValueError):
+        return None
+
+
 def _commit_span_days(rows) -> float | None:
     dates = [parse_ts(row["committed_at"]) for row in rows]
     dates = [date for date in dates if date is not None]
@@ -1167,6 +1235,7 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     commit_rows = db.get_commits(conn, system, name)
     content = db.get_content_scan(conn, system, name)
     guarddog = db.get_guarddog_scan(conn, system, name)
+    dynamic_row = db.get_dynamic_scan(conn, system, name)
     deps = db.get_dependencies(conn, system, name)
     conn.close()
 
@@ -1228,6 +1297,8 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "content_flags": json.loads(content["flags_json"] or "{}").get("flags", []) if content else None,
             "guarddog_risk_score": guarddog["risk_score"] if guarddog else None,
             "guarddog_findings": _guarddog_finding_count(guarddog),
+            "dynamic_risk_score": dynamic_row["risk_score"] if dynamic_row else None,
+            "dynamic_findings": _dynamic_finding_count(dynamic_row),
             "maintainer_count": len(maintainer_rows),
             "commit_author_count": len({row["author_login"] or row["author_email"] for row in commit_rows}),
             "commit_span_days": _commit_span_days(commit_rows),

@@ -145,6 +145,20 @@ def enrich_findings_cmd(
     typer.echo(json.dumps(pipeline.enrich_findings(cfg, system, limit)))
 
 
+@app.command("scan-dynamic")
+def scan_dynamic_cmd(
+    system: Optional[str] = typer.Option(None, help="Only npm or pypi."),
+    min_score: float = typer.Option(40.0, help="Minimum risk score."),
+    limit: int = typer.Option(50, help="Maximum packages to scan."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Send packages to an isolated dynamic-analysis worker."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.scan_dynamic(
+        cfg, system, min_score, limit
+    )))
+
+
 @app.command("scan-guarddog")
 def scan_guarddog_cmd(
     system: Optional[str] = typer.Option(None, help="Only npm or pypi."),
@@ -322,7 +336,7 @@ def delete_package_cmd(
         "versions", "maintainers", "repo_stats", "osv", "signals",
         "scores", "snapshots", "identity_links", "dependencies",
         "commits", "package_impact", "package_findings", "content_scan",
-        "guarddog_scan", "packages",
+        "guarddog_scan", "dynamic_scan", "packages",
     )
     if not yes:
         counts = {
