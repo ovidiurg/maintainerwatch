@@ -353,10 +353,26 @@ Responsible use expectations:
 - If you deploy a public instance, add terms of use, access logging that
   minimises personal data, and a data-protection review.
 
-If you are a maintainer and want a link or record corrected or removed, use the
-private contact process in [docs/gdpr.md](docs/gdpr.md); local operators can run
-`mw delete-package --system SYSTEM --name PACKAGE --yes` to remove a package,
-its records and its identity links.
+## Contact
+
+We intentionally do **not** publish a general contact email address, to reduce
+spam and unsolicited bulk mail. Use these channels instead:
+
+- **Privacy, correction or removal requests:** GitHub private security advisory
+  (`https://github.com/ovidiurg/maintainerwatch/security/advisories/new`).
+- **Security reports:** the same private advisory channel; do not disclose
+  vulnerabilities in a public issue.
+- **General questions and bugs:** GitHub Issues.
+
+For a local deployment, remove a package and its versions, maintainers,
+signals, scores, snapshots, commits, OSV rows, repository stats, dependencies
+and identity links with:
+
+```bash
+mw delete-package --system SYSTEM --name PACKAGE --yes
+```
+
+See [docs/gdpr.md](docs/gdpr.md) for the full removal process.
 
 ## License
 

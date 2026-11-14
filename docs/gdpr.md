@@ -58,10 +58,13 @@ be completed before any public deployment.
 
 ## Contact and removal requests
 
-Use GitHub's private security advisory channel for privacy or correction
-requests: <https://github.com/ovidiurg/maintainerwatch/security/advisories/new>.
+We do not publish a general contact email address, to reduce spam and
+unsolicited bulk mail. Use GitHub's private security advisory channel for
+privacy, correction or removal requests:
+<https://github.com/ovidiurg/maintainerwatch/security/advisories/new>.
 Include the ecosystem, package name and, if applicable, the identity link or
-field you want reviewed; do not post personal data in a public issue.
+field you want reviewed; do not post personal data in a public issue. General
+questions can use GitHub Issues.
 
 For a local deployment, remove a package and its versions, maintainers,
 signals, scores, snapshots, commits, OSV rows, repository stats, dependencies
