@@ -257,6 +257,10 @@ Rebuild with `python scripts/build_validation_dataset.py` and validate with
 A preliminary case-control evaluation on the validation database gives AUC
 0.864, PR-AUC 0.839, Brier 0.123, precision@25 1.0, and at threshold 40
 precision 0.935 / recall 0.632 / FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+A larger, year-stratified, non-OSV sample (`config/validation-v2.yaml`) gives
+489 positives / 1,008 controls, AUC 0.878, threshold-40 precision 0.945 /
+recall 0.671 / FPR 0.019; the 2026 test slice is 0.947 AUC, while the small
+pre-2026 train slice is 0.662. See [docs/validation/evaluation-v2.md](docs/validation/evaluation-v2.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
 

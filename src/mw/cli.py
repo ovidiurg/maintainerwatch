@@ -101,6 +101,9 @@ def evaluate_validation(
     max_controls: Optional[int] = typer.Option(None, help="Limit controls."),
     since: Optional[str] = typer.Option(None, help="Only positives at/after this ISO date."),
     until: Optional[str] = typer.Option(None, help="Only positives at/before this ISO date."),
+    split: Optional[str] = typer.Option(None, help="train or test (uses control split)."),
+    split_date: Optional[str] = typer.Option(None, help="Cutoff boundary for a temporal positive split."),
+    report: bool = typer.Option(True, "--report/--no-report", help="Write the generated report."),
     config: Optional[str] = typer.Option(None, help="Config file path."),
 ) -> None:
     """Evaluate the current model on the validation dataset."""
@@ -110,7 +113,8 @@ def evaluate_validation(
     result = validation.evaluate(
         conn, cfg, dataset,
         max_positives=max_positives, max_controls=max_controls,
-        since=since, until=until,
+        since=since, until=until, split=split, split_date=split_date,
+        write_report=report,
     )
     conn.close()
     typer.echo(json.dumps({

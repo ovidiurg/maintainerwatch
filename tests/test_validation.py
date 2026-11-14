@@ -74,7 +74,8 @@ def test_evaluate_synthetic(tmp_path):
     )
     (dataset / "controls.jsonl").write_text(
         "\n".join(
-            json.dumps({"system": "npm", "package": name, "label": "benign"})
+            json.dumps({"system": "npm", "package": name, "label": "benign",
+                        "split": "test" if name == "good-a" else "train"})
             for name in ("good-a", "good-b")
         ) + "\n",
         encoding="utf-8",
@@ -98,6 +99,13 @@ def test_evaluate_synthetic(tmp_path):
     assert result["metrics"]["average_precision"] == 1.0
     assert result["metrics"]["brier_score"] is not None
     assert result["temporal"]["2024"]["count"] == 2
+
+    split = validation.evaluate(
+        conn, cfg, dataset, split="test", split_date="2024-01-01T00:00:00Z",
+        write_report=False,
+    )
+    assert split["coverage"]["positives_in_db"] == 2
+    assert split["coverage"]["controls_in_db"] == 1
 
     ablations = validation.evaluate_ablations(conn, cfg, dataset)
     assert "baseline" in ablations

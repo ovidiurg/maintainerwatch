@@ -173,6 +173,8 @@ def evaluate(
     max_controls: int | None = None,
     since: str | None = None,
     until: str | None = None,
+    split: str | None = None,
+    split_date: str | None = None,
     write_report: bool = True,
 ) -> dict[str, Any]:
     dataset_dir = Path(dataset_dir)
@@ -221,6 +223,7 @@ def evaluate(
         (scores[key], record)
         for key, record in controls_by_key.items()
         if key in scores
+        and (split is None or record.get("split") == split)
     ]
     positive_scores.sort(
         key=lambda item: (item[1]["priority"], item[1]["cutoff"]), reverse=True
@@ -233,6 +236,17 @@ def evaluate(
         positive_scores = [
             item for item in positive_scores if (item[1].get("cutoff") or "") <= until
         ]
+    if split and split_date:
+        if split == "test":
+            positive_scores = [
+                item for item in positive_scores
+                if (item[1].get("cutoff") or "") >= split_date
+            ]
+        elif split == "train":
+            positive_scores = [
+                item for item in positive_scores
+                if (item[1].get("cutoff") or "") < split_date
+            ]
     if max_positives:
         positive_scores = positive_scores[:max_positives]
     if max_controls:
@@ -249,6 +263,8 @@ def evaluate(
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model_version": cfg.model_version,
         "dataset_dir": str(dataset_dir),
+        "split": split,
+        "split_date": split_date,
         "coverage": {
             "positives_in_dataset": len(positives),
             "positives_in_db": len(positive_scores),

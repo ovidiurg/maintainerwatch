@@ -45,6 +45,24 @@ the label sources; treat them as triage evidence, not independent predictive
 proof. See
 `docs/validation/evaluation.md` for the generated report and caveats.
 
+
+## Validation v2 — expanded sample
+
+`config/validation-v2.yaml` and `scripts/prepare_validation_v2_sample.py` define
+a larger, year-stratified, non-OSV positive sample. The local DB currently has
+**489 positives** and **1,008 controls**.
+
+| Sample | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
+|---|---:|---:|---|
+| Full | 0.878 | 0.858 | 0.945 / 0.671 / 0.019 |
+| Train (<2026) | 0.662 | 0.294 | 0.483 / 0.117 / 0.019 |
+| Test (>=2026) | 0.947 | 0.975 | 0.987 / 0.851 / 0.020 |
+
+The positive mix is Datadog 463, tstromberg 65, DependencyWatch 53, OSV 4;
+cutoffs are 2026: 468, 2025: 110, 2024: 7. The temporal split is diagnostic,
+not a fully historical control population. See
+`docs/validation/evaluation-v2.md`.
+
 ## Pre-incident replay
 
 `python scripts/validation_replay.py` rebuilds each package using only versions
