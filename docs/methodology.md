@@ -54,7 +54,7 @@ to the same canonical identity.
 | `publisher_change` | 30 | A canonical publisher identity changed between releases in the last 365 days (value = min(1, changes / 2)), or between current maintainers and a 180-365 day snapshot (value capped at 0.5). |
 | `bus_factor` | 20 | Share of repository contributions held by the top author (12 months). |
 | `account_age` | 15 | Age of the repository owner account; younger is riskier. |
-| `release_anomaly` | 15 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
+| `release_anomaly` | 10 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. A never-provenance package gets an age/popularity-aware baseline; low-adoption npm packages are medium-capped. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
@@ -160,7 +160,11 @@ is not evidence of compromise.
 score = 100 * sum(weight[s] * value[s]) / sum(weight[s])
 ```
 
-over applicable signals. Bands: `< 25` low, `< 50` medium, otherwise high.
+over applicable signals. Bands: `< 25` low, `< 50` medium, otherwise high,
+but a high numerical score is capped to medium unless one high-confidence
+behavioural/advisory signal is present (`publisher_change`,
+`commit_anomaly`, `osv_risk`, `depsdev_findings`, `install_script`,
+`maintainer_continuity`).
 `inputs_hash` is the SHA-256 of the canonical JSON of applicable signal values,
 evidence and model version, so a score can be verified.
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from mw.risk import describe_risk
+from mw.models import SignalEvidence
+from mw.risk import describe_risk, has_high_confidence
 
 
 def _sig(value, **evidence):
@@ -38,3 +39,16 @@ def test_general_fallback():
     risk_type, _, next_step = describe_risk({})
     assert risk_type == "General risk"
     assert next_step
+
+
+def test_high_confidence_requires_behavioral_signal():
+    assert has_high_confidence({"publisher_change": _sig(0.5)}) is True
+    assert has_high_confidence({"osv_risk": _sig(1.0)}) is True
+    assert has_high_confidence({"release_anomaly": _sig(1.0)}) is False
+    assert has_high_confidence({"signing_gap": _sig(1.0)}) is False
+
+
+def test_high_confidence_accepts_signal_evidence():
+    assert has_high_confidence({
+        "publisher_change": SignalEvidence(value=0.5),
+    }) is True

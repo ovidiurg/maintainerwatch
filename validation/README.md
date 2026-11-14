@@ -28,12 +28,12 @@ packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.864 |
-| PR-AUC / average precision | 0.839 |
-| Brier score | 0.1227 |
+| AUC | 0.862 |
+| PR-AUC / average precision | 0.838 |
+| Brier score | 0.1223 |
 | Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 0.98 / 0.75 |
-| Threshold 40: precision / recall / FPR | 0.935 / 0.632 / 0.021 |
-| Threshold 50: precision / recall / FPR | 0.986 / 0.605 / 0.004 |
+| Threshold 40: precision / recall / FPR | 0.986 / 0.632 / 0.004 |
+| Threshold 50: precision / recall / FPR | 1.0 / 0.605 / 0.0 |
 
 The sample is npm-heavy and dominated by `malicious_package`; the takeover
 slice is reported separately in `docs/incident-validation.md`. The generated
@@ -54,9 +54,9 @@ a larger, year-stratified, non-OSV positive sample. The local DB currently has
 
 | Sample | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
 |---|---:|---:|---|
-| Full | 0.878 | 0.858 | 0.945 / 0.671 / 0.019 |
-| Train (<2026) | 0.662 | 0.294 | 0.483 / 0.117 / 0.019 |
-| Test (>=2026) | 0.947 | 0.975 | 0.987 / 0.851 / 0.020 |
+| Full | 0.879 | 0.863 | 0.973 / 0.671 / 0.009 |
+| Train (<2026) | 0.665 | 0.307 | 0.636 / 0.117 / 0.010 |
+| Test (>=2026) | 0.947 | 0.975 | 0.997 / 0.851 / 0.005 |
 
 The positive mix is Datadog 463, tstromberg 65, DependencyWatch 53, OSV 4;
 cutoffs are 2026: 468, 2025: 110, 2024: 7. The temporal split is diagnostic,

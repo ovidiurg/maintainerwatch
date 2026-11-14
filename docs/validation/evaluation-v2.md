@@ -13,7 +13,7 @@ Generated from `config/validation-v2.yaml` with the non-OSV positive sample.
 
 | Positives / controls | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
 |---|---|---|---|
-| 489 / 1008 | 0.878 | 0.858 | 0.945 / 0.671 / 0.019 |
+| 489 / 1008 | 0.879 | 0.863 | 0.973 / 0.671 / 0.009 |
 
 ## Temporal holdout
 
@@ -21,8 +21,8 @@ Positives are split by incident cutoff; controls use their `split` field. The sp
 
 | Split | Positives / controls | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
 |---|---|---|---|---|
-| train (< 2026) | 120 / 810 | 0.662 | 0.294 | 0.483 / 0.117 / 0.019 |
-| test (>= 2026) | 369 / 198 | 0.947 | 0.975 | 0.987 / 0.851 / 0.02 |
+| train (< 2026) | 120 / 810 | 0.665 | 0.307 | 0.636 / 0.117 / 0.01 |
+| test (>= 2026) | 369 / 198 | 0.947 | 0.975 | 0.997 / 0.851 / 0.005 |
 
 ## Caveats
 

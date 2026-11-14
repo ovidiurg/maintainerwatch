@@ -4,6 +4,22 @@ from typing import Any
 
 from .impact import impact_tier
 
+HIGH_CONFIDENCE_SIGNALS = {
+    "publisher_change", "commit_anomaly", "osv_risk", "depsdev_findings",
+    "install_script", "maintainer_continuity",
+}
+
+
+def has_high_confidence(signals: dict) -> bool:
+    for name in HIGH_CONFIDENCE_SIGNALS:
+        signal = signals.get(name)
+        if signal is None:
+            continue
+        value = signal.get("value", 0) if isinstance(signal, dict) else getattr(signal, "value", 0)
+        if value >= 0.5:
+            return True
+    return False
+
 def _value(signals: dict[str, dict[str, Any]], name: str) -> float:
     return float(signals.get(name, {}).get("value") or 0.0)
 

@@ -255,12 +255,12 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.864, PR-AUC 0.839, Brier 0.123, precision@25 1.0, and at threshold 40
-precision 0.935 / recall 0.632 / FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.862, PR-AUC 0.838, Brier 0.122, precision@25 1.0, and at threshold 40
+precision 0.986 / recall 0.632 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 A larger, year-stratified, non-OSV sample (`config/validation-v2.yaml`) gives
-489 positives / 1,008 controls, AUC 0.878, threshold-40 precision 0.945 /
-recall 0.671 / FPR 0.019; the 2026 test slice is 0.947 AUC, while the small
-pre-2026 train slice is 0.662. See [docs/validation/evaluation-v2.md](docs/validation/evaluation-v2.md).
+489 positives / 1,008 controls, AUC 0.879, threshold-40 precision 0.973 /
+recall 0.671 / FPR 0.009; the 2026 test slice is 0.997 precision / 0.851 recall,
+while the small pre-2026 train slice remains weak. See [docs/validation/evaluation-v2.md](docs/validation/evaluation-v2.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
 
@@ -278,7 +278,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 582,496 versions, 242,652 commits, 11,018 maintainers, 1,375 repositories,
   4,967 OSV records, 18,612 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 37 high, 1,675 medium, 4,351 low. OIDC/bot publishers are ignored.
+- Risk bands: 8 high, 1,475 medium, 4,580 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -309,8 +309,11 @@ A weighted sum of applicable signals, normalised to 0–100, with an
 `inputs_hash` for reproducibility. Every signal stores its evidence.
 `mw scan` also reports `evidence_coverage`; low-coverage, hygiene-only scores
 are review candidates rather than confirmed high risk. High-band scores are
-reserved for packages with behavioural evidence; obscure low-adoption packages
-use a medium-capped unsigned baseline. `scan`/API also expose maintainer count,
+reserved for packages with high-confidence behavioural/advisory evidence
+(`publisher_change`, `commit_anomaly`, `osv_risk`, `depsdev_findings`,
+`install_script`, `maintainer_continuity`); other high numerical scores are
+kept at medium. Obscure low-adoption packages use a medium-capped unsigned
+baseline. `scan`/API also expose maintainer count,
 commit-author count/span, GuardDog findings and static content flags as context. Repository metadata (archived, owner
 type, stars/forks/issues), individual Scorecard checks and static tarball scan
 flags are exposed as context in `scan`/API; scored `repo_health`/content

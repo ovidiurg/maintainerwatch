@@ -24,7 +24,7 @@ from .ingest.scorecard import fetch_scorecard
 from .models import Maintainer, Version
 from .report import build_report
 from .resolve import identity_map, resolve_package
-from .risk import describe_risk
+from .risk import describe_risk, has_high_confidence
 from .score import band_for, compute_score, computed_at
 from .signals import SIGNALS, compute_all
 from .signals.base import Context, parse_ts
@@ -1035,6 +1035,8 @@ def score_all(cfg: Config) -> dict:
         score, band, inputs_hash = compute_score(
             signals, cfg.weights, cfg.model_version
         )
+        if band == "high" and not has_high_confidence(signals):
+            band = "medium"
         ts = computed_at()
 
         for signal_name, sig in signals.items():

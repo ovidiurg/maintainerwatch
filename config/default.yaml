@@ -19,7 +19,7 @@ weights:
   publisher_change: 30
   bus_factor: 20
   account_age: 15
-  release_anomaly: 15
+  release_anomaly: 10
   signing_gap: 10
   typosquat: 10
   license_inconsistency: 5
@@ -47,7 +47,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.4.9"
+model_version: "0.5.0"
 
 alerts:
   rules:
