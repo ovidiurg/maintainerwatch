@@ -16,8 +16,7 @@ Key facts:
 - CLI entry point: `mw` (`src/mw/cli.py`).
 - Default database: `data/maintainerwatch.sqlite`.
 - Default config: `config/default.yaml`; validation configs live in `config/`.
-- Data, caches, exports, reports, `.opencode/`, and local ignored docs must not
-  be committed.
+- Do not commit `data/`, caches, tokens or credentials.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
 
@@ -86,8 +85,7 @@ Use `mw --help` and `mw COMMAND --help` for the authoritative option list.
    --cov-fail-under=75`.
 5. Update `README.md` / `INSTALL.md` / `docs/api.md` when commands, config,
    endpoints or metrics change.
-6. Do not commit `data/`, caches, `.opencode/`, local ignored docs, tokens or
-   credentials.
+6. Do not commit `data/`, caches, tokens or credentials.
 7. For a public deployment, follow the dual-use and GDPR guidance; do not make
    automatic accusations about maintainers.
 
