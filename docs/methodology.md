@@ -61,7 +61,8 @@ to the same canonical identity.
 | `commit_anomaly` | 15 | New-author share in a 90-day window and commit burst (30 days vs the previous 90 days) from sampled GitHub commits. |
 | `scorecard` | 10 | Low OpenSSF Scorecard repository score; value = max(0, (7 - score) / 7). |
 | `dependency_risk` | 15 | Log-scaled transitive fan-in (200+ dependents = 1.0) plus a smaller fan-out component. |
-| `install_script` | 15 | npm preinstall/install/postinstall/prepare scripts: high-risk download/eval/child-process patterns score 1.0; other scripts score 0.3-0.5. |
+| `install_script` | 15 | npm preinstall/install/postinstall/prepare scripts: only high-risk download/eval/child-process patterns make the signal applicable. |
+| `osv_risk` | 10 | Version-aware OSV match: a `MAL-*` advisory affecting the current version scores 1.0; another current advisory scores 0.5. Historical advisories fixed before the current version are not applicable. |
 | `package_age` | 10 | Replay-only signal: age of the first release before the cutoff; younger packages score higher. |
 
 ## License sources

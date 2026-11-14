@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS repo_stats (
 
 CREATE TABLE IF NOT EXISTS osv (
   system TEXT NOT NULL, name TEXT NOT NULL, vuln_id TEXT NOT NULL,
-  severity TEXT, published_at TEXT,
+  severity TEXT, published_at TEXT, affected_json TEXT,
+  summary TEXT, modified_at TEXT,
   PRIMARY KEY (system, name, vuln_id)
 );
 
@@ -117,6 +118,9 @@ def init_db(conn: sqlite3.Connection) -> None:
     _ensure_column(conn, "repo_stats", "license", "TEXT")
     _ensure_column(conn, "versions", "publisher_key_id", "TEXT")
     _ensure_column(conn, "versions", "install_script", "TEXT")
+    _ensure_column(conn, "osv", "affected_json", "TEXT")
+    _ensure_column(conn, "osv", "summary", "TEXT")
+    _ensure_column(conn, "osv", "modified_at", "TEXT")
     conn.commit()
 
 
@@ -227,16 +231,63 @@ def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> N
     conn.commit()
 
 
-def upsert_osv(conn: sqlite3.Connection, rows: Iterable[tuple[str, str, str, str | None, str | None]]) -> None:
+def upsert_osv(conn: sqlite3.Connection, rows: Iterable[tuple]) -> None:
     conn.executemany(
-        """INSERT INTO osv (system, name, vuln_id, severity, published_at)
-           VALUES (?, ?, ?, ?, ?)
+        """INSERT INTO osv
+             (system, name, vuln_id, severity, published_at,
+              affected_json, summary, modified_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(system, name, vuln_id) DO UPDATE SET
              severity=COALESCE(excluded.severity, osv.severity),
-             published_at=COALESCE(excluded.published_at, osv.published_at)""",
+             published_at=COALESCE(excluded.published_at, osv.published_at),
+             affected_json=COALESCE(excluded.affected_json, osv.affected_json),
+             summary=COALESCE(excluded.summary, osv.summary),
+             modified_at=COALESCE(excluded.modified_at, osv.modified_at)""",
         list(rows),
     )
     conn.commit()
+
+
+def get_osv(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM osv WHERE system=? AND name=? ORDER BY vuln_id",
+        (system, name),
+    ).fetchall()
+
+
+def missing_osv_details(
+    conn: sqlite3.Connection,
+    system: str | None,
+    limit: int,
+    malicious_only: bool = False,
+) -> list[sqlite3.Row]:
+    sql = "SELECT DISTINCT vuln_id FROM osv WHERE affected_json IS NULL"
+    args: list[object] = []
+    if system:
+        sql += " AND system=?"
+        args.append(system)
+    if malicious_only:
+        sql += " AND vuln_id LIKE 'MAL-%'"
+    sql += " ORDER BY vuln_id LIMIT ?"
+    args.append(limit)
+    return conn.execute(sql, args).fetchall()
+
+
+def update_osv_detail(
+    conn: sqlite3.Connection,
+    vuln_id: str,
+    affected_json: str,
+    summary: str | None,
+    modified_at: str | None,
+) -> int:
+    cur = conn.execute(
+        """UPDATE osv SET affected_json=?, summary=COALESCE(?, summary),
+                         modified_at=COALESCE(?, modified_at)
+           WHERE vuln_id=?""",
+        (affected_json, summary, modified_at, vuln_id),
+    )
+    conn.commit()
+    return cur.rowcount
 
 
 def get_package(conn: sqlite3.Connection, system: str, name: str) -> sqlite3.Row | None:

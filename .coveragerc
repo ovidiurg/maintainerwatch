@@ -1,0 +1,9 @@
+[run]
+source = src/mw
+omit =
+    src/mw/cli.py
+    src/mw/ingest/*
+    src/mw/resolve/*
+
+[report]
+fail_under = 75

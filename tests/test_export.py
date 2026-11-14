@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from mw.export import _cyclonedx_document, _osv_document, _purl, _spdx_document
+import json
+
+from mw import db
+from mw.config import load_config
+from mw.export import (
+    _cyclonedx_document, _osv_document, _purl, _spdx_document,
+    _records, export_dataset, export_json,
+)
+from mw.models import Package, Version
 
 RECORD = {
     "system": "npm",
@@ -65,3 +73,49 @@ def test_osv_document():
     vuln = document["results"][0]["vulns"][0]
     assert vuln["id"] == "GHSA-1"
     assert vuln["severity"][0]["score"] == "7.5"
+
+
+def _export_setup(tmp_path):
+    cfg = load_config()
+    cfg.db_path = tmp_path / "export.sqlite"
+    cfg.data_dir = tmp_path
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    db.upsert_packages(conn, [Package(system="npm", name="pkg", downloads_weekly=5)])
+    db.upsert_versions(conn, [
+        Version(system="npm", name="pkg", version="1.0.0", published_at="2024-01-01"),
+    ])
+    db.record_score(conn, "npm", "pkg", 60.0, "high", cfg.model_version, "hash", "2026-01-01")
+    db.record_signal(
+        conn, "npm", "pkg", "publisher_change", 1.0, "high", "{}",
+        cfg.model_version, "2026-01-01",
+    )
+    db.upsert_osv(conn, [
+        ("npm", "pkg", "GHSA-test", "7.5", "2024-01-01", None, None, None),
+    ])
+    conn.commit()
+    conn.close()
+    return cfg
+
+
+def test_records_and_export_formats(tmp_path):
+    cfg = _export_setup(tmp_path)
+    records = _records(cfg)
+    assert records[0]["system"] == "npm"
+    assert records[0]["sig_publisher_change"] == 1.0
+    assert "\"npm\"" in export_json(cfg)
+
+    for fmt in ("json", "csv", "spdx", "cyclonedx", "osv", "parquet"):
+        path, count = export_dataset(cfg, fmt)
+        assert path.exists()
+        assert count >= 1
+
+
+def test_export_unsupported_format(tmp_path):
+    cfg = _export_setup(tmp_path)
+    try:
+        export_dataset(cfg, "unknown")
+    except ValueError as exc:
+        assert "unsupported" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")

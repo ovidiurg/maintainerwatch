@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from itertools import islice
+from urllib.parse import quote
 
 from .http import CachedClient
 
 OSV_QUERYBATCH = "https://api.osv.dev/v1/querybatch"
+OSV_VULN = "https://api.osv.dev/v1/vulns"
 ECOSYSTEM = {"npm": "npm", "pypi": "PyPI", "crates": "crates.io", "maven": "Maven"}
 
 
@@ -15,6 +17,18 @@ def _chunks(iterable, size):
         if not batch:
             return
         yield batch
+
+
+def fetch_vuln_detail(client: CachedClient, vuln_id: str) -> dict | None:
+    url = f"{OSV_VULN}/{quote(vuln_id, safe='')}"
+    doc = client.get_json(url)
+    if not isinstance(doc, dict):
+        return None
+    return {
+        "affected": doc.get("affected") or [],
+        "summary": doc.get("summary"),
+        "modified": doc.get("modified"),
+    }
 
 
 def fetch_vulns(

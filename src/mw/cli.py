@@ -154,6 +154,20 @@ def enrich_github_cmd(
     typer.echo(json.dumps(pipeline.enrich_github(cfg, system, limit, pages)))
 
 
+@app.command("backfill-osv")
+def backfill_osv_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    limit: int = typer.Option(500, help="Maximum advisories to fetch."),
+    malicious_only: bool = typer.Option(False, help="Only MAL- advisories."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Fetch affected-version ranges for stored OSV advisories."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(
+        pipeline.backfill_osv(cfg, system, limit, malicious_only)
+    ))
+
+
 @app.command("backfill-deps")
 def backfill_deps(
     system: Optional[str] = typer.Option(None, help="npm, pypi, crates or maven."),

@@ -92,11 +92,12 @@ class Config(BaseModel):
             "scorecard": 10,
             "dependency_risk": 15,
             "install_script": 15,
+            "osv_risk": 10,
             "package_age": 10,
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.4.6"
+    model_version: str = "0.4.7"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",

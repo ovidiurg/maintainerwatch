@@ -27,6 +27,7 @@ weights:
   scorecard: 10
   dependency_risk: 15
   install_script: 15
+  osv_risk: 10
   package_age: 10
 
 # Confidence levels accepted for identity-gated signals.
@@ -44,7 +45,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.4.6"
+model_version: "0.4.7"
 
 alerts:
   rules:

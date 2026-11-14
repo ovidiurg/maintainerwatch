@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" detect-secrets
+      - name: Unit and API tests
+        run: python -m pytest --cov=src/mw --cov-config=.coveragerc --cov-fail-under=75
+      - name: Compile
+        run: python -m compileall -q src scripts tests
+      - name: Secret scan
+        run: |
+          detect-secrets scan --all-files \
+            --exclude-files '\.git/.*' \
+            --exclude-files '\.venv/.*' \
+            --exclude-files 'dist/.*' \
+            --exclude-files 'data/.*' \
+            --exclude-files '\.pytest_cache/.*' \
+            --exclude-files 'validation/v1/manifest\.json' > /tmp/secrets.json
+          python - <<'PY'
+          import json
+          findings = json.load(open('/tmp/secrets.json')).get('results', {})
+          if findings:
+              raise SystemExit(f'secret findings: {findings}')
+          PY

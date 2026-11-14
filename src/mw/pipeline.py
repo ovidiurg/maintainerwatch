@@ -123,7 +123,7 @@ def ingest_system(
         for (s, n), entries in vulns.items():
             counts[(s, n)] = len(entries)
             for vuln_id, severity, published in entries:
-                osv_rows.append((s, n, vuln_id, severity, published))
+                osv_rows.append((s, n, vuln_id, severity, published, None, None, None))
         db.upsert_osv(conn, osv_rows)
         db.update_osv_counts(conn, counts)
         conn.commit()
@@ -468,6 +468,30 @@ def enrich_github(
 
     conn.close()
     return {"requested": len(rows), "repos": repos, "commits": commits}
+
+
+def backfill_osv(
+    cfg: Config,
+    system: str | None = None,
+    limit: int = 500,
+    malicious_only: bool = False,
+) -> dict:
+    conn = _open(cfg)
+    rows = db.missing_osv_details(conn, system, limit, malicious_only)
+    updated = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            detail = osv.fetch_vuln_detail(client, row["vuln_id"])
+            if detail is None:
+                continue
+            affected_json = json.dumps(detail["affected"], sort_keys=True)
+            db.update_osv_detail(
+                conn, row["vuln_id"], affected_json,
+                detail.get("summary"), detail.get("modified"),
+            )
+            updated += 1
+    conn.close()
+    return {"requested": len(rows), "updated": updated}
 
 
 def backfill_commits(

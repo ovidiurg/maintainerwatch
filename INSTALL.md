@@ -75,6 +75,7 @@ mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw enrich-github --limit 100       # bounded repo stats, Scorecard and commits
 mw enrich-impact --limit 500       # deps.dev dependent counts for impact ranking
+mw backfill-osv --limit 500        # version-aware OSV affected ranges
 mw backfill-deps
 mw backfill-licenses
 mw backfill-commits
@@ -172,7 +173,8 @@ python -m compileall src
 ```
 
 The test suite does not hit the network; it uses an in-memory SQLite database
-and synthetic fixtures.
+and synthetic fixtures. `.github/workflows/ci.yml` runs it on Python 3.11–3.13
+with a 75% core-code coverage gate and a secret scan.
 
 ## Packaging and operations
 

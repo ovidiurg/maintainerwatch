@@ -14,6 +14,7 @@ mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw ingest --system github --top 1
 mw enrich-impact --limit 500
+mw backfill-osv --limit 500 --malicious-only
 
 # 2. Rebuild derived data, record snapshots, rescore, export.
 mw maintain
