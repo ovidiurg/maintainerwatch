@@ -44,44 +44,139 @@ pip install -e ".[dev]"
 
 ## Usage
 
+Every command accepts `--config PATH` (default: `config/default.yaml`).
+`mw --help` and `mw COMMAND --help` show the authoritative option list.
+`mw init` creates an empty database; ingest/score/maintenance commands also
+initialise the schema on first use. Read-only commands such as `scan` need an
+ingested database.
+
 ```bash
-# Ingest a small sample first (smoke test).
+# Smoke test: a small npm sample.
+mw init
 mw ingest --system npm --top 200
-
-# Full configured run.
-mw ingest --system npm
-mw ingest --system pypi
-mw ingest --system crates --top 100
-mw ingest --system maven --top 50
-mw ingest --system github --top 1
-mw backfill-deps
-mw backfill-licenses
-mw backfill-commits
-mw backfill-snapshots
-mw resolve
 mw score-all
-
-# Inspect one package.
-mw scan requests --system pypi
-mw scan event-stream --system npm
-mw scan serde --system crates
-
-# Alerts and the read-only API.
-mw alerts --min-score 40 --signal publisher_change --min-signal 0.5
-mw alerts --rules --dry-run
-mw serve --host 127.0.0.1 --port 8000
-
-# Export the dataset and build the report.
-mw export --format parquet
-mw export --format spdx
-mw export --format cyclonedx
-mw export --format osv
-mw report --out report.html
+mw scan express --system npm
 ```
 
-See [docs/api.md](docs/api.md) for endpoints, pagination headers, the optional
-`MAINTAINERWATCH_API_KEY`, rate limiting and alert-rule webhook/email delivery.
-Alert rules and delivery targets live in `config/default.yaml` under `alerts`.
+### Ingest and enrich
+
+```bash
+# Ingest registry metadata. Without --system, uses cfg.ecosystems.
+mw ingest [--system npm|pypi|crates|maven|github] [--top N]
+          [--seed-file FILE] [--github|--no-github] [--config PATH]
+
+# Build a deterministic seed list instead of using a registry top-N.
+# --seed-file is newline-separated; --github defaults to enabled.
+mw ingest --system npm --seed-file data/mvp/seeds/npm.txt --no-github
+
+# Fetch repo stats, OpenSSF Scorecard and bounded commit history for packages
+# that do not have repo stats yet. Defaults: --limit 100, --pages 2.
+mw enrich-github [--system SYSTEM] [--limit N] [--pages N] [--config PATH]
+
+# Resolve maintainer identities (Keybase, GitHub email/GPG, PyPI provenance).
+mw resolve [--limit N] [--config PATH]
+```
+
+### Backfills and recurring maintenance
+
+```bash
+# Dependency edges and fan-in.
+mw backfill-deps [--system npm|pypi|crates|maven] [--limit N] [--config PATH]
+
+# License classifiers and repository licenses; --refresh bypasses HTTP cache.
+mw backfill-licenses [--system SYSTEM] [--limit N] [--refresh] [--config PATH]
+
+# GitHub/GitLab commits; --until limits historical replay, --pages is 100/page.
+mw backfill-commits [--system SYSTEM] [--name PACKAGE] [--until ISO_DATE]
+                    [--pages N] [--limit N] [--config PATH]
+
+# Import a JSONL/JSON/CSV snapshot, or reconstruct PyPI snapshots.
+mw backfill-snapshots [--source FILE] [--limit N] [--config PATH]
+
+# Record the current maintainer set as a snapshot.
+mw snapshot [--system SYSTEM] [--limit N] [--config PATH]
+
+# Full recurring pipeline: backfills, identities, snapshots, scores, exports.
+mw maintain [--with-commits|--no-with-commits] [--limit N]
+            [--export|--no-export] [--config PATH]
+```
+
+### Score, inspect and alert
+
+```bash
+mw score-all [--config PATH]
+
+# Name is positional; --system accepts npm, pypi, crates, maven or github.
+mw scan PACKAGE [--system|-s SYSTEM] [--config PATH]
+
+# Simple threshold list, or config-driven rules with webhook/email delivery.
+mw alerts [--min-score 40] [--signal SIGNAL] [--min-signal 0.5] [--limit N]
+          [--rules] [--webhook URL] [--email ADDRESS] [--dry-run]
+          [--out FILE] [--config PATH]
+
+# Read-only REST API.
+mw serve [--host 127.0.0.1] [--port 8000] [--config PATH]
+```
+
+`mw alerts --rules` uses the `alerts.rules` block in `config/default.yaml`.
+`--dry-run` matches rules without delivering; `--out` writes JSON.
+See [docs/api.md](docs/api.md) for endpoints, pagination, `MAINTAINERWATCH_API_KEY`
+and rate limiting.
+
+### Validation
+
+```bash
+# Score and evaluate the committed case-control dataset.
+mw score-all --config config/validation.yaml
+mw evaluate-validation --config config/validation.yaml
+# Options: --dataset validation/v1 --max-positives N --max-controls N
+
+# Obscure-package calibration sample (data/ is local, not committed).
+python scripts/prepare_obscure_controls.py
+python scripts/prepare_mvp_seeds.py
+mw init --config config/validation-obscure.yaml
+mw ingest --system npm --seed-file data/validation-obscure/seeds/npm-all.txt \
+          --no-github --config config/validation-obscure.yaml
+mw score-all --config config/validation-obscure.yaml
+```
+
+`make validation-sample` builds `validation/v1` seed files;
+`make validation-eval` evaluates the validation config;
+`make dataset-check` validates the committed dataset metadata.
+
+### Export, report and packaging
+
+```bash
+mw export [--format parquet|csv|json|spdx|cyclonedx|osv] [--config PATH]
+mw report [--out report.html] [--config PATH]
+```
+
+`mw export` writes under the configured `data_dir`; `mw report` builds a static
+HTML report. Standard outputs are JSON, SPDX 2.3, CycloneDX 1.5 and
+OSV-compatible JSON.
+
+### Make targets
+
+```bash
+make install             # editable install with dev extras
+make install-release     # add release/build extras
+make test                # pytest
+make lint                # compileall
+make build               # sdist + wheel
+make check               # tests, build, dataset check and twine check
+make dataset-check       # validation/v1 schema and counts
+make validation-sample   # validation/v1 seed files
+make validation-eval     # evaluate config/validation.yaml
+make validate            # incident replay report
+make maintain            # mw maintain
+make snapshot            # mw snapshot
+make docker              # build container image
+make docker-run          # run container with ./data mounted on :8000
+make clean               # remove build artifacts
+```
+
+Authentication is read from `GITHUB_TOKEN`/`GITLAB_TOKEN`, with automatic
+fallback to `gh auth token`; `MAINTAINERWATCH_API_KEY` protects the API.
 
 ## Packaging and operations
 
