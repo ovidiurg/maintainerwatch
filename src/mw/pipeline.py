@@ -20,6 +20,7 @@ from .ingest.scorecard import fetch_score
 from .models import Maintainer, Version
 from .report import build_report
 from .resolve import identity_map, resolve_package
+from .risk import describe_risk
 from .score import band_for, compute_score, computed_at
 from .signals import compute_all
 from .signals.base import Context, parse_ts
@@ -751,6 +752,17 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     deps = db.get_dependencies(conn, system, name)
     conn.close()
 
+    signal_map = {
+        row["signal_type"]: {
+            "value": row["value"],
+            "evidence": json.loads(row["evidence_json"] or "{}"),
+        }
+        for row in signal_rows
+    }
+    risk_type = risk_note = next_step = ""
+    if score_row["band"] in {"medium", "high"}:
+        risk_type, risk_note, next_step = describe_risk(signal_map)
+
     applicable_weight = sum(
         cfg.weights.get(row["signal_type"], 0)
         for row in signal_rows
@@ -763,6 +775,9 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
         "score": score_row["score"],
         "band": score_row["band"],
         "evidence_coverage": round(applicable_weight / total_weight, 4) if total_weight else 0.0,
+        "risk_type": risk_type,
+        "risk_note": risk_note,
+        "next_step": next_step,
         "model_version": score_row["model_version"],
         "inputs_hash": score_row["inputs_hash"],
         "computed_at": score_row["computed_at"],
@@ -779,11 +794,5 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "scorecard_score": repo["scorecard_score"] if repo else None,
             "dependencies": sorted({d["dep_name"] for d in deps}),
         },
-        "signals": {
-            r["signal_type"]: {
-                "value": r["value"],
-                "evidence": json.loads(r["evidence_json"] or "{}"),
-            }
-            for r in signal_rows
-        },
+        "signals": signal_map,
     }

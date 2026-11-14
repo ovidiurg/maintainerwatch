@@ -111,6 +111,24 @@ Back up `data/` (database, exports, report) and the `logs/` directory.
 - Watch the maintenance log for `backfill` and `resolve` errors; most sources
   are best-effort and report failures per package.
 
+## Security and responsible use
+
+- Treat `data/maintainerwatch.sqlite`, backups and exports as sensitive: they
+  contain maintainer identifiers and public email fields. Restrict filesystem
+  access and encrypt backups where appropriate.
+- The API is read-only but exposes ranked package risk and maintainer evidence.
+  Bind it to localhost by default; for a public deployment add
+  `MAINTAINERWATCH_API_KEY`, rate limits, a TLS reverse proxy and minimal logs.
+- Do not publish raw databases, maintainer dossiers or ranked target lists.
+  Publish aggregate findings only, with identities minimised.
+- Bulk ingestion should use `--no-github`; bound `mw enrich-github` with
+  `--limit` and `--pages` to control GitHub API use.
+- Use findings for defence, maintenance and coordinated disclosure, not for
+  automated accusations or harassment of maintainers.
+
+See the dual-use section in [README.md](../README.md) and
+[docs/gdpr.md](gdpr.md).
+
 ## Retention
 
 - HTTP responses are cached under `data/cache/` with a short TTL; safe to

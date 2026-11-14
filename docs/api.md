@@ -28,9 +28,10 @@ mw serve --host 127.0.0.1 --port 8000
 and `license`.
 
 `/packages/{system}/{name}` returns the score, `inputs_hash`, `computed_at`,
-`evidence_coverage`, the `context` block and every signal with its `value` and
-`evidence` (including `install_script` scripts for npm). Run `mw score-all`
-before querying.
+`evidence_coverage`, `risk_type`, `risk_note`, `next_step`, the `context` block
+and every signal with its `value` and `evidence` (including `install_script`
+scripts for npm). The risk fields are populated for medium/high scores and are
+empty for low scores. Run `mw score-all` before querying.
 
 ## Pagination
 
@@ -130,6 +131,17 @@ mw alerts --rules --email security@example.org
 Webhook payloads are generic JSON by default; `slack` and `discord` formats are
 available. Email requires the `smtp` block and `SMTP_PASSWORD` in the
 environment. Delivery is best-effort and reported per rule.
+
+## Security and responsible use
+
+The API is read-only, but it exposes ranked risk scores, signal evidence and
+maintainer identifiers. Bind it to localhost by default. For a public
+deployment, require `MAINTAINERWATCH_API_KEY`, enable rate limiting, terminate
+TLS at a reverse proxy and minimise access logs.
+
+Do not expose the raw SQLite database or turn the API into a public “target
+list”. Share aggregate findings only, with identities minimised. A high score
+is a request for review, not proof of compromise.
 
 ## Notes
 

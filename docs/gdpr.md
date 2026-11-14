@@ -21,12 +21,13 @@ describes the safeguards; it is not legal advice.
 |---|---|
 | Package and version metadata | plain, public |
 | Publisher/maintainer identifiers | plain where already public (registry fields) |
-| Email addresses | only as evidence links for identity resolution; hash before any export |
+| Email addresses | public registry/commit fields may be stored in the local database; not exported; hash or minimise before any public deployment |
 | Repository statistics | aggregated counts and shares |
 | Identity links | `id_a`, `id_b`, link type, confidence, evidence URL |
 
-Emails are never included in the exported dataset. Exports contain
-package-level aggregates and public evidence URLs.
+Emails are not included in the exported dataset. Exports contain package-level
+aggregates and public evidence URLs. Raw caches and the SQLite database can
+still contain public email fields and must be protected accordingly.
 
 ## Lawful basis
 
@@ -47,6 +48,19 @@ be completed before any public deployment.
 ## Access and security
 
 - No accounts or personal data are collected from users of the tool.
-- The database is local by default.
-- If a public instance is deployed, access logs must be minimised and retained
-  only as long as necessary.
+- The database is local by default and should be treated as sensitive because
+  it contains maintainer identifiers and public email fields.
+- If a public instance is deployed, protect the API with an API key, rate
+  limits and a TLS reverse proxy; minimise and retain access logs only as long
+  as necessary.
+- Do not publish the raw database, maintainer dossiers or ranked target lists.
+  Share aggregate findings with identities minimised.
+
+## Dual-use
+
+MaintainerWatch is dual-use: the same risk ranking that supports defensive
+triage can be repurposed for target selection or social engineering. It does
+not contain exploits, credentials, private data or attack tooling. A high score
+is a request for review, not proof of compromise, and must not be treated as an
+automated accusation against a maintainer. Security-relevant findings should
+follow coordinated disclosure.

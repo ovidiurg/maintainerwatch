@@ -176,13 +176,25 @@ evidence and model version, so a score can be verified.
 - Scores are risk indicators, not proof of compromise. They must be reviewed
   with the underlying evidence.
 
+## Interpretation and dual-use
+
+Scores are risk indicators, not proof of compromise. A high score means the
+package deserves review; it does not mean the package is malicious or
+“attackable”. Medium/high rows in the report include a short risk type,
+description and next investigation step.
+
+The same ranking can be repurposed for offensive reconnaissance. Do not publish
+ranked target lists or maintainer dossiers. See the dual-use section in
+[README.md](../README.md) and the data-protection notes in
+[docs/gdpr.md](gdpr.md).
+
 ## Validation
 
 The MVP replays known incidents (event-stream, ua-parser-js, colors, node-ipc,
 xz-utils) using data available before each incident.
 `scripts/incident_check.py` writes `docs/incident-validation.md` with a
 precision/recall table against a 27-package benign sample. The benign label is a
-proxy, not ground truth. At threshold 40 the replay gives precision 0.300,
-recall 0.600 and a false-positive rate of 0.259. Commit-level signals catch the
+proxy, not ground truth. At threshold 40 the replay gives precision 0.333,
+recall 0.400 and a false-positive rate of 0.148. Commit-level signals catch the
 ua-parser-js hijack burst and the xz-utils new-author/burst pattern; colors and
 node-ipc remain medium at best.

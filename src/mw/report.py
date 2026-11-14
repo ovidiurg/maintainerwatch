@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -7,6 +9,7 @@ from jinja2 import Template
 
 from . import db
 from .config import Config
+from .risk import describe_risk
 
 INCIDENTS = [
     ("npm", "event-stream"),
@@ -50,13 +53,16 @@ TEMPLATE = """<!doctype html>
 
 <h2>Top risk</h2>
 <table>
-  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Fan-in trans.</th><th>Scorecard</th><th>Repo</th></tr>
+  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Risk type</th><th>Short description</th><th>Next step</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Fan-in trans.</th><th>Scorecard</th><th>Repo</th></tr>
   {% for r in top %}
   <tr>
     <td>{{ r.system }}</td>
     <td>{{ r.name }}</td>
     <td>{{ r.score }}</td>
     <td class="{{ r.band }}">{{ r.band }}</td>
+    <td>{{ r.risk_type or "-" }}</td>
+    <td>{{ r.risk_note or "-" }}</td>
+    <td>{{ r.next_step or "-" }}</td>
     <td>{{ r.downloads_weekly or 0 }}</td>
     <td>{{ r.osv_count or 0 }}</td>
     <td>{{ r.fan_in or 0 }}</td>
@@ -70,19 +76,22 @@ TEMPLATE = """<!doctype html>
 <h2>Historical incidents</h2>
 <p class="muted">Replay check: packages involved in past takeover incidents, if present in this dataset.</p>
 <table>
-  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th></tr>
+  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Risk type</th><th>Short description</th><th>Next step</th></tr>
   {% for r in incidents %}
-  <tr><td>{{ r.system }}</td><td>{{ r.name }}</td><td>{{ r.score }}</td><td class="{{ r.band }}">{{ r.band }}</td></tr>
+  <tr><td>{{ r.system }}</td><td>{{ r.name }}</td><td>{{ r.score }}</td><td class="{{ r.band }}">{{ r.band }}</td><td>{{ r.risk_type or "-" }}</td><td>{{ r.risk_note or "-" }}</td><td>{{ r.next_step or "-" }}</td></tr>
   {% else %}
-  <tr><td colspan="4" class="muted">No incident packages ingested yet.</td></tr>
+  <tr><td colspan="7" class="muted">No incident packages ingested yet.</td></tr>
   {% endfor %}
 </table>
 
 <h2>Method</h2>
 <p>Score = 100 × Σ(weight × value) / Σ(weight) over applicable signals:
 publisher_change (30), bus_factor (20), account_age (15), release_anomaly (15),
-signing_gap (10), typosquat (10). Bands: &lt;25 low, &lt;50 medium, else high.
-Identity-gated signals only use links with high/medium confidence.</p>
+signing_gap (10), typosquat (10), license_inconsistency (5), commit_anomaly (15),
+scorecard (10), dependency_risk (15), install_script (15). Bands: &lt;25 low,
+&lt;50 medium, else high. Identity-gated signals only use links with high/medium
+confidence. Risk type, short description and next investigation step are shown for
+medium/high scores and derived from the dominant signals.</p>
 <p class="muted">Only public, role-related data is used. See docs/gdpr.md.</p>
 </body>
 </html>
@@ -104,9 +113,32 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
            ORDER BY s.score DESC, s.name ASC""",
         (cfg.model_version,),
     ).fetchall()
+
+    signal_rows = conn.execute(
+        """SELECT system, name, signal_type, value, evidence_json
+           FROM signals WHERE model_version = ?""",
+        (cfg.model_version,),
+    ).fetchall()
     conn.close()
 
-    records = [dict(r) for r in rows]
+    signals: dict[tuple[str, str], dict] = defaultdict(dict)
+    for row in signal_rows:
+        signals[(row["system"], row["name"])][row["signal_type"]] = {
+            "value": row["value"],
+            "evidence": json.loads(row["evidence_json"] or "{}"),
+        }
+
+    records = []
+    for row in rows:
+        record = dict(row)
+        record["risk_type"] = ""
+        record["risk_note"] = ""
+        record["next_step"] = ""
+        if record["band"] in {"medium", "high"}:
+            record["risk_type"], record["risk_note"], record["next_step"] = describe_risk(
+                signals[(record["system"], record["name"])]
+            )
+        records.append(record)
     bands = {"low": 0, "medium": 0, "high": 0}
     for r in records:
         bands[r["band"]] = bands.get(r["band"], 0) + 1

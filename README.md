@@ -152,8 +152,9 @@ mw report [--out report.html] [--config PATH]
 ```
 
 `mw export` writes under the configured `data_dir`; `mw report` builds a static
-HTML report. Standard outputs are JSON, SPDX 2.3, CycloneDX 1.5 and
-OSV-compatible JSON.
+HTML report. Rows with medium/high scores include a short risk type, description
+and next investigation step. Standard outputs are JSON, SPDX 2.3, CycloneDX 1.5
+and OSV-compatible JSON.
 
 ### Make targets
 
@@ -256,9 +257,42 @@ See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy
 
-Only public, role-related data is processed. Emails are stored hashed; the
-public dataset contains package-level aggregates and evidence URLs, never
-personal contact data. See [docs/gdpr.md](docs/gdpr.md).
+Only public, role-related data is processed. The local database can contain
+public registry and commit email fields; those fields are not included in the
+exported dataset. Before any public deployment, hash or minimise email
+addresses, restrict access to the raw database, and complete the assessment in
+[docs/gdpr.md](docs/gdpr.md).
+
+## Dual-use and responsible use
+
+MaintainerWatch is **dual-use**. It produces a ranked, explainable view of
+maintainer and package risk from public metadata. The same ranking that helps a
+security team triage a dependency can also lower the cost of offensive
+reconnaissance: target selection for account takeover or social engineering,
+identifying dormant or single-maintainer projects, typosquatting and
+dependency-confusion planning, or mapping maintainer identities.
+
+The project deliberately does **not** include exploits, credentials, private
+data, breach data or automated attack tooling. A high score is a request for
+review, not proof of compromise and not a claim that a package is “attackable”.
+The report therefore pairs each medium/high score with a short risk type and a
+defensive next step.
+
+Responsible use expectations:
+
+- Prefer a local or access-controlled deployment; protect the REST API with
+  `MAINTAINERWATCH_API_KEY`, rate limits and a reverse proxy.
+- Do not publish ranked target lists, maintainer dossiers or raw databases.
+  Publish aggregate findings only when necessary, with identities minimised.
+- Keep exported datasets free of personal contact data; hash or remove email
+  addresses before sharing. Apply retention limits to raw caches.
+- Use findings for defence, maintenance and coordinated disclosure. Do not
+  make automated accusations about individuals or harass maintainers.
+- If you deploy a public instance, add terms of use, access logging that
+  minimises personal data, and a data-protection review.
+
+If you are a maintainer and want a link or record corrected or removed, see the
+contact process in [docs/gdpr.md](docs/gdpr.md).
 
 ## License
 

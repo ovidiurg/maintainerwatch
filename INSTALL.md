@@ -113,6 +113,15 @@ For the local obscure-package calibration sample, use
 `config/validation-obscure.yaml`; the seed and builder scripts are
 `scripts/prepare_obscure_controls.py` and `scripts/prepare_mvp_seeds.py`.
 
+## Responsible use
+
+MaintainerWatch is dual-use: its ranked maintainer/package risk view can also
+lower the cost of offensive reconnaissance. Do not expose the raw database or a
+public ranked target list. For a public API, use `MAINTAINERWATCH_API_KEY`, rate
+limits, TLS and minimal logs. Exports exclude email addresses; keep raw caches
+and SQLite access restricted. See the dual-use section in
+[README.md](README.md) and [docs/gdpr.md](docs/gdpr.md).
+
 ## Alerts and REST API
 
 ```bash
