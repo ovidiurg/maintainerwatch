@@ -30,6 +30,15 @@ def test_auc():
     assert validation.auc([], [10.0]) is None
 
 
+def test_average_precision_brier_and_calibration():
+    assert validation.average_precision([80.0, 60.0], [10.0, 20.0]) == 1.0
+    assert validation.average_precision([10.0, 20.0], [80.0, 60.0]) == 0.417
+    assert validation.brier_score([100.0], [0.0]) == 0.0
+    bins = validation.calibration([80.0], [10.0], bins=10)
+    assert len(bins) == 10
+    assert sum(item["count"] for item in bins) == 2
+
+
 def test_committed_dataset_counts_match_manifest():
     incidents, packages, controls = validation.load_dataset()
     manifest = json.loads(
@@ -79,9 +88,17 @@ def test_evaluate_synthetic(tmp_path):
     conn.commit()
 
     result = validation.evaluate(conn, cfg, dataset, write_report=False)
-    conn.close()
 
     assert result["coverage"]["positives_in_db"] == 2
     assert result["coverage"]["controls_in_db"] == 2
     assert result["metrics"]["precision_at_10"] == 0.5
     assert result["metrics"]["auc"] == 1.0
+    assert result["metrics"]["average_precision"] == 1.0
+    assert result["metrics"]["brier_score"] is not None
+    assert result["temporal"]["2024"]["count"] == 2
+
+    filtered = validation.evaluate(
+        conn, cfg, dataset, since="2025-01-01T00:00:00Z", write_report=False,
+    )
+    assert filtered["coverage"]["positives_in_db"] == 0
+    conn.close()

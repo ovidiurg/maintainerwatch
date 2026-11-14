@@ -143,6 +143,7 @@ first.
 mw score-all --config config/validation.yaml
 mw evaluate-validation --config config/validation.yaml
 # Options: --dataset validation/v1 --max-positives N --max-controls N
+#          --since ISO_DATE --until ISO_DATE (temporal positive slice)
 
 # Obscure-package calibration sample (data/ is local, not committed).
 python scripts/prepare_obscure_controls.py
@@ -219,8 +220,8 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.864, precision@25 1.0, and at threshold 40 precision 0.935 / recall 0.632 /
-FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.864, PR-AUC 0.839, Brier 0.123, precision@25 1.0, and at threshold 40
+precision 0.935 / recall 0.632 / FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
 

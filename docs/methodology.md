@@ -206,6 +206,11 @@ ranked target lists or maintainer dossiers. See the dual-use section in
 
 ## Validation
 
+The case-control evaluator reports precision@k, ROC-AUC, PR-AUC/average
+precision, Brier score, calibration bins and metrics grouped by incident cutoff
+year. Temporal groups are small; use them for diagnostics rather than claims of
+predictive performance.
+
 The MVP replays known incidents (event-stream, ua-parser-js, colors, node-ipc,
 xz-utils) using data available before each incident.
 `scripts/incident_check.py` writes `docs/incident-validation.md` with a

@@ -84,6 +84,53 @@ def auc(pos_scores: list[float], neg_scores: list[float]) -> float | None:
     return round(value, 3)
 
 
+def average_precision(pos_scores: list[float], neg_scores: list[float]) -> float | None:
+    if not pos_scores or not neg_scores:
+        return None
+    combined = sorted(
+        [(score, 1) for score in pos_scores] + [(score, 0) for score in neg_scores],
+        key=lambda item: item[0], reverse=True,
+    )
+    total_pos = len(pos_scores)
+    hits = 0
+    precision_sum = 0.0
+    for rank, (_, label) in enumerate(combined, 1):
+        if label:
+            hits += 1
+            precision_sum += hits / rank
+    return round(precision_sum / total_pos, 3)
+
+
+def brier_score(pos_scores: list[float], neg_scores: list[float]) -> float | None:
+    if not pos_scores or not neg_scores:
+        return None
+    errors = [
+        (score / 100.0 - label) ** 2
+        for score, label in (
+            [(score, 1) for score in pos_scores] + [(score, 0) for score in neg_scores]
+        )
+    ]
+    return round(statistics.mean(errors), 4)
+
+
+def calibration(pos_scores: list[float], neg_scores: list[float], bins: int = 10) -> list[dict]:
+    combined = [(score, 1) for score in pos_scores] + [(score, 0) for score in neg_scores]
+    out = []
+    for index in range(bins):
+        lower = index / bins * 100
+        upper = (index + 1) / bins * 100
+        bucket = [
+            (score, label) for score, label in combined
+            if (lower <= score < upper) or (index == bins - 1 and score == 100)
+        ]
+        out.append({
+            "bin": f"{lower:.0f}-{upper:.0f}",
+            "count": len(bucket),
+            "mean_score": round(statistics.mean([score for score, _ in bucket]), 1) if bucket else None,
+            "positive_rate": round(statistics.mean([label for _, label in bucket]), 3) if bucket else None,
+        })
+    return out
+
 def _group_stats(records: list[tuple[float, dict]], key: str) -> dict[str, dict]:
     grouped: dict[str, list[float]] = defaultdict(list)
     for score, record in records:
@@ -99,12 +146,33 @@ def _group_stats(records: list[tuple[float, dict]], key: str) -> dict[str, dict]
     }
 
 
+def _temporal_metrics(
+    positive_scores: list[tuple[float, dict]],
+    neg_values: list[float],
+) -> dict[str, dict]:
+    grouped: dict[str, list[float]] = defaultdict(list)
+    for score, record in positive_scores:
+        year = (record.get("cutoff") or "unknown")[:4]
+        grouped[year].append(score)
+    out = {}
+    for year, values in sorted(grouped.items()):
+        out[year] = {
+            "count": len(values),
+            "auc": auc(values, neg_values),
+            "average_precision": average_precision(values, neg_values),
+            "threshold_40": threshold_metrics(values, neg_values, 40.0),
+        }
+    return out
+
+
 def evaluate(
     conn,
     cfg: Config,
     dataset_dir: str | Path = ROOT / "validation" / "v1",
     max_positives: int | None = None,
     max_controls: int | None = None,
+    since: str | None = None,
+    until: str | None = None,
     write_report: bool = True,
 ) -> dict[str, Any]:
     dataset_dir = Path(dataset_dir)
@@ -157,6 +225,14 @@ def evaluate(
     positive_scores.sort(
         key=lambda item: (item[1]["priority"], item[1]["cutoff"]), reverse=True
     )
+    if since:
+        positive_scores = [
+            item for item in positive_scores if (item[1].get("cutoff") or "") >= since
+        ]
+    if until:
+        positive_scores = [
+            item for item in positive_scores if (item[1].get("cutoff") or "") <= until
+        ]
     if max_positives:
         positive_scores = positive_scores[:max_positives]
     if max_controls:
@@ -185,11 +261,15 @@ def evaluate(
             "precision_at_50": precision_at_k(combined, 50),
             "precision_at_100": precision_at_k(combined, 100),
             "auc": auc(pos_values, neg_values),
+            "average_precision": average_precision(pos_values, neg_values),
+            "brier_score": brier_score(pos_values, neg_values),
+            "calibration": calibration(pos_values, neg_values),
             "thresholds": [
                 threshold_metrics(pos_values, neg_values, threshold)
                 for threshold in thresholds
             ],
         },
+        "temporal": _temporal_metrics(positive_scores, neg_values),
         "positives_by_attack_type": _group_stats(positive_scores, "attack_type"),
         "positives_by_priority": _group_stats(positive_scores, "priority"),
         "positives_by_system": _group_stats(positive_scores, "system"),
@@ -236,6 +316,8 @@ def _markdown_report(result: dict) -> str:
         f"| Precision@50 | {metrics['precision_at_50']} |",
         f"| Precision@100 | {metrics['precision_at_100']} |",
         f"| AUC | {metrics['auc']} |",
+        f"| PR-AUC / average precision | {metrics['average_precision']} |",
+        f"| Brier score | {metrics['brier_score']} |",
         "",
         "## Threshold metrics",
         "",
@@ -247,6 +329,28 @@ def _markdown_report(result: dict) -> str:
             f"| {row['threshold']} | {row['tp']} | {row['fp']} | {row['fn']} | "
             f"{row['tn']} | {row['precision']} | {row['recall']} | "
             f"{row['false_positive_rate']} |"
+        )
+    lines.extend([
+        "", "## Temporal slices", "",
+        "| Cutoff year | Positives | AUC | PR-AUC | Threshold-40 precision / recall / FPR |",
+        "|---|---|---|---|---|",
+    ])
+    for year, stats in result.get("temporal", {}).items():
+        row = stats["threshold_40"]
+        lines.append(
+            f"| {year} | {stats['count']} | {stats['auc']} | "
+            f"{stats['average_precision']} | {row['precision']} / "
+            f"{row['recall']} / {row['false_positive_rate']} |"
+        )
+    lines.extend([
+        "", "## Calibration", "",
+        "| Score bin | Count | Mean score | Positive rate |",
+        "|---|---|---|---|",
+    ])
+    for row in metrics.get("calibration", []):
+        lines.append(
+            f"| {row['bin']} | {row['count']} | {row['mean_score']} | "
+            f"{row['positive_rate']} |"
         )
     lines.extend(["", "## Positives by attack type", "", "| Type | Count | Mean | Median | High |", "|---|---|---|---|---|"])
     for name, stats in result["positives_by_attack_type"].items():

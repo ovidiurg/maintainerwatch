@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T16:37:44.057456+00:00",
+  "generated_at": "2026-11-14T16:47:56.290712+00:00",
   "model_version": "0.4.8",
   "dataset_dir": "validation/v1",
   "coverage": {
@@ -14,6 +14,70 @@
     "precision_at_50": 1.0,
     "precision_at_100": 0.76,
     "auc": 0.864,
+    "average_precision": 0.839,
+    "brier_score": 0.1227,
+    "calibration": [
+      {
+        "bin": "0-10",
+        "count": 124,
+        "mean_score": 5.7,
+        "positive_rate": 0.056
+      },
+      {
+        "bin": "10-20",
+        "count": 88,
+        "mean_score": 14.7,
+        "positive_rate": 0.227
+      },
+      {
+        "bin": "20-30",
+        "count": 51,
+        "mean_score": 23.5,
+        "positive_rate": 0.255
+      },
+      {
+        "bin": "30-40",
+        "count": 14,
+        "mean_score": 34.2,
+        "positive_rate": 0.143
+      },
+      {
+        "bin": "40-50",
+        "count": 7,
+        "mean_score": 42.5,
+        "positive_rate": 0.429
+      },
+      {
+        "bin": "50-60",
+        "count": 8,
+        "mean_score": 52.1,
+        "positive_rate": 0.875
+      },
+      {
+        "bin": "60-70",
+        "count": 12,
+        "mean_score": 62.7,
+        "positive_rate": 1
+      },
+      {
+        "bin": "70-80",
+        "count": 50,
+        "mean_score": 75.3,
+        "positive_rate": 1
+      },
+      {
+        "bin": "80-90",
+        "count": 0,
+        "mean_score": null,
+        "positive_rate": null
+      },
+      {
+        "bin": "90-100",
+        "count": 0,
+        "mean_score": null,
+        "positive_rate": null
+      }
+    ],
     "thresholds": [
       {
         "threshold": 25.0,
@@ -56,6 +120,53 @@
         "false_positive_rate": 0.0
       }
     ]
+  },
+  "temporal": {
+    "2024": {
+      "count": 1,
+      "auc": 1.0,
+      "average_precision": 1.0,
+      "threshold_40": {
+        "threshold": 40.0,
+        "tp": 1,
+        "fp": 5,
+        "fn": 0,
+        "tn": 235,
+        "precision": 0.167,
+        "recall": 1.0,
+        "false_positive_rate": 0.021
+      }
+    },
+    "2025": {
+      "count": 2,
+      "auc": 0.507,
+      "average_precision": 0.254,
+      "threshold_40": {
+        "threshold": 40.0,
+        "tp": 1,
+        "fp": 5,
+        "fn": 1,
+        "tn": 235,
+        "precision": 0.167,
+        "recall": 0.5,
+        "false_positive_rate": 0.021
+      }
+    },
+    "2026": {
+      "count": 111,
+      "auc": 0.869,
+      "average_precision": 0.839,
+      "threshold_40": {
+        "threshold": 40.0,
+        "tp": 70,
+        "fp": 5,
+        "fn": 41,
+        "tn": 235,
+        "precision": 0.933,
+        "recall": 0.631,
+        "false_positive_rate": 0.021
+      }
+    }
   },
   "positives_by_attack_type": {
     "malicious_package": {
