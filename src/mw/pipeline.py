@@ -15,7 +15,7 @@ from . import db, snapshots
 from .config import Config
 from .impact import impact_score, impact_tier
 from .export import export_dataset
-from .ingest import crates, depsdev, downloads, findings, forge, github, github_repo, maven, npm, osv, pypi
+from .ingest import crates, depsdev, downloads, findings, forge, github, github_repo, maven, npm, osv, pypi, tarball
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_scorecard
 from .models import Maintainer, Version
@@ -356,6 +356,63 @@ def prioritize_impact(
         "missing_dependency_candidates": [dict(row) for row in deps],
         "seed_files": paths,
     }
+
+
+def scan_content(
+    cfg: Config,
+    system: str | None = None,
+    min_score: float = 40.0,
+    limit: int = 50,
+    max_bytes: int = 20_000_000,
+    dry_run: bool = False,
+) -> dict:
+    conn = _open(cfg)
+    where = ["s.model_version = ?", "s.score >= ?"]
+    params: list[object] = [cfg.model_version, min_score]
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT s.system, s.name, s.score
+            FROM scores s
+            JOIN packages p ON p.system = s.system AND p.name = s.name
+            WHERE {' AND '.join(where)}
+            ORDER BY s.score DESC, s.name ASC LIMIT ?""",
+        [*params, limit],
+    ).fetchall()
+    scanned = 0
+    errors = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            versions = [
+                version for version in db.get_versions(conn, row["system"], row["name"])
+                if not version["is_yanked"]
+            ]
+            if not versions:
+                errors += 1
+                continue
+            version = versions[-1]["version"]
+            fetched = tarball.fetch_archive(
+                client, row["system"], row["name"], version, max_bytes=max_bytes
+            )
+            if fetched is None:
+                errors += 1
+                continue
+            data, filename = fetched
+            result = tarball.scan_archive(data, filename)
+            if not dry_run:
+                db.upsert_content_scan(
+                    conn,
+                    (
+                        row["system"], row["name"], version,
+                        result["risk_score"], json.dumps(result, sort_keys=True),
+                        result["files"], result["bytes"], result["sha256"],
+                        datetime.now(timezone.utc).isoformat(),
+                    ),
+                )
+            scanned += 1
+    conn.close()
+    return {"requested": len(rows), "scanned": scanned, "errors": errors, "dry_run": dry_run}
 
 
 def enrich_scorecard(
@@ -1001,6 +1058,7 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     pkg = db.get_package(conn, system, name)
     repo = db.get_repo_stats(conn, system, name)
     impact = db.get_impact(conn, system, name)
+    content = db.get_content_scan(conn, system, name)
     deps = db.get_dependencies(conn, system, name)
     conn.close()
 
@@ -1058,6 +1116,8 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "repo_forks": int(repo["forks"] or 0) if repo else None,
             "repo_open_issues": int(repo["open_issues"] or 0) if repo else None,
             "scorecard_failed_checks": _failed_scorecard_checks(repo) if repo else None,
+            "content_risk": int(content["risk_score"] or 0) if content else None,
+            "content_flags": json.loads(content["flags_json"] or "{}").get("flags", []) if content else None,
             "dependent_count": int(impact["dependent_count"] or 0) if impact else None,
             "direct_dependent_count": int(impact["direct_dependent_count"] or 0) if impact else None,
             "indirect_dependent_count": int(impact["indirect_dependent_count"] or 0) if impact else None,

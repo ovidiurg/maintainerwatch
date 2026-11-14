@@ -123,6 +123,11 @@ A signal that cannot be computed (for example, no repository data) is marked
 
 ## Repository context
 
+`mw scan-content` downloads a bounded tarball/wheel, never executes it, and
+stores flags from static checks (install hooks, network/exec patterns, wallet/
+environment access, base64/obfuscation, binary files). It is exposed as context
+only; a scored content signal was not added without a safe validation set.
+
 `mw enrich-github` stores repository metadata (archived, owner type, stars,
 forks, open issues) and `mw enrich-scorecard` stores individual OpenSSF
 Scorecard checks. These are exposed in `scan`/API context. A scored

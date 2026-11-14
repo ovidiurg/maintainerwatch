@@ -145,6 +145,22 @@ def enrich_findings_cmd(
     typer.echo(json.dumps(pipeline.enrich_findings(cfg, system, limit)))
 
 
+@app.command("scan-content")
+def scan_content_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    min_score: float = typer.Option(40.0, help="Minimum risk score."),
+    limit: int = typer.Option(50, help="Maximum packages to scan."),
+    max_bytes: int = typer.Option(20_000_000, help="Maximum archive size."),
+    dry_run: bool = typer.Option(False, help="Scan without storing results."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Statically scan package tarballs for risky content."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.scan_content(
+        cfg, system, min_score, limit, max_bytes, dry_run
+    )))
+
+
 @app.command("enrich-scorecard")
 def enrich_scorecard_cmd(
     system: Optional[str] = typer.Option(None, help="Only this ecosystem."),

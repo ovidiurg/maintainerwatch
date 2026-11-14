@@ -81,6 +81,13 @@ CREATE TABLE IF NOT EXISTS dependencies (
   PRIMARY KEY (system, name, version, dep_system, dep_name)
 );
 
+CREATE TABLE IF NOT EXISTS content_scan (
+  system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
+  risk_score INTEGER, flags_json TEXT, files INTEGER, bytes INTEGER,
+  sha256 TEXT, updated_at TEXT,
+  PRIMARY KEY (system, name)
+);
+
 CREATE TABLE IF NOT EXISTS package_findings (
   system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
   findings_json TEXT, updated_at TEXT,
@@ -614,6 +621,31 @@ def delete_package(conn: sqlite3.Connection, system: str, name: str) -> dict[str
     counts["inbound_dependencies"] = cur.rowcount
     conn.commit()
     return counts
+
+
+def upsert_content_scan(conn: sqlite3.Connection, row: tuple) -> None:
+    conn.execute(
+        """INSERT INTO content_scan
+             (system, name, version, risk_score, flags_json, files, bytes,
+              sha256, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(system, name) DO UPDATE SET
+             version=excluded.version,
+             risk_score=excluded.risk_score,
+             flags_json=excluded.flags_json,
+             files=excluded.files,
+             bytes=excluded.bytes,
+             sha256=excluded.sha256,
+             updated_at=excluded.updated_at""",
+        row,
+    )
+    conn.commit()
+
+
+def get_content_scan(conn: sqlite3.Connection, system: str, name: str):
+    return conn.execute(
+        "SELECT * FROM content_scan WHERE system=? AND name=?", (system, name)
+    ).fetchone()
 
 
 def upsert_findings(

@@ -33,8 +33,9 @@ mw serve --host 127.0.0.1 --port 8000
 `evidence_coverage`, `risk_type`, `risk_note`, `next_step`, `impact_score`,
 `impact_tier`, the `context` block (which includes `dependent_count` when
 deps.dev enrichment ran, repository `repo_archived`/owner/stars/forks/open-issues
-metadata and `scorecard_failed_checks`) and every signal with its `value` and
-`evidence` (including `install_script` scripts for npm). The risk fields are populated for
+metadata, `scorecard_failed_checks`, `content_risk` and `content_flags`) and
+every signal with its `value` and `evidence` (including `install_script` scripts
+for npm). The risk fields are populated for
 medium/high scores and are empty for low scores. Run `mw score-all` and
 `mw enrich-impact` before querying.
 

@@ -77,6 +77,7 @@ mw enrich-github --limit 100       # bounded repo stats, Scorecard and commits
 mw enrich-impact --limit 500       # deps.dev dependent counts for impact ranking
 mw enrich-findings --limit 500     # deps.dev malicious/deprecated findings
 mw enrich-scorecard --limit 500    # individual OpenSSF Scorecard checks
+mw scan-content --limit 50          # static tarball content scan
 mw backfill-osv --limit 500        # version-aware OSV affected ranges
 mw backfill-deps
 mw backfill-licenses

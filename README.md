@@ -84,6 +84,9 @@ mw enrich-findings [--system SYSTEM] [--limit N] [--config PATH]
 # Fetch individual OpenSSF Scorecard checks for existing repositories.
 mw enrich-scorecard [--system SYSTEM] [--limit N] [--config PATH]
 
+# Statically scan package tarballs for risky content.
+mw scan-content [--system SYSTEM] [--min-score 40] [--limit N] [--dry-run]
+
 # Fetch affected-version ranges for OSV advisories (version-aware signal).
 mw backfill-osv [--system SYSTEM] [--limit N] [--malicious-only] [--config PATH]
 
@@ -275,9 +278,9 @@ A weighted sum of applicable signals, normalised to 0–100, with an
 are review candidates rather than confirmed high risk. High-band scores are
 reserved for packages with behavioural evidence; obscure low-adoption packages
 use a medium-capped unsigned baseline. Repository metadata (archived, owner
-type, stars/forks/issues) and individual Scorecard checks are exposed as context
-in `scan`/API; an experimental scored `repo_health` signal was rejected because
-it reduced validation AUC.
+type, stars/forks/issues), individual Scorecard checks and static tarball scan
+flags are exposed as context in `scan`/API; scored `repo_health`/content
+experiments are not in the model because the validation gain was not safe.
 See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy

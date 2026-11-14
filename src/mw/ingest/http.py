@@ -124,6 +124,29 @@ class CachedClient:
             return None
         return None
 
+    def get_bytes(self, url: str, *, max_bytes: int = 20_000_000,
+                  headers: dict[str, str] | None = None) -> bytes | None:
+        for attempt in range(3):
+            self._throttle()
+            try:
+                with self._client.stream("GET", url, headers=headers) as response:
+                    if response.status_code == 404:
+                        return None
+                    if response.status_code != 200:
+                        time.sleep(1.5 * (attempt + 1))
+                        continue
+                    chunks = []
+                    total = 0
+                    for chunk in response.iter_bytes():
+                        total += len(chunk)
+                        if total > max_bytes:
+                            return None
+                        chunks.append(chunk)
+                    return b"".join(chunks)
+            except httpx.HTTPError:
+                time.sleep(1.5 * (attempt + 1))
+        return None
+
     def post_json(self, url: str, payload: Any, *, headers: dict[str, str] | None = None) -> Any | None:
         for attempt in range(4):
             self._throttle()
