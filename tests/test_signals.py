@@ -114,6 +114,25 @@ def test_release_anomaly_detects_dormancy(conn):
     assert ev.value >= 0.8
 
 
+def test_release_anomaly_all_same_timestamp_not_applicable(conn):
+    _add_package(conn)
+    ts = "2025-01-01T00:00:00+00:00"
+    _add_versions(conn, [("1.0.0", ts, "a"), ("1.0.1", ts, "a"), ("1.0.2", ts, "a")])
+    ev = release_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+
+
+def test_release_anomaly_initial_burst_not_flagged(conn):
+    _add_package(conn)
+    _add_versions(conn, [
+        ("1.0.0", "2025-01-01T00:00:00+00:00", "a"),
+        ("1.0.1", "2025-01-01T06:00:00+00:00", "a"),
+        ("1.0.2", "2025-01-01T12:00:00+00:00", "a"),
+    ])
+    ev = release_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.evidence["burst"] == 0.0
+
+
 def test_release_anomaly_not_applicable_with_few_versions(conn):
     _add_package(conn)
     _add_versions(conn, [("1.0.0", "2020-01-01T00:00:00+00:00", "a")])
@@ -138,6 +157,15 @@ def test_signing_gap_npm_no_provenance_is_baseline(conn):
     assert ev.applicable is True
     assert ev.value == 1.0
     assert ev.evidence["baseline_unsigned"] is True
+
+
+def test_signing_gap_npm_mature_low_adoption_baseline(conn):
+    _add_package(conn, downloads=50)
+    _add_versions(conn, [("1.0.0", _iso(500), "a")])
+    ev = signing_gap.compute(Context(conn=conn, system="npm", name="pkg",
+                                     downloads_weekly=50))
+    assert ev.value == 0.7
+    assert ev.evidence["low_adoption"] is True
 
 
 def test_signing_gap_npm_mature_popular_baseline(conn):
@@ -343,7 +371,7 @@ def test_publisher_change_old_maintainer_still_present(conn):
     _add_maintainer(conn, "alice@example.org", system="npm")
     _add_maintainer(conn, "bob@example.org", system="npm")
     ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.25
+    assert ev.value == 0.025
     assert ev.evidence["n_legitimate"] == 1
     assert "old maintainer still has maintainer access" in (
         ev.evidence["recent_changes"][0]["legitimacy"]["reasons"]
@@ -358,7 +386,7 @@ def test_publisher_change_shared_packages(conn):
     _add_maintainer(conn, "alice@example.org", system="npm", name="shared")
     _add_maintainer(conn, "bob@example.org", system="npm", name="shared")
     ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.3
+    assert ev.value == 0.03
     assert ev.evidence["recent_changes"][0]["legitimacy"]["shared_package_count"] == 1
 
 
@@ -368,7 +396,7 @@ def test_publisher_change_young_package(conn):
     _add_versions(conn, [("1.0.0", _iso(20), "alice@example.org"),
                          ("1.0.1", _iso(10), "bob@example.org")])
     ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.4
+    assert round(ev.value, 3) == 0.04
     assert "package is younger than one year" in (
         ev.evidence["recent_changes"][0]["legitimacy"]["reasons"]
     )
@@ -381,7 +409,7 @@ def test_publisher_change_new_publisher_seen_before(conn):
                          ("1.2.0", _iso(200), "alice@example.org"),
                          ("1.3.0", _iso(30), "bob@example.org")])
     ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.3
+    assert ev.value == 0.03
     change = ev.evidence["recent_changes"][-1]
     assert change["legitimacy"]["new_publisher_seen_before"] is True
 
@@ -391,7 +419,7 @@ def test_publisher_change_same_email_domain(conn):
     _add_versions(conn, [("1.0.0", _iso(90), "typescript@microsoft.com"),
                          ("1.0.1", _iso(30), "npmjs@microsoft.com")])
     ev = publisher_change.compute(Context(conn=conn, system="npm", name="pkg"))
-    assert ev.value == 0.3
+    assert ev.value == 0.03
     assert ev.evidence["n_legitimate"] == 1
     assert "old and new publishers share an email domain" in (
         ev.evidence["recent_changes"][0]["legitimacy"]["reasons"]
@@ -415,6 +443,12 @@ def test_pypi_snapshot_without_current_maintainers_not_applicable(conn):
                        json.dumps([]), "hash-new")
     ev = publisher_change.compute(Context(conn=conn, system="pypi", name="pkg"))
     assert ev.applicable is False
+
+
+def test_top_names_filters_low_adoption(conn):
+    _add_package(conn, name="popular", downloads=500_000)
+    _add_package(conn, name="obscure", downloads=10)
+    assert db.top_names(conn, "npm", min_downloads=100_000) == ["popular"]
 
 
 def test_score_is_reproducible():
@@ -611,6 +645,28 @@ def test_commit_anomaly_burst(conn):
     assert ev.applicable is True
     assert ev.evidence["burst_value"] == 1.0
     assert ev.value == 1.0
+
+
+def test_commit_anomaly_short_history_not_applicable(conn):
+    _add_package(conn)
+    for index in range(10):
+        _add_commit(conn, 10 + index, "alice", f"c-{index}")
+    ev = commit_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+    assert ev.evidence["reason"] == "commit history shorter than 180 days"
+
+
+def test_release_anomaly_crates_dormancy_capped(conn):
+    _add_package(conn, system="crates")
+    _add_versions(conn, [
+        ("1.0.0", "2020-01-01T00:00:00+00:00", "a"),
+        ("1.0.1", "2020-02-01T00:00:00+00:00", "a"),
+        ("1.0.2", "2020-03-01T00:00:00+00:00", "a"),
+        ("2.0.0", "2023-01-01T00:00:00+00:00", "a"),
+    ], system="crates")
+    ev = release_anomaly.compute(Context(conn=conn, system="crates", name="pkg"))
+    assert ev.value <= 0.5
+    assert ev.evidence["calibrated_cap"] is True
 
 
 def test_commit_anomaly_not_applicable(conn):

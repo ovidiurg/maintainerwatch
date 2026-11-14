@@ -30,6 +30,16 @@ def compute(ctx: Context) -> SignalEvidence:
         )
 
     commits.sort(key=lambda item: item[0])
+    history_span = days_between(commits[0][0], reference)
+    if history_span < 180:
+        return SignalEvidence(
+            value=0.0,
+            applicable=False,
+            evidence={
+                "reason": "commit history shorter than 180 days",
+                "history_span_days": round(history_span, 1),
+            },
+        )
     window = [item for item in commits if days_between(item[0], reference) <= WINDOW_DAYS]
     if len(window) < MIN_COMMITS:
         return SignalEvidence(
@@ -79,5 +89,6 @@ def compute(ctx: Context) -> SignalEvidence:
             "burst_ratio": round(burst_ratio, 2),
             "burst_value": round(burst_value, 3),
             "top_author_share": round(top_share, 3),
+            "history_span_days": round(history_span, 1),
         },
     )

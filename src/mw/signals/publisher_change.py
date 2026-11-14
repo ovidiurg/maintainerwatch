@@ -11,6 +11,7 @@ from .base import Context, clamp, days_between, now_utc, parse_ts
 from .legitimacy import assess_change
 
 WINDOW_DAYS = 365
+LEGITIMATE_CHANGE_WEIGHT = 0.1
 SNAPSHOT_MIN_AGE_DAYS = 180
 SNAPSHOT_MAX_AGE_DAYS = 365
 
@@ -129,7 +130,11 @@ def compute(ctx: Context) -> SignalEvidence:
                 change.get("from_raw"), change.get("to_raw"), change.get("at"),
                 ctx.identity_mapping,
             )
-            effective += context["discount"]
+            effective += (
+                context["discount"]
+                if context["discount"] >= 1.0
+                else context["discount"] * LEGITIMATE_CHANGE_WEIGHT
+            )
             recent_with_context.append({**change, "legitimacy": context})
         return SignalEvidence(
             value=clamp(effective / 2.0),
@@ -141,6 +146,7 @@ def compute(ctx: Context) -> SignalEvidence:
                     1 for change in recent_with_context
                     if change["legitimacy"]["discount"] < 1.0
                 ),
+                "effective_changes": round(effective, 4),
                 "recent_changes": recent_with_context[-10:],
                 "changes": changes[-10:],
             },

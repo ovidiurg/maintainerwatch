@@ -23,6 +23,7 @@ from .resolve import identity_map, resolve_package
 from .score import band_for, compute_score, computed_at
 from .signals import compute_all
 from .signals.base import Context, parse_ts
+from .signals.typosquat import TARGET_MIN_DOWNLOADS
 
 
 def make_client(cfg: Config) -> CachedClient:
@@ -507,7 +508,9 @@ def score_all(cfg: Config) -> dict:
     for r in rows:
         system, name = r["system"], r["name"]
         if system not in top_cache:
-            top_cache[system] = db.top_names(conn, system, 5000)
+            top_cache[system] = db.top_names(
+                conn, system, 5000, min_downloads=TARGET_MIN_DOWNLOADS
+            )
         repo = db.get_repo_stats(conn, system, name)
 
         ctx = Context(
@@ -682,11 +685,18 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     deps = db.get_dependencies(conn, system, name)
     conn.close()
 
+    applicable_weight = sum(
+        cfg.weights.get(row["signal_type"], 0)
+        for row in signal_rows
+        if row["band"]
+    )
+    total_weight = sum(cfg.weights.values())
     return {
         "system": system,
         "name": name,
         "score": score_row["score"],
         "band": score_row["band"],
+        "evidence_coverage": round(applicable_weight / total_weight, 4) if total_weight else 0.0,
         "model_version": score_row["model_version"],
         "inputs_hash": score_row["inputs_hash"],
         "computed_at": score_row["computed_at"],

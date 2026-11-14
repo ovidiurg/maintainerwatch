@@ -103,8 +103,8 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.850, precision@25 0.96, and at threshold 40 precision 0.919 / recall 0.596 /
-FPR 0.025. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.846, precision@25 1.0, and at threshold 40 precision 0.932 / recall 0.596 /
+FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
 
@@ -114,25 +114,32 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 12 November 2026)
+## Results (MVP, 13 November 2026)
 
-- 1,169 packages scored: 518 npm, 500 PyPI, 100 crates.io, 50 Maven and 1
-  GitHub repository.
-- 207,252 versions, 210,185 commits, 2,396 maintainers, 1,122 repositories,
-  3,229 OSV records, 2,638 runtime dependency edges (PyPI extras excluded).
+- 1,713 packages scored: 908 npm, 533 PyPI, 191 crates.io, 80 Maven (30 of 124 expansion seeds)
+  and 1 GitHub repository. The expansion adds 544 registry-metadata packages across
+  ecosystems, mixing popular and obscure packages.
+- 231,261 versions, 210,185 commits, 3,524 maintainers, 1,130 repositories,
+  3,286 OSV records, 3,940 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 1 high, 416 medium, 752 low. OIDC/bot publishers are ignored.
-- License cross-check: 1,148 compatible/recognised, 10 non-SPDX, 7 missing and
-  4 declared-vs-repository conflicts (pathspec, uvloop, eslint-visitor-keys,
-  opencv-python-headless).
+- Risk bands: 0 high, 427 medium, 1,286 low. OIDC/bot publishers are ignored.
+- License cross-check: 1,652 compatible/recognised, 13 non-SPDX, 43 missing and
+  4 declared-vs-repository conflicts.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
   packages; PyPI `publisher_change` is now applicable (298 high, 20 low, 182
   not applicable) and its snapshot value is capped at 0.5.
-- Highest: antd 50.0, editables 49.9, json5 47.4, aiohappyeyeballs 46.9,
-  py 46.7, annotated-types 45.1, smallvec 44.9, path-to-regexp 44.3.
-- Pre-incident replay: event-stream 59.5, colors 27.3, node-ipc 25.2,
-  ua-parser-js 25.0, xz-utils 42.8. At threshold 40 the 27-package benign
+- Highest medium scores: @babel/preset-modules 48.1, b-plus-tree-ts 48.0,
+  b-side 48.0, b-swarm 48.0, json5 47.4, py 46.7, serde_core 45.3,
+  proc-macro2 45.2, annotated-types 45.1. No package reached the high band.
+- Pre-incident replay: event-stream 59.0, colors 27.3, node-ipc 24.1,
+  ua-parser-js 25.0, xz-utils 39.3. At threshold 40 the 27-package benign
   sample gives precision 0.333, recall 0.400, false-positive rate 0.148.
+- Validation sample: 68 of 114 known positives at threshold 40 (precision
+  0.932, FPR 0.021); 43 at threshold 50. The main MVP DB has no labelled
+  positives; validation is the true-positive evidence.
+- The new packages were ingested with `--no-github`; GitHub API calls stayed
+  limited to the existing repository/commit backfill. SQLite is 163 MB and the
+  request cache is 2.9 GB.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
@@ -142,6 +149,10 @@ See [docs/incident-validation.md](docs/incident-validation.md).
 
 A weighted sum of applicable signals, normalised to 0–100, with an
 `inputs_hash` for reproducibility. Every signal stores its evidence.
+`mw scan` also reports `evidence_coverage`; low-coverage, hygiene-only scores
+are review candidates rather than confirmed high risk. High-band scores are
+reserved for packages with behavioural evidence; obscure low-adoption packages
+use a medium-capped unsigned baseline.
 See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy

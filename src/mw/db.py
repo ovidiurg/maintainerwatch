@@ -500,10 +500,16 @@ def get_identity_links(conn: sqlite3.Connection, system: str, name: str) -> list
     ).fetchall()
 
 
-def top_names(conn: sqlite3.Connection, system: str, limit: int = 5000) -> list[str]:
+def top_names(
+    conn: sqlite3.Connection,
+    system: str,
+    limit: int = 5000,
+    min_downloads: int = 0,
+) -> list[str]:
     rows = conn.execute(
-        """SELECT name FROM packages WHERE system=?
+        """SELECT name FROM packages
+           WHERE system=? AND downloads_weekly >= ?
            ORDER BY downloads_weekly DESC LIMIT ?""",
-        (system, limit),
+        (system, min_downloads, limit),
     ).fetchall()
     return [r["name"] for r in rows]

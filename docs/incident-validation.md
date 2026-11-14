@@ -16,11 +16,11 @@ not proof of compromise, and a low score is a miss to be reported honestly.
 
 | Incident | Package | Cutoff | publisher_change | release_anomaly | signing_gap | commit_anomaly | Replay score | Band | Applicable |
 |---|---|---|---|---|---|---|---|---|---|
-| event-stream | npm/event-stream | 2018-11-20 | 0.50 | 0.11 | 1.00 | 1.00 | 59.5 | high | publisher_change, release_anomaly, signing_gap, commit_anomaly |
+| event-stream | npm/event-stream | 2018-11-20 | 0.50 | 0.09 | 1.00 | 1.00 | 59.0 | high | publisher_change, release_anomaly, signing_gap, commit_anomaly |
 | ua-parser-js | npm/ua-parser-js | 2021-10-21 | 0.00 | 0.00 | – | 1.00 | 25.0 | medium | publisher_change, release_anomaly, commit_anomaly |
 | colors | npm/colors | 2022-01-07 | 0.00 | 0.80 | 0.30 | – | 27.3 | medium | publisher_change, release_anomaly, signing_gap |
-| node-ipc | npm/node-ipc | 2022-03-14 | 0.00 | 0.72 | 0.30 | – | 25.2 | medium | publisher_change, release_anomaly, signing_gap |
-| tukaani-project/xz | github/tukaani-project/xz | 2024-02-23 | – | 0.19 | – | 0.67 | 42.8 | medium | release_anomaly, commit_anomaly |
+| node-ipc | npm/node-ipc | 2022-03-14 | 0.00 | 0.69 | 0.30 | – | 24.1 | low | publisher_change, release_anomaly, signing_gap |
+| tukaani-project/xz | github/tukaani-project/xz | 2024-02-23 | – | 0.12 | – | 0.67 | 39.3 | medium | release_anomaly, commit_anomaly |
 
 ## Metrics
 
@@ -28,17 +28,17 @@ Benign sample: 27 packages with no known compromise, cutoff 2024-01-01. The labe
 
 | Threshold | TP | FP | FN | TN | Precision | Recall | False-positive rate |
 |---|---|---|---|---|---|---|---|
-| 25 | 5 | 9 | 0 | 18 | 0.357 | 1.000 | 0.333 |
-| 40 | 2 | 4 | 3 | 23 | 0.333 | 0.400 | 0.148 |
-| 50 | 1 | 4 | 4 | 23 | 0.200 | 0.200 | 0.148 |
+| 25 | 4 | 5 | 1 | 22 | 0.444 | 0.800 | 0.185 |
+| 40 | 1 | 3 | 4 | 24 | 0.250 | 0.200 | 0.111 |
+| 50 | 1 | 2 | 4 | 25 | 0.333 | 0.200 | 0.074 |
 
 ## Notes
 
-- **event-stream** (2018-11-20): Malicious flatmap-stream dependency introduced through a new publisher. replay=59.5 (high), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
+- **event-stream** (2018-11-20): Malicious flatmap-stream dependency introduced through a new publisher. replay=59.0 (high), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
 - **ua-parser-js** (2021-10-21): Maintainer account hijacked; malicious versions published. replay=25.0 (medium), signals=publisher_change, release_anomaly, commit_anomaly.
 - **colors** (2022-01-07): Maintainer intentionally broke releases (sabotage, not takeover). replay=27.3 (medium), signals=publisher_change, release_anomaly, signing_gap.
-- **node-ipc** (2022-03-14): Protestware release. replay=25.2 (medium), signals=publisher_change, release_anomaly, signing_gap.
-- **tukaani-project/xz** (2024-02-23): Maintainer/commit-level backdoor; release-only signals are expected to miss it. replay=42.8 (medium), signals=release_anomaly, commit_anomaly.
+- **node-ipc** (2022-03-14): Protestware release. replay=24.1 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **tukaani-project/xz** (2024-02-23): Maintainer/commit-level backdoor; release-only signals are expected to miss it. replay=39.3 (medium), signals=release_anomaly, commit_anomaly.
 
 ## Limitations
 

@@ -7,7 +7,9 @@ RECENT_VERSIONS = 5
 YOUNG_PACKAGE_DAYS = 365
 MATURE_PACKAGE_DAYS = 730
 POPULAR_DOWNLOADS = 100_000
+LOW_ADOPTION_DOWNLOADS = 1_000
 BASELINE_NEW = 1.0
+BASELINE_LOW_ADOPTION = 0.7
 BASELINE_MID = 0.7
 BASELINE_OLD = 0.5
 BASELINE_OLD_POPULAR = 0.3
@@ -24,6 +26,8 @@ def _baseline_for(ctx: Context, versions) -> tuple[float, float | None]:
     age = days_between(first, now_utc()) if first else None
     if age is None or age < YOUNG_PACKAGE_DAYS:
         return BASELINE_NEW, age
+    if ctx.downloads_weekly < LOW_ADOPTION_DOWNLOADS:
+        return BASELINE_LOW_ADOPTION, age
     if age < MATURE_PACKAGE_DAYS:
         return BASELINE_MID, age
     if ctx.downloads_weekly >= POPULAR_DOWNLOADS:
@@ -58,6 +62,7 @@ def compute(ctx: Context) -> SignalEvidence:
                     "baseline_unsigned": True,
                     "package_age_days": round(age, 1) if age is not None else None,
                     "downloads_weekly": ctx.downloads_weekly,
+                    "low_adoption": ctx.downloads_weekly < LOW_ADOPTION_DOWNLOADS,
                     "versions_checked": len(versions),
                 },
             )

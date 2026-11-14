@@ -8,6 +8,7 @@ from .models import SignalEvidence
 from .resolve import identity_map
 from .signals import compute_all
 from .signals.base import Context
+from .signals.typosquat import TARGET_MIN_DOWNLOADS
 
 REPLAY_SIGNALS = [
     "publisher_change",
@@ -59,7 +60,9 @@ def replay(
         system=system,
         name=name,
         downloads_weekly=int(pkg["downloads_weekly"] or 0),
-        top_names=top_names or db.top_names(conn, system, 5000),
+        top_names=top_names or db.top_names(
+            conn, system, 5000, min_downloads=TARGET_MIN_DOWNLOADS
+        ),
         identity_mapping=identity_map(conn, system, name, cfg.min_identity_confidence),
         license=pkg["license"],
         as_of=cutoff,
@@ -111,7 +114,9 @@ def evaluate(
     def run(item: tuple[str, str, str]) -> ReplayResult | None:
         system, name, cutoff = item
         if system not in top_cache:
-            top_cache[system] = db.top_names(conn, system, 5000)
+            top_cache[system] = db.top_names(
+                conn, system, 5000, min_downloads=TARGET_MIN_DOWNLOADS
+            )
         return replay(conn, cfg, system, name, cutoff, top_cache[system])
 
     positives = [r for r in (run(item) for item in incidents) if r is not None]

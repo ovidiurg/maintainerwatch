@@ -3,6 +3,8 @@ from __future__ import annotations
 from ..models import SignalEvidence
 from .base import Context
 
+TARGET_MIN_DOWNLOADS = 100_000
+
 
 def levenshtein(a: str, b: str) -> int:
     """Damerau-Levenshtein (optimal string alignment), so transpositions count once."""
