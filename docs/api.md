@@ -18,16 +18,29 @@ mw serve --host 127.0.0.1 --port 8000
 | GET | `/packages` | Paginated scored packages (`system`, `band`, `min_score`, `limit`, `offset`). |
 | GET | `/packages/{system}/{name}` | Score, signal evidence, context and dependencies for one package. |
 | GET | `/top` | First page of the highest-risk packages (`system`, `limit`, `offset`). |
-| GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`). |
+| GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). |
 | GET | `/alert-rules` | Runs the alert rules from `config/default.yaml` without delivering them. |
+
+## Response shapes
+
+`/packages` items contain `system`, `name`, `score`, `band`, `downloads_weekly`,
+`osv_count`, `fan_in`, `fan_in_transitive`, `dependencies_count`, `repo_url`
+and `license`.
+
+`/packages/{system}/{name}` returns the score, `inputs_hash`, `computed_at`,
+`evidence_coverage`, the `context` block and every signal with its `value` and
+`evidence` (including `install_script` scripts for npm). Run `mw score-all`
+before querying.
 
 ## Pagination
 
-`/packages` and `/top` accept `limit` (1–500) and `offset` (0-based). The
-response body is a JSON array; pagination metadata is returned in headers:
+`/packages` and `/top` accept `limit` (1–500) and `offset` (0-based).
+`/packages` additionally accepts `system`, `band` and `min_score`; `/top` only
+accepts `system`, `limit` and `offset`. The response body is a JSON array;
+pagination metadata is returned in headers:
 
 ```
-X-Total-Count: 1169
+X-Total-Count: 1713
 X-Limit: 50
 X-Offset: 0
 X-Next-Offset: 50
@@ -121,6 +134,9 @@ environment. Delivery is best-effort and reported per rule.
 ## Notes
 
 - The API reads the same SQLite database as the CLI; run `mw score-all` first.
+- Scores are filtered by the configured `model_version` from `config/default.yaml`.
 - It is read-only: there are no write endpoints.
+- `install_script`, `evidence_coverage` and the other model additions are
+  returned automatically; no endpoint change is needed.
 - The OpenAPI schema includes parameter descriptions and examples; `/docs`
   renders it interactively.

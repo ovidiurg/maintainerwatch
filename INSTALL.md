@@ -5,7 +5,7 @@
 - Python 3.11 or newer
 - pip and a virtual environment
 - git
-- Network access to npm, PyPI, OSV and GitHub
+- Network access to npm, PyPI, crates.io, Maven Central, OSV and GitHub/GitLab
 - Optional: the GitHub CLI (`gh`) for authenticated GitHub API calls
 
 ## Install from source
@@ -73,6 +73,7 @@ mw ingest --system npm --top 200
 mw ingest --system pypi --top 200
 mw ingest --system crates --top 100
 mw ingest --system maven --top 50
+mw enrich-github --limit 100       # bounded repo stats, Scorecard and commits
 mw backfill-deps
 mw backfill-licenses
 mw backfill-commits
@@ -89,12 +90,28 @@ mw export --format osv
 Maven uses a curated seed list by default; pass `--seed-file` with
 `group:artifact` lines to target your own artifacts.
 
-`backfill-commits` fetches the last two GitHub commit pages per repository; for
-historical replay use `--until` (see `scripts/incident_check.py`).
+`enrich-github` only fills packages that do not have repository stats yet; use
+`--limit` and `--pages` to bound GitHub requests. `backfill-commits` fetches the
+last two GitHub commit pages per repository; for historical replay use `--until`
+(see `scripts/incident_check.py`).
 `backfill-snapshots` reconstructs PyPI maintainer snapshots from PEP 658
 release metadata (or imports a JSONL/JSON/CSV file with `--source`).
 GitLab forges are supported too: set `GITLAB_TOKEN` to raise the GitLab.com API
 rate limit.
+
+## Validation
+
+Score and evaluate the committed validation dataset in a separate database:
+
+```bash
+mw score-all --config config/validation.yaml
+mw evaluate-validation --config config/validation.yaml
+# optional: --dataset validation/v1 --max-positives N --max-controls N
+```
+
+For the local obscure-package calibration sample, use
+`config/validation-obscure.yaml`; the seed and builder scripts are
+`scripts/prepare_obscure_controls.py` and `scripts/prepare_mvp_seeds.py`.
 
 ## Alerts and REST API
 
@@ -150,10 +167,16 @@ and synthetic fixtures.
 ```bash
 make install              # pip install -e ".[dev]"
 make test
+make lint                 # compileall
 make build                # sdist + wheel in dist/
-make check                # tests, build, twine check
+make check                # tests, build, validation check and twine check
+make dataset-check        # validation/v1 schema and counts
+make validation-sample    # validation/v1 seed files
+make validation-eval      # evaluate config/validation.yaml
+make validate             # incident replay report
 ./scripts/build_reproducible.sh
 make docker               # docker build -t maintainerwatch:latest .
+make docker-run           # run with ./data mounted on :8000
 docker compose up -d --build
 ```
 
