@@ -17,7 +17,7 @@ from .impact import impact_score, impact_tier
 from .export import export_dataset
 from .ingest import crates, depsdev, downloads, findings, forge, github, github_repo, maven, npm, osv, pypi
 from .ingest.http import CachedClient
-from .ingest.scorecard import fetch_score
+from .ingest.scorecard import fetch_scorecard
 from .models import Maintainer, Version
 from .report import build_report
 from .resolve import identity_map, resolve_package
@@ -140,7 +140,9 @@ def ingest_system(
                 if not stats:
                     continue
                 if github.parse_github_repo(pkg.repo_url):
-                    stats.scorecard_score = fetch_score(client, pkg.repo_url)
+                    stats.scorecard_score, stats.scorecard_checks_json = fetch_scorecard(
+                        client, pkg.repo_url
+                    )
                 db.upsert_repo_stats(conn, [stats])
                 github_count += 1
             conn.commit()
@@ -356,6 +358,40 @@ def prioritize_impact(
     }
 
 
+def enrich_scorecard(
+    cfg: Config,
+    system: str | None = None,
+    limit: int = 500,
+) -> dict:
+    conn = _open(cfg)
+    where = [
+        "r.repo_url IS NOT NULL", "r.repo_url != ''",
+        "r.scorecard_checks_json IS NULL",
+    ]
+    params: list[object] = []
+    if system:
+        where.append("r.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT r.system, r.name, r.repo_url, p.downloads_weekly
+            FROM repo_stats r
+            LEFT JOIN packages p ON p.system = r.system AND p.name = r.name
+            WHERE {' AND '.join(where)}
+            ORDER BY p.downloads_weekly DESC LIMIT ?""",
+        [*params, limit],
+    ).fetchall()
+    updated = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            score, checks = fetch_scorecard(client, row["repo_url"])
+            if score is None and checks is None:
+                continue
+            db.update_repo_scorecard(conn, row["system"], row["name"], score, checks)
+            updated += 1
+    conn.close()
+    return {"requested": len(rows), "updated": updated}
+
+
 def enrich_findings(
     cfg: Config,
     system: str | None = None,
@@ -490,7 +526,9 @@ def enrich_github(
             if stats is None:
                 continue
             if github.parse_github_repo(row["repo_url"]):
-                stats.scorecard_score = fetch_score(client, row["repo_url"])
+                stats.scorecard_score, stats.scorecard_checks_json = fetch_scorecard(
+                    client, row["repo_url"]
+                )
             db.upsert_repo_stats(conn, [stats])
             repos += 1
             package_commits = forge.fetch_commits(
@@ -929,6 +967,23 @@ def run_alert_rules(
     return results
 
 
+def _failed_scorecard_checks(repo) -> list[str]:
+    try:
+        checks = json.loads(repo["scorecard_checks_json"] or "[]")
+    except (TypeError, ValueError):
+        return []
+    critical = {
+        "Dangerous-Workflow", "Binary-Artifacts", "Branch-Protection",
+        "Code-Review", "Maintained", "Security-Policy", "Signed-Releases",
+        "Token-Permissions", "Vulnerabilities",
+    }
+    return [
+        item.get("name") for item in checks
+        if isinstance(item, dict) and item.get("name") in critical
+        and int(item.get("score") or 0) == 0
+    ]
+
+
 def scan(cfg: Config, system: str, name: str) -> dict | None:
     conn = _open(cfg)
     score_row = conn.execute(
@@ -997,6 +1052,12 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "fan_in": int(pkg["fan_in"] or 0) if pkg else 0,
             "fan_in_transitive": int(pkg["fan_in_transitive"] or 0) if pkg else 0,
             "scorecard_score": repo["scorecard_score"] if repo else None,
+            "repo_archived": bool(repo["archived"]) if repo else None,
+            "repo_owner_type": repo["owner_type"] if repo else None,
+            "repo_stars": int(repo["stars"] or 0) if repo else None,
+            "repo_forks": int(repo["forks"] or 0) if repo else None,
+            "repo_open_issues": int(repo["open_issues"] or 0) if repo else None,
+            "scorecard_failed_checks": _failed_scorecard_checks(repo) if repo else None,
             "dependent_count": int(impact["dependent_count"] or 0) if impact else None,
             "direct_dependent_count": int(impact["direct_dependent_count"] or 0) if impact else None,
             "indirect_dependent_count": int(impact["indirect_dependent_count"] or 0) if impact else None,

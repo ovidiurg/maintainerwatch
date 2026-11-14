@@ -81,6 +81,9 @@ mw enrich-impact [--system SYSTEM] [--limit N] [--config PATH]
 # Fetch deps.dev findings (MALICIOUS/DEPRECATED/LOW_USAGE/etc.).
 mw enrich-findings [--system SYSTEM] [--limit N] [--config PATH]
 
+# Fetch individual OpenSSF Scorecard checks for existing repositories.
+mw enrich-scorecard [--system SYSTEM] [--limit N] [--config PATH]
+
 # Fetch affected-version ranges for OSV advisories (version-aware signal).
 mw backfill-osv [--system SYSTEM] [--limit N] [--malicious-only] [--config PATH]
 
@@ -271,7 +274,10 @@ A weighted sum of applicable signals, normalised to 0–100, with an
 `mw scan` also reports `evidence_coverage`; low-coverage, hygiene-only scores
 are review candidates rather than confirmed high risk. High-band scores are
 reserved for packages with behavioural evidence; obscure low-adoption packages
-use a medium-capped unsigned baseline.
+use a medium-capped unsigned baseline. Repository metadata (archived, owner
+type, stars/forks/issues) and individual Scorecard checks are exposed as context
+in `scan`/API; an experimental scored `repo_health` signal was rejected because
+it reduced validation AUC.
 See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy

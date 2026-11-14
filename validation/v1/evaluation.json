@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T16:47:56.290712+00:00",
+  "generated_at": "2026-11-14T16:55:10.280770+00:00",
   "model_version": "0.4.8",
   "dataset_dir": "validation/v1",
   "coverage": {
@@ -12,46 +12,46 @@
     "precision_at_10": 1.0,
     "precision_at_25": 1.0,
     "precision_at_50": 1.0,
-    "precision_at_100": 0.76,
-    "auc": 0.864,
-    "average_precision": 0.839,
-    "brier_score": 0.1227,
+    "precision_at_100": 0.73,
+    "auc": 0.778,
+    "average_precision": 0.785,
+    "brier_score": 0.1374,
     "calibration": [
       {
         "bin": "0-10",
-        "count": 124,
-        "mean_score": 5.7,
-        "positive_rate": 0.056
-      },
-      {
-        "bin": "10-20",
-        "count": 88,
-        "mean_score": 14.7,
-        "positive_rate": 0.227
-      },
-      {
-        "bin": "20-30",
-        "count": 51,
-        "mean_score": 23.5,
-        "positive_rate": 0.255
-      },
-      {
-        "bin": "30-40",
-        "count": 14,
-        "mean_score": 34.2,
+        "count": 28,
+        "mean_score": 7.5,
         "positive_rate": 0.143
       },
       {
+        "bin": "10-20",
+        "count": 105,
+        "mean_score": 14.9,
+        "positive_rate": 0.181
+      },
+      {
+        "bin": "20-30",
+        "count": 99,
+        "mean_score": 24.8,
+        "positive_rate": 0.172
+      },
+      {
+        "bin": "30-40",
+        "count": 44,
+        "mean_score": 33.3,
+        "positive_rate": 0.045
+      },
+      {
         "bin": "40-50",
-        "count": 7,
-        "mean_score": 42.5,
-        "positive_rate": 0.429
+        "count": 9,
+        "mean_score": 43.5,
+        "positive_rate": 0.333
       },
       {
         "bin": "50-60",
-        "count": 8,
-        "mean_score": 52.1,
-        "positive_rate": 0.875
+        "count": 7,
+        "mean_score": 52.2,
+        "positive_rate": 1
       },
       {
         "bin": "60-70",
@@ -81,33 +81,33 @@
     "thresholds": [
       {
         "threshold": 25.0,
-        "tp": 76,
-        "fp": 25,
-        "fn": 38,
-        "tn": 215,
-        "precision": 0.752,
-        "recall": 0.667,
-        "false_positive_rate": 0.104
+        "tp": 78,
+        "fp": 89,
+        "fn": 36,
+        "tn": 151,
+        "precision": 0.467,
+        "recall": 0.684,
+        "false_positive_rate": 0.371
       },
       {
         "threshold": 40.0,
         "tp": 72,
-        "fp": 5,
+        "fp": 6,
         "fn": 42,
-        "tn": 235,
-        "precision": 0.935,
+        "tn": 234,
+        "precision": 0.923,
         "recall": 0.632,
-        "false_positive_rate": 0.021
+        "false_positive_rate": 0.025
       },
       {
         "threshold": 50.0,
         "tp": 69,
-        "fp": 1,
+        "fp": 0,
         "fn": 45,
-        "tn": 239,
-        "precision": 0.986,
+        "tn": 240,
+        "precision": 1.0,
         "recall": 0.605,
-        "false_positive_rate": 0.004
+        "false_positive_rate": 0.0
       },
       {
         "threshold": 60.0,
@@ -129,49 +129,49 @@
       "threshold_40": {
         "threshold": 40.0,
         "tp": 1,
-        "fp": 5,
+        "fp": 6,
         "fn": 0,
-        "tn": 235,
-        "precision": 0.167,
+        "tn": 234,
+        "precision": 0.143,
         "recall": 1.0,
-        "false_positive_rate": 0.021
+        "false_positive_rate": 0.025
       }
     },
     "2025": {
       "count": 2,
-      "auc": 0.507,
-      "average_precision": 0.254,
+      "auc": 0.67,
+      "average_precision": 0.173,
       "threshold_40": {
         "threshold": 40.0,
         "tp": 1,
-        "fp": 5,
+        "fp": 6,
         "fn": 1,
-        "tn": 235,
-        "precision": 0.167,
+        "tn": 234,
+        "precision": 0.143,
         "recall": 0.5,
-        "false_positive_rate": 0.021
+        "false_positive_rate": 0.025
       }
     },
     "2026": {
       "count": 111,
-      "auc": 0.869,
-      "average_precision": 0.839,
+      "auc": 0.778,
+      "average_precision": 0.783,
       "threshold_40": {
         "threshold": 40.0,
         "tp": 70,
-        "fp": 5,
+        "fp": 6,
         "fn": 41,
-        "tn": 235,
-        "precision": 0.933,
+        "tn": 234,
+        "precision": 0.921,
         "recall": 0.631,
-        "false_positive_rate": 0.021
+        "false_positive_rate": 0.025
       }
     }
   },
   "positives_by_attack_type": {
     "malicious_package": {
       "count": 110,
-      "mean_score": 51.0,
+      "mean_score": 51.6,
       "median_score": 62.9,
       "high_band": 69
     },
@@ -183,15 +183,15 @@
     },
     "worm": {
       "count": 2,
-      "mean_score": 21.2,
-      "median_score": 21.2,
+      "mean_score": 29.4,
+      "median_score": 29.4,
       "high_band": 0
     }
   },
   "positives_by_priority": {
     "high": {
       "count": 114,
-      "mean_score": 50.0,
+      "mean_score": 50.7,
       "median_score": 62.9,
       "high_band": 69
     }
@@ -199,7 +199,7 @@
   "positives_by_system": {
     "npm": {
       "count": 113,
-      "mean_score": 50.0,
+      "mean_score": 50.7,
       "median_score": 62.9,
       "high_band": 68
     },
@@ -213,14 +213,14 @@
   "negatives_by_system": {
     "npm": {
       "count": 120,
-      "mean_score": 12.8,
-      "median_score": 9.6,
-      "high_band": 1
+      "mean_score": 22.1,
+      "median_score": 21.7,
+      "high_band": 0
     },
     "pypi": {
       "count": 120,
-      "mean_score": 14.0,
-      "median_score": 10.1,
+      "mean_score": 21.1,
+      "median_score": 21.0,
       "high_band": 0
     }
   }

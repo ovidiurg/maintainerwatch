@@ -56,6 +56,12 @@ class RepoStats(BaseModel):
     last_commit_at: str | None = None
     scorecard_score: float | None = None
     license: str | None = None
+    archived: bool = False
+    owner_type: str | None = None
+    stars: int = 0
+    forks: int = 0
+    open_issues: int = 0
+    scorecard_checks_json: str | None = None
 
 
 class IdentityLink(BaseModel):

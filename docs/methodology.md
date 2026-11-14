@@ -121,6 +121,14 @@ excluded from the graph.
 A signal that cannot be computed (for example, no repository data) is marked
 `applicable = false` and excluded from the score rather than counted as zero.
 
+## Repository context
+
+`mw enrich-github` stores repository metadata (archived, owner type, stars,
+forks, open issues) and `mw enrich-scorecard` stores individual OpenSSF
+Scorecard checks. These are exposed in `scan`/API context. A scored
+`repo_health` experiment was rejected because it reduced validation AUC; the
+overall `scorecard` signal remains in the model.
+
 ## Impact
 
 Impact is separate from risk. `mw enrich-impact` reads deps.dev dependent

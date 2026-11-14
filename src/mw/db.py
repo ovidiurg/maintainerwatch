@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS repo_stats (
   system TEXT NOT NULL, name TEXT NOT NULL, repo_url TEXT,
   owner TEXT, owner_created_at TEXT, contributors_12m INTEGER DEFAULT 0,
   top_author_share REAL DEFAULT 0, last_commit_at TEXT, scorecard_score REAL,
-  license TEXT,
+  license TEXT, archived INTEGER DEFAULT 0, owner_type TEXT,
+  stars INTEGER DEFAULT 0, forks INTEGER DEFAULT 0, open_issues INTEGER DEFAULT 0,
+  scorecard_checks_json TEXT,
   PRIMARY KEY (system, name)
 );
 
@@ -127,6 +129,12 @@ def init_db(conn: sqlite3.Connection) -> None:
     _ensure_column(conn, "osv", "affected_json", "TEXT")
     _ensure_column(conn, "osv", "summary", "TEXT")
     _ensure_column(conn, "osv", "modified_at", "TEXT")
+    _ensure_column(conn, "repo_stats", "archived", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "repo_stats", "owner_type", "TEXT")
+    _ensure_column(conn, "repo_stats", "stars", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "repo_stats", "forks", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "repo_stats", "open_issues", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "repo_stats", "scorecard_checks_json", "TEXT")
     conn.commit()
 
 
@@ -214,15 +222,17 @@ def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> N
     rows = [
         (s.system, s.name, s.repo_url, s.owner, s.owner_created_at,
          s.contributors_12m, s.top_author_share, s.last_commit_at,
-         s.scorecard_score, s.license)
+         s.scorecard_score, s.license, int(s.archived), s.owner_type,
+         s.stars, s.forks, s.open_issues, s.scorecard_checks_json)
         for s in stats
     ]
     conn.executemany(
         """INSERT INTO repo_stats
              (system, name, repo_url, owner, owner_created_at,
               contributors_12m, top_author_share, last_commit_at,
-              scorecard_score, license)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              scorecard_score, license, archived, owner_type, stars, forks,
+              open_issues, scorecard_checks_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(system, name) DO UPDATE SET
              repo_url=COALESCE(excluded.repo_url, repo_stats.repo_url),
              owner=COALESCE(excluded.owner, repo_stats.owner),
@@ -231,8 +241,31 @@ def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> N
              top_author_share=excluded.top_author_share,
              last_commit_at=COALESCE(excluded.last_commit_at, repo_stats.last_commit_at),
              scorecard_score=COALESCE(excluded.scorecard_score, repo_stats.scorecard_score),
-             license=COALESCE(excluded.license, repo_stats.license)""",
+             license=COALESCE(excluded.license, repo_stats.license),
+             archived=excluded.archived,
+             owner_type=COALESCE(excluded.owner_type, repo_stats.owner_type),
+             stars=excluded.stars,
+             forks=excluded.forks,
+             open_issues=excluded.open_issues,
+             scorecard_checks_json=COALESCE(excluded.scorecard_checks_json, repo_stats.scorecard_checks_json)""",
         rows,
+    )
+    conn.commit()
+
+
+def update_repo_scorecard(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    score: float | None,
+    checks_json: str | None,
+) -> None:
+    conn.execute(
+        """UPDATE repo_stats
+           SET scorecard_score=COALESCE(?, scorecard_score),
+               scorecard_checks_json=COALESCE(?, scorecard_checks_json)
+           WHERE system=? AND name=?""",
+        (score, checks_json, system, name),
     )
     conn.commit()
 

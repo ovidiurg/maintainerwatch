@@ -84,6 +84,11 @@ def fetch_repo_stats(
         last_commit_at=meta.get("pushed_at") or meta.get("updated_at"),
         scorecard_score=None,
         license=repo_license,
+        archived=bool(meta.get("archived")),
+        owner_type=(meta.get("owner") or {}).get("type"),
+        stars=int(meta.get("stargazers_count") or 0),
+        forks=int(meta.get("forks_count") or 0),
+        open_issues=int(meta.get("open_issues_count") or 0),
     )
 
 

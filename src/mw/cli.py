@@ -145,6 +145,17 @@ def enrich_findings_cmd(
     typer.echo(json.dumps(pipeline.enrich_findings(cfg, system, limit)))
 
 
+@app.command("enrich-scorecard")
+def enrich_scorecard_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    limit: int = typer.Option(500, help="Maximum repositories to enrich."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Fetch individual OpenSSF Scorecard checks for existing repos."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.enrich_scorecard(cfg, system, limit)))
+
+
 @app.command("enrich-impact")
 def enrich_impact_cmd(
     system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
