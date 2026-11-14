@@ -19,14 +19,6 @@
       <a href="https://github.com/ovidiurg/maintainerwatch">GitHub</a>
     </div>
   </nav>
-  <aside class="disclaimer" role="note" aria-label="Important interpretation note">
-    <strong>Scores are risk indicators, not verdicts.</strong>
-    <span>
-      A high score means the package deserves review; it does not mean the
-      package is malicious or “attackable”. Medium/high rows in the report
-      include a short risk type, description and next investigation step.
-    </span>
-  </aside>
   <div class="hero-copy">
     <p class="eyebrow">Open source · Python · SQLite · FastAPI</p>
     <h1>Risk intelligence for the people behind packages.</h1>
@@ -118,10 +110,18 @@ mw report --out data/report.html</code></pre>
       Then run <code>mw serve --host 127.0.0.1 --port 8000</code> for the
       read-only API, or <code>mw alerts --min-score 40</code> for a first triage list.
     </p>
+    <aside class="disclaimer" role="note" aria-label="Important interpretation note">
+      <strong>Scores are risk indicators, not verdicts.</strong>
+      <span>
+        A high score means the package deserves review; it does not mean the
+        package is malicious or “attackable”. Medium/high rows in the report
+        include a short risk type, description and next investigation step.
+      </span>
+    </aside>
   </section>
 
   <section id="validation">
-    <h2>Validation, not vibes</h2>
+    <h2>Validation</h2>
     <p class="section-lede">
       The project publishes a case-control dataset and a reproducible evaluation
       harness. Current-state metrics are a calibration baseline, not a claim of

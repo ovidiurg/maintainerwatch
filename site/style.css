@@ -57,6 +57,12 @@ nav {
   white-space: nowrap;
 }
 .disclaimer span { max-width: 92ch; }
+#quickstart .disclaimer {
+  margin-top: 2rem;
+  border: 1px solid #f0c36d;
+  border-radius: 0.8rem;
+}
+#quickstart .disclaimer strong { white-space: normal; }
 @media (max-width: 520px) {
   .disclaimer { padding: 0.9rem 1rem; }
   .disclaimer strong { white-space: normal; }
@@ -150,6 +156,12 @@ footer { border-top: 1px solid var(--line); color: var(--muted); text-align: cen
   white-space: nowrap;
 }
 .disclaimer span { max-width: 92ch; }
+#quickstart .disclaimer {
+  margin-top: 2rem;
+  border: 1px solid #f0c36d;
+  border-radius: 0.8rem;
+}
+#quickstart .disclaimer strong { white-space: normal; }
 @media (max-width: 520px) {
   .disclaimer { padding: 0.9rem 1rem; }
   .disclaimer strong { white-space: normal; }
