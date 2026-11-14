@@ -111,6 +111,7 @@ Score and evaluate the committed validation dataset in a separate database:
 ```bash
 mw score-all --config config/validation.yaml
 mw evaluate-validation --config config/validation.yaml
+mw evaluate-ablations --config config/validation.yaml
 # optional: --dataset validation/v1 --max-positives N --max-controls N
 ```
 

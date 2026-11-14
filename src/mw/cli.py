@@ -183,6 +183,30 @@ def enrich_impact_cmd(
     typer.echo(json.dumps(pipeline.enrich_impact(cfg, system, limit)))
 
 
+@app.command("evaluate-ablations")
+def evaluate_ablations_cmd(
+    dataset: str = typer.Option("validation/v1", help="Validation dataset directory."),
+    since: Optional[str] = typer.Option(None, help="Only positives at/after this ISO date."),
+    until: Optional[str] = typer.Option(None, help="Only positives at/before this ISO date."),
+    out: Optional[str] = typer.Option(None, help="Write JSON to this path."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Leave-one-signal-out validation metrics."""
+    cfg = load_config(config)
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    result = validation.evaluate_ablations(
+        conn, cfg, dataset, since=since, until=until
+    )
+    conn.close()
+    payload = json.dumps(result, indent=2)
+    if out:
+        Path(out).write_text(payload, encoding="utf-8")
+        typer.echo(json.dumps({"path": out}))
+    else:
+        typer.echo(payload)
+
+
 @app.command("enrich-github")
 def enrich_github_cmd(
     system: Optional[str] = typer.Option(None, help="Only this ecosystem."),

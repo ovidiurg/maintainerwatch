@@ -151,6 +151,9 @@ mw evaluate-validation --config config/validation.yaml
 # Options: --dataset validation/v1 --max-positives N --max-controls N
 #          --since ISO_DATE --until ISO_DATE (temporal positive slice)
 
+# Leave-one-signal-out metrics; always pass the validation config.
+mw evaluate-ablations --config config/validation.yaml --out data/ablations.json
+
 # Obscure-package calibration sample (data/ is local, not committed).
 python scripts/prepare_obscure_controls.py
 python scripts/prepare_mvp_seeds.py

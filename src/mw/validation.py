@@ -289,6 +289,94 @@ def evaluate(
     return result
 
 
+def evaluate_ablations(
+    conn,
+    cfg: Config,
+    dataset_dir: str | Path = ROOT / "validation" / "v1",
+    since: str | None = None,
+    until: str | None = None,
+) -> dict[str, Any]:
+    """Leave-one-signal-out metrics on the validation case-control sample."""
+    from .signals import SIGNALS
+
+    dataset_dir = Path(dataset_dir)
+    incidents, packages, controls = load_dataset(dataset_dir)
+    incident_by_id = {item["incident_id"]: item for item in incidents}
+    positives: dict[tuple[str, str], dict] = {}
+    for package in packages:
+        incident = incident_by_id.get(package.get("incident_id"), {})
+        cutoff = incident.get("observation_cutoff") or ""
+        key = (package.get("system"), package.get("package"))
+        record = {"cutoff": cutoff, "package": package.get("package")}
+        if key not in positives or cutoff < (positives[key].get("cutoff") or "9999"):
+            positives[key] = record
+    controls_by_key = {
+        (item.get("system"), item.get("package")): {}
+        for item in controls
+    }
+    scores = {
+        (row["system"], row["name"]): float(row["score"])
+        for row in conn.execute(
+            "SELECT system, name, score FROM scores WHERE model_version=?",
+            (cfg.model_version,),
+        )
+    }
+    rows = {}
+    for row in conn.execute(
+        "SELECT system, name, signal_type, value, band FROM signals "
+        "WHERE model_version=?", (cfg.model_version,)
+    ):
+        rows.setdefault((row["system"], row["name"]), {})[row["signal_type"]] = (
+            float(row["value"]), bool(row["band"])
+        )
+    allowed = set(SIGNALS)
+    keys = [key for key in scores if key in positives or key in controls_by_key]
+    if since:
+        keys = [key for key in keys if key not in positives or (positives[key]["cutoff"] or "") >= since]
+    if until:
+        keys = [key for key in keys if key not in positives or (positives[key]["cutoff"] or "") <= until]
+    pos_keys = [key for key in keys if key in positives]
+    neg_keys = [key for key in keys if key in controls_by_key]
+
+    def score(key: str, weights: dict[str, int]) -> float:
+        applicable = {
+            name: value for name, (value, active) in rows.get(key, {}).items()
+            if active and name in weights and name in allowed
+        }
+        total = sum(weights[name] for name in applicable)
+        if not total:
+            return 0.0
+        return round(100.0 * sum(weights[name] * value for name, value in applicable.items()) / total, 1)
+
+    def metrics(weights: dict[str, int]) -> dict:
+        pos = [score(key, weights) for key in pos_keys]
+        neg = [score(key, weights) for key in neg_keys]
+        return {
+            "auc": auc(pos, neg),
+            "average_precision": average_precision(pos, neg),
+            "threshold_40": threshold_metrics(pos, neg, 40.0),
+            "threshold_50": threshold_metrics(pos, neg, 50.0),
+        }
+
+    baseline = metrics(cfg.weights)
+    ablations = {}
+    for name in sorted(SIGNALS):
+        if name not in cfg.weights:
+            continue
+        weights = dict(cfg.weights)
+        weights.pop(name, None)
+        result = metrics(weights)
+        result["delta_auc"] = round(
+            (result["auc"] or 0.0) - (baseline["auc"] or 0.0), 3
+        )
+        ablations[name] = result
+    return {
+        "model_version": cfg.model_version,
+        "baseline": baseline,
+        "ablations": ablations,
+    }
+
+
 def _markdown_report(result: dict) -> str:
     coverage = result["coverage"]
     metrics = result["metrics"]

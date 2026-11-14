@@ -221,7 +221,9 @@ ranked target lists or maintainer dossiers. See the dual-use section in
 
 The case-control evaluator reports precision@k, ROC-AUC, PR-AUC/average
 precision, Brier score, calibration bins and metrics grouped by incident cutoff
-year. Temporal groups are small; use them for diagnostics rather than claims of
+year. `mw evaluate-ablations --config config/validation.yaml` reports
+leave-one-signal-out deltas; use it as a diagnostic, not a license to overfit
+the small validation sample. Temporal groups are small; use them for diagnostics rather than claims of
 predictive performance.
 
 The MVP replays known incidents (event-stream, ua-parser-js, colors, node-ipc,

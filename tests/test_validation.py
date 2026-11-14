@@ -85,6 +85,8 @@ def test_evaluate_synthetic(tmp_path):
     db.init_db(conn)
     for name, score in (("bad-a", 70.0), ("bad-b", 30.0), ("good-a", 20.0), ("good-b", 10.0)):
         db.record_score(conn, "npm", name, score, "medium", cfg.model_version, "hash", "2026-01-01")
+    db.record_signal(conn, "npm", "bad-a", "publisher_change", 1.0, "high", "{}", cfg.model_version, "2026-01-01")
+    db.record_signal(conn, "npm", "bad-b", "publisher_change", 0.0, "low", "{}", cfg.model_version, "2026-01-01")
     conn.commit()
 
     result = validation.evaluate(conn, cfg, dataset, write_report=False)
@@ -96,6 +98,11 @@ def test_evaluate_synthetic(tmp_path):
     assert result["metrics"]["average_precision"] == 1.0
     assert result["metrics"]["brier_score"] is not None
     assert result["temporal"]["2024"]["count"] == 2
+
+    ablations = validation.evaluate_ablations(conn, cfg, dataset)
+    assert "baseline" in ablations
+    assert "publisher_change" in ablations["ablations"]
+    assert "delta_auc" in ablations["ablations"]["publisher_change"]
 
     filtered = validation.evaluate(
         conn, cfg, dataset, since="2025-01-01T00:00:00Z", write_report=False,
