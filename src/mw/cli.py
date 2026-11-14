@@ -131,6 +131,17 @@ def prioritize_impact_cmd(
     ))
 
 
+@app.command("enrich-findings")
+def enrich_findings_cmd(
+    system: Optional[str] = typer.Option(None, help="Only this ecosystem."),
+    limit: int = typer.Option(500, help="Maximum packages to enrich."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Fetch deps.dev findings for high-download packages."""
+    cfg = load_config(config)
+    typer.echo(json.dumps(pipeline.enrich_findings(cfg, system, limit)))
+
+
 @app.command("enrich-impact")
 def enrich_impact_cmd(
     system: Optional[str] = typer.Option(None, help="Only this ecosystem."),

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-14T14:15:43.990045+00:00",
-  "model_version": "0.4.7",
+  "generated_at": "2026-11-14T16:37:44.057456+00:00",
+  "model_version": "0.4.8",
   "dataset_dir": "validation/v1",
   "coverage": {
     "positives_in_dataset": 29166,
@@ -12,47 +12,47 @@
     "precision_at_10": 1.0,
     "precision_at_25": 1.0,
     "precision_at_50": 1.0,
-    "precision_at_100": 0.75,
-    "auc": 0.857,
+    "precision_at_100": 0.76,
+    "auc": 0.864,
     "thresholds": [
       {
         "threshold": 25.0,
         "tp": 76,
-        "fp": 26,
+        "fp": 25,
         "fn": 38,
-        "tn": 214,
-        "precision": 0.745,
+        "tn": 215,
+        "precision": 0.752,
         "recall": 0.667,
-        "false_positive_rate": 0.108
+        "false_positive_rate": 0.104
       },
       {
         "threshold": 40.0,
-        "tp": 70,
+        "tp": 72,
         "fp": 5,
-        "fn": 44,
+        "fn": 42,
         "tn": 235,
-        "precision": 0.933,
-        "recall": 0.614,
+        "precision": 0.935,
+        "recall": 0.632,
         "false_positive_rate": 0.021
       },
       {
         "threshold": 50.0,
-        "tp": 63,
+        "tp": 69,
         "fp": 1,
-        "fn": 51,
+        "fn": 45,
         "tn": 239,
-        "precision": 0.984,
-        "recall": 0.553,
+        "precision": 0.986,
+        "recall": 0.605,
         "false_positive_rate": 0.004
       },
       {
         "threshold": 60.0,
-        "tp": 63,
+        "tp": 62,
         "fp": 0,
-        "fn": 51,
+        "fn": 52,
         "tn": 240,
         "precision": 1.0,
-        "recall": 0.553,
+        "recall": 0.544,
         "false_positive_rate": 0.0
       }
     ]
@@ -60,55 +60,55 @@
   "positives_by_attack_type": {
     "malicious_package": {
       "count": 110,
-      "mean_score": 47.3,
-      "median_score": 60.0,
-      "high_band": 63
+      "mean_score": 51.0,
+      "median_score": 62.9,
+      "high_band": 69
     },
     "typosquat": {
       "count": 2,
-      "mean_score": 19.2,
-      "median_score": 19.2,
+      "mean_score": 24.6,
+      "median_score": 24.6,
       "high_band": 0
     },
     "worm": {
       "count": 2,
-      "mean_score": 22.5,
-      "median_score": 22.5,
+      "mean_score": 21.2,
+      "median_score": 21.2,
       "high_band": 0
     }
   },
   "positives_by_priority": {
     "high": {
       "count": 114,
-      "mean_score": 46.3,
-      "median_score": 60.0,
-      "high_band": 63
+      "mean_score": 50.0,
+      "median_score": 62.9,
+      "high_band": 69
     }
   },
   "positives_by_system": {
     "npm": {
       "count": 113,
-      "mean_score": 46.4,
-      "median_score": 60.0,
-      "high_band": 63
+      "mean_score": 50.0,
+      "median_score": 62.9,
+      "high_band": 68
     },
     "pypi": {
       "count": 1,
-      "mean_score": 40.0,
-      "median_score": 40.0,
-      "high_band": 0
+      "mean_score": 57.1,
+      "median_score": 57.1,
+      "high_band": 1
     }
   },
   "negatives_by_system": {
     "npm": {
       "count": 120,
-      "mean_score": 12.5,
-      "median_score": 9.4,
+      "mean_score": 12.8,
+      "median_score": 9.6,
       "high_band": 1
     },
     "pypi": {
       "count": 120,
-      "mean_score": 13.7,
+      "mean_score": 14.0,
       "median_score": 10.1,
       "high_band": 0
     }

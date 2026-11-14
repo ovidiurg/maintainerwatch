@@ -8,7 +8,7 @@ describe packages (`deps.dev`), vulnerabilities (`OSV`) or repository practices
 (`OpenSSF Scorecard`), but not the people behind packages across ecosystems.
 
 MaintainerWatch ingests public package metadata, resolves maintainer identities
-with explicit confidence levels, derives twelve explainable risk signals and
+with explicit confidence levels, derives thirteen explainable risk signals and
 publishes a versioned open dataset plus a CLI/report.
 
 ## Scope
@@ -28,7 +28,8 @@ publishes a versioned open dataset plus a CLI/report.
   9. `scorecard` — low OpenSSF Scorecard repository score
   10. `dependency_risk` — high transitive fan-in / dependency footprint
   11. `osv_risk` — version-aware MAL/CVE advisory affecting the current release
-  12. `install_script` — suspicious npm install/postinstall content
+  12. `depsdev_findings` — version-aware malicious/deprecated/low-usage findings
+  13. `install_script` — suspicious npm install/postinstall content
 - Context: OSV vulnerability counts and the dependency graph.
 - Identity resolution (minimal, passive): Keybase proofs, GitHub commit
   emails, GPG keyservers and PyPI PEP 740 provenance. No social-media scraping.
@@ -76,6 +77,9 @@ mw enrich-github [--system SYSTEM] [--limit N] [--pages N] [--config PATH]
 
 # Fetch deps.dev dependent counts for high-download packages.
 mw enrich-impact [--system SYSTEM] [--limit N] [--config PATH]
+
+# Fetch deps.dev findings (MALICIOUS/DEPRECATED/LOW_USAGE/etc.).
+mw enrich-findings [--system SYSTEM] [--limit N] [--config PATH]
 
 # Fetch affected-version ranges for OSV advisories (version-aware signal).
 mw backfill-osv [--system SYSTEM] [--limit N] [--malicious-only] [--config PATH]
@@ -215,7 +219,7 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.857, precision@25 1.0, and at threshold 40 precision 0.933 / recall 0.614 /
+0.864, precision@25 1.0, and at threshold 40 precision 0.935 / recall 0.632 /
 FPR 0.021. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
@@ -234,7 +238,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 582,496 versions, 242,652 commits, 11,018 maintainers, 1,375 repositories,
   4,967 OSV records, 18,612 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 38 high, 1,650 medium, 4,375 low. OIDC/bot publishers are ignored.
+- Risk bands: 38 high, 1,648 medium, 4,377 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -246,13 +250,13 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - Pre-incident replay: event-stream 59.0, colors 27.3, node-ipc 24.1,
   ua-parser-js 25.0, xz-utils 39.3. At threshold 40 the 27-package benign
   sample gives precision 0.333, recall 0.400, false-positive rate 0.148.
-- Validation sample: 69 of 114 known positives at threshold 40 (precision
-  0.932, FPR 0.021); 44 at threshold 50. The main MVP DB has no labelled
+- Validation sample: 72 of 114 known positives at threshold 40 (precision
+  0.935, FPR 0.021); 69 at threshold 50. The main MVP DB has no labelled
   positives; validation is the true-positive evidence.
 - GitHub enrichment is impact-ranked and bounded: the latest pass covered 90
   repositories and 11,335 commits with a two-page commit window.
   Install-script scanning flags only high-risk npm install scripts.
-- Bulk package ingestion used `--no-github`; SQLite is 307 MB and the request
+- Bulk package ingestion used `--no-github`; SQLite is 328 MB and the request
   cache is 4.4 GB.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).

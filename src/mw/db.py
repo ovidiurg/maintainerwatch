@@ -79,6 +79,12 @@ CREATE TABLE IF NOT EXISTS dependencies (
   PRIMARY KEY (system, name, version, dep_system, dep_name)
 );
 
+CREATE TABLE IF NOT EXISTS package_findings (
+  system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
+  findings_json TEXT, updated_at TEXT,
+  PRIMARY KEY (system, name)
+);
+
 CREATE TABLE IF NOT EXISTS package_impact (
   system TEXT NOT NULL, name TEXT NOT NULL, version TEXT,
   dependent_count INTEGER, direct_dependent_count INTEGER,
@@ -575,6 +581,29 @@ def delete_package(conn: sqlite3.Connection, system: str, name: str) -> dict[str
     counts["inbound_dependencies"] = cur.rowcount
     conn.commit()
     return counts
+
+
+def upsert_findings(
+    conn: sqlite3.Connection,
+    rows: list[tuple],
+) -> None:
+    conn.executemany(
+        """INSERT INTO package_findings
+             (system, name, version, findings_json, updated_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(system, name) DO UPDATE SET
+             version=excluded.version,
+             findings_json=excluded.findings_json,
+             updated_at=excluded.updated_at""",
+        rows,
+    )
+    conn.commit()
+
+
+def get_findings(conn: sqlite3.Connection, system: str, name: str):
+    return conn.execute(
+        "SELECT * FROM package_findings WHERE system=? AND name=?", (system, name)
+    ).fetchone()
 
 
 def upsert_impact(conn: sqlite3.Connection, rows: list[tuple]) -> None:

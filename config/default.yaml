@@ -28,6 +28,7 @@ weights:
   dependency_risk: 15
   install_script: 15
   osv_risk: 10
+  depsdev_findings: 10
   package_age: 10
 
 # Confidence levels accepted for identity-gated signals.
@@ -45,7 +46,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.4.7"
+model_version: "0.4.8"
 
 alerts:
   rules:

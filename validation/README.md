@@ -28,13 +28,16 @@ packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.857 |
+| AUC | 0.864 |
 | Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 0.98 / 0.75 |
-| Threshold 40: precision / recall / FPR | 0.933 / 0.614 / 0.021 |
-| Threshold 50: precision / recall / FPR | 0.984 / 0.553 / 0.004 |
+| Threshold 40: precision / recall / FPR | 0.935 / 0.632 / 0.021 |
+| Threshold 50: precision / recall / FPR | 0.986 / 0.605 / 0.004 |
 
 The sample is npm-heavy and dominated by `malicious_package`; the takeover
-slice is reported separately in `docs/incident-validation.md`. See
+slice is reported separately in `docs/incident-validation.md`. OSV and deps.dev
+findings are known-advisory signals, so current-state metrics can overlap with
+the label sources; treat them as triage evidence, not independent predictive
+proof. See
 `docs/validation/evaluation.md` for the generated report and caveats.
 
 ## Pre-incident replay

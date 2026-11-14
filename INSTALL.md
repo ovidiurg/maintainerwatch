@@ -75,6 +75,7 @@ mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw enrich-github --limit 100       # bounded repo stats, Scorecard and commits
 mw enrich-impact --limit 500       # deps.dev dependent counts for impact ranking
+mw enrich-findings --limit 500     # deps.dev malicious/deprecated findings
 mw backfill-osv --limit 500        # version-aware OSV affected ranges
 mw backfill-deps
 mw backfill-licenses

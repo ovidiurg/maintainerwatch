@@ -15,7 +15,7 @@ from . import db, snapshots
 from .config import Config
 from .impact import impact_score, impact_tier
 from .export import export_dataset
-from .ingest import crates, depsdev, downloads, forge, github, github_repo, maven, npm, osv, pypi
+from .ingest import crates, depsdev, downloads, findings, forge, github, github_repo, maven, npm, osv, pypi
 from .ingest.http import CachedClient
 from .ingest.scorecard import fetch_score
 from .models import Maintainer, Version
@@ -354,6 +354,51 @@ def prioritize_impact(
         "missing_dependency_candidates": [dict(row) for row in deps],
         "seed_files": paths,
     }
+
+
+def enrich_findings(
+    cfg: Config,
+    system: str | None = None,
+    limit: int = 500,
+) -> dict:
+    conn = _open(cfg)
+    where = ["f.name IS NULL", "p.downloads_weekly > 0"]
+    params: list[object] = []
+    if system:
+        where.append("p.system = ?")
+        params.append(system)
+    rows = conn.execute(
+        f"""SELECT p.system, p.name,
+                   (SELECT v.version FROM versions v
+                    WHERE v.system = p.system AND v.name = p.name
+                    ORDER BY COALESCE(v.published_at, '') DESC LIMIT 1) AS version
+            FROM packages p
+            LEFT JOIN package_findings f
+              ON f.system = p.system AND f.name = p.name
+            WHERE {' AND '.join(where)}
+            ORDER BY p.downloads_weekly DESC, p.fan_in_transitive DESC
+            LIMIT ?""",
+        [*params, limit],
+    ).fetchall()
+    updated = 0
+    with make_client(cfg) as client:
+        for row in rows:
+            doc = findings.fetch_findings(
+                client, row["system"], row["name"], row["version"]
+            )
+            if doc is None:
+                continue
+            db.upsert_findings(
+                conn,
+                [(
+                    row["system"], row["name"], row["version"],
+                    json.dumps(doc, sort_keys=True),
+                    datetime.now(timezone.utc).isoformat(),
+                )],
+            )
+            updated += 1
+    conn.close()
+    return {"requested": len(rows), "updated": updated}
 
 
 def enrich_impact(

@@ -83,3 +83,9 @@ def test_osv_signal_cve_is_moderate(conn):
     )])
     ev = osv_risk.compute(Context(conn=conn, system="npm", name="pkg"))
     assert ev.value == 0.5
+
+
+def test_osv_mismatch_and_invalid_payload():
+    assert affected("not-json", "npm", "pkg", "1.0.0") is False
+    assert affected(_affected([{"introduced": "0"}]), "pypi", "other", "1.0.0") is False
+    assert affected(_affected([{"introduced": "2.0.0"}]), "npm", "pkg", "1.0.0") is False

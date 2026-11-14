@@ -1,6 +1,6 @@
 # Validation evaluation
 
-Generated: 2026-11-14T14:15:43.990045+00:00 · model 0.4.7
+Generated: 2026-11-14T16:37:44.057456+00:00 · model 0.4.8
 
 > Baseline: current-state scores from the validation ingest, not a pre-incident replay. Use it to compare model versions on the same sample.
 
@@ -18,25 +18,25 @@ Generated: 2026-11-14T14:15:43.990045+00:00 · model 0.4.7
 | Precision@10 | 1.0 |
 | Precision@25 | 1.0 |
 | Precision@50 | 1.0 |
-| Precision@100 | 0.75 |
-| AUC | 0.857 |
+| Precision@100 | 0.76 |
+| AUC | 0.864 |
 
 ## Threshold metrics
 
 | Threshold | TP | FP | FN | TN | Precision | Recall | FPR |
 |---|---|---|---|---|---|---|---|
-| 25.0 | 76 | 26 | 38 | 214 | 0.745 | 0.667 | 0.108 |
-| 40.0 | 70 | 5 | 44 | 235 | 0.933 | 0.614 | 0.021 |
-| 50.0 | 63 | 1 | 51 | 239 | 0.984 | 0.553 | 0.004 |
-| 60.0 | 63 | 0 | 51 | 240 | 1.0 | 0.553 | 0.0 |
+| 25.0 | 76 | 25 | 38 | 215 | 0.752 | 0.667 | 0.104 |
+| 40.0 | 72 | 5 | 42 | 235 | 0.935 | 0.632 | 0.021 |
+| 50.0 | 69 | 1 | 45 | 239 | 0.986 | 0.605 | 0.004 |
+| 60.0 | 62 | 0 | 52 | 240 | 1.0 | 0.544 | 0.0 |
 
 ## Positives by attack type
 
 | Type | Count | Mean | Median | High |
 |---|---|---|---|---|
-| malicious_package | 110 | 47.3 | 60.0 | 63 |
-| typosquat | 2 | 19.2 | 19.2 | 0 |
-| worm | 2 | 22.5 | 22.5 | 0 |
+| malicious_package | 110 | 51.0 | 62.9 | 69 |
+| typosquat | 2 | 24.6 | 24.6 | 0 |
+| worm | 2 | 21.2 | 21.2 | 0 |
 
 ## Takeover slice
 

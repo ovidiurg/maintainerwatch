@@ -63,6 +63,7 @@ to the same canonical identity.
 | `dependency_risk` | 15 | Log-scaled transitive fan-in (200+ dependents = 1.0) plus a smaller fan-out component. |
 | `install_script` | 15 | npm preinstall/install/postinstall/prepare scripts: only high-risk download/eval/child-process patterns make the signal applicable. |
 | `osv_risk` | 10 | Version-aware OSV match: a `MAL-*` advisory affecting the current version scores 1.0; another current advisory scores 0.5. Historical advisories fixed before the current version are not applicable. |
+| `depsdev_findings` | 10 | deps.dev version findings: `MALICIOUS` 1.0, `VULNERABLE` 0.5, `DEPRECATED` 0.4, `LOW_USAGE` 0.3, `COOLDOWN` 0.2. |
 | `package_age` | 10 | Replay-only signal: age of the first release before the cutoff; younger packages score higher. |
 
 ## License sources
