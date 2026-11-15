@@ -199,10 +199,14 @@ mw score-all --config config/validation-obscure.yaml
 ```bash
 mw export [--format parquet|csv|json|spdx|cyclonedx|osv] [--config PATH]
 mw report [--out report.html] [--config PATH]
+mw calibrate --candidate config/calibration-candidate.yaml [--fail-on-regression]
 ```
 
 `mw export` writes under the configured `data_dir`; `mw report` builds a static
-HTML report. Rows with medium/high scores include a short risk type, description
+HTML report. `mw calibrate` compares candidate weights against the baseline on
+the temporal validation samples; see [`docs/calibration.md`](docs/calibration.md).
+
+Rows with medium/high scores include a short risk type, description
 and next investigation step; impact is shown separately as deps.dev dependent
 count plus a tier (low/medium/high/critical). Standard outputs are JSON, SPDX 2.3, CycloneDX 1.5
 and OSV-compatible JSON.
@@ -230,7 +234,9 @@ make clean               # remove build artifacts
 CI runs the test suite on Python 3.11–3.13, including API tests, compileall and
 secret scanning. Coverage is enforced at 75% over the core model/API code; the
 network ingestion adapters and CLI entrypoint are excluded from the coverage
-denominator.
+denominator. Docker smoke runs on pull requests that touch code, Docker,
+`pyproject.toml`, `docker-compose.yml` or `config/`, and on manual
+`workflow_dispatch` with `docker_smoke=true`.
 
 Authentication is read from `GITHUB_TOKEN`/`GITLAB_TOKEN`, with automatic
 fallback to `gh auth token`; `MAINTAINERWATCH_API_KEY` protects the API.
@@ -258,6 +264,9 @@ make check            # tests, build and twine check
 make docker           # container image
 docker compose up -d --build      # serve on :8000 with ./data mounted
 make docker-report    # write ./data/report.html from the container
+make docker-smoke     # full image/CLI/report/API smoke test
+make calibration      # compare candidate weights with the baseline
+make calibration-drift # render append-only calibration history
 ```
 
 Docker report workflow:
@@ -304,7 +313,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.15 · model 0.5.2)
+## Results (MVP, 15 November 2026 · app 0.4.16 · model 0.5.2)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,

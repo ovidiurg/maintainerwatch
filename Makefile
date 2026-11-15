@@ -1,6 +1,7 @@
 PYTHON ?= python3
+CANDIDATE ?= config/calibration-candidate.yaml
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-drift maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -31,6 +32,15 @@ docker-run:
 
 docker-report:
 	docker compose run --rm api mw report --out /app/data/report.html
+
+docker-smoke:
+	bash scripts/docker_smoke.sh
+
+calibration:
+	$(PYTHON) -m mw.cli calibrate --candidate $(CANDIDATE)
+
+calibration-drift:
+	$(PYTHON) scripts/calibration_drift.py
 
 maintain:
 	mw maintain

@@ -6,7 +6,7 @@ from typing import Optional
 
 import typer
 
-from . import db, pipeline, validation
+from . import calibration, db, pipeline, validation
 from .config import load_config
 from .export import export_dataset
 from .report import build_report
@@ -121,6 +121,46 @@ def evaluate_validation(
         "coverage": result["coverage"],
         "metrics": result["metrics"],
     }, indent=2))
+
+
+@app.command("calibrate")
+def calibrate(
+    candidate: str = typer.Option(..., help="Candidate YAML config with weights."),
+    baseline: Optional[str] = typer.Option(None, help="Baseline config file path."),
+    validation: str = typer.Option("config/validation.yaml", help="v1 validation config."),
+    validation_v2: str = typer.Option("config/validation-v2.yaml", help="v2 validation config."),
+    split_date: str = typer.Option("2026-01-01", help="v2 test split date."),
+    out: str = typer.Option("data/calibration.json", help="JSON report path."),
+    history: str = typer.Option(
+        "data/calibration/history.jsonl", help="Append-only calibration history."
+    ),
+    fail_on_regression: bool = typer.Option(False, help="Exit 1 if guardrails fail."),
+) -> None:
+    """Compare candidate weights with the baseline on temporal validation."""
+    if not Path(candidate).is_file():
+        raise typer.BadParameter(f"candidate config not found: {candidate}")
+    result = calibration.run(
+        load_config(baseline),
+        load_config(candidate),
+        load_config(validation),
+        load_config(validation_v2),
+        split_date=split_date,
+    )
+    out_path = Path(out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    md_path = out_path.with_suffix(".md")
+    md_path.write_text(calibration.markdown(result), encoding="utf-8")
+    calibration.append_history(history, result)
+    typer.echo(json.dumps({
+        "path": str(out_path),
+        "markdown": str(md_path),
+        "passed": result["passed"],
+        "guardrails": result["guardrails"],
+        "history": history,
+    }, indent=2))
+    if fail_on_regression and not result["passed"]:
+        raise typer.Exit(code=1)
 
 
 @app.command("prioritize-impact")

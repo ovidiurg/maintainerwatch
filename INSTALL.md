@@ -182,7 +182,8 @@ python -m compileall src
 
 The test suite does not hit the network; it uses an in-memory SQLite database
 and synthetic fixtures. `.github/workflows/ci.yml` runs it on Python 3.11–3.13
-with a 75% core-code coverage gate and a secret scan.
+with a 75% core-code coverage gate and a secret scan. Docker smoke runs on
+relevant pull requests and manual `workflow_dispatch`.
 
 ## Packaging and operations
 
@@ -201,6 +202,7 @@ make docker               # docker build -t maintainerwatch:latest .
 make docker-run           # run with ./data mounted on :8000
 docker compose up -d --build
 make docker-report        # generate ./data/report.html in the container
+make docker-smoke         # full image/CLI/report/API smoke test
 ```
 
 ### Docker report access
