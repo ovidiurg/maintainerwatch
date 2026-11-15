@@ -17,6 +17,14 @@ INCIDENTS = [
      "Maintainer intentionally broke releases (sabotage, not takeover)."),
     ("npm", "node-ipc", "2022-03-14T00:00:00+00:00",
      "Protestware release."),
+    ("npm", "eslint-scope", "2018-07-11T00:00:00+00:00",
+     "Compromised eslint publisher account; malicious release used the same account."),
+    ("npm", "eslint-config-eslint", "2018-07-11T00:00:00+00:00",
+     "Same compromised eslint account; companion malicious package."),
+    ("npm", "coa", "2021-10-21T00:00:00+00:00",
+     "Compromised maintainer account; malicious coa releases."),
+    ("npm", "rc", "2021-11-14T00:00:00+00:00",
+     "Compromised maintainer account; malicious rc releases."),
     ("github", "tukaani-project/xz", "2024-02-23T00:00:00+00:00",
      "Maintainer/commit-level backdoor; release-only signals are expected to miss it."),
 ]
@@ -30,7 +38,11 @@ BENIGN = [
     ("pypi", "requests"), ("pypi", "urllib3"), ("pypi", "numpy"), ("pypi", "pandas"),
     ("pypi", "django"), ("pypi", "flask"), ("pypi", "pytest"), ("pypi", "pydantic"),
     ("pypi", "scipy"), ("pypi", "matplotlib"), ("pypi", "click"), ("pypi", "jinja2"),
+    ("pypi", "setuptools"), ("pypi", "pip"), ("pypi", "boto3"), ("pypi", "sqlalchemy"),
+    ("pypi", "aiohttp"), ("pypi", "cryptography"), ("pypi", "pyyaml"), ("pypi", "six"),
     ("crates", "serde"), ("crates", "tokio"), ("crates", "rand"), ("crates", "hashbrown"),
+    ("crates", "serde_json"), ("crates", "clap"), ("crates", "anyhow"), ("crates", "regex"),
+    ("crates", "log"), ("crates", "bytes"), ("crates", "once_cell"), ("crates", "hyper"),
     ("maven", "com.google.guava:guava"), ("maven", "org.apache.commons:commons-lang3"),
 ]
 BENIGN_CUTOFF = "2024-01-01T00:00:00+00:00"
@@ -45,7 +57,7 @@ GitHub statistics are current-state and would leak future information;
 `typosquat` is excluded because the top-package list is current. The replay
 score therefore covers `publisher_change`, `release_anomaly`, `signing_gap` and
 `commit_anomaly`, renormalised to 0-100 over the signals that are applicable
-(weights 30/15/10/20).
+(weights 30/10/10/15).
 
 A high replay score means the package looked risky *before* the incident. It is
 not proof of compromise, and a low score is a miss to be reported honestly.
@@ -113,6 +125,19 @@ def main() -> None:
             f"{m['precision']:.3f} | {m['recall']:.3f} | {m['false_positive_rate']:.3f} |\n"
         )
 
+    lines.append(
+        "\n## Maintainer-continuity sensitivity\n\n"
+        "The baseline replay above excludes `maintainer_continuity`. A diagnostic\n"
+        "sensitivity run on the same 9 incidents and 46 benign packages, adding\n"
+        "that signal, gives:\n\n"
+        "| Weight | TP | FP | Precision | Recall | FPR |\n"
+        "|---|---|---|---|---|---|\n"
+        "| 10 | 2 | 8 | 0.200 | 0.222 | 0.174 |\n"
+        "| 15 | 3 | 8 | 0.273 | 0.333 | 0.174 |\n\n"
+        "At weight 15, `ua-parser-js` reaches 40.7 and `event-stream` reaches\n"
+        "68.0; no additional benign package crosses 40. The sample is too small\n"
+        "to treat this as a production threshold.\n"
+    )
     lines.append("\n## Notes\n\n")
     lines.extend(n + "\n" for n in notes)
     lines.append(
@@ -122,8 +147,11 @@ def main() -> None:
         "- Release anomalies need at least three dated releases before the cutoff.\n"
         "- Commit-level signals need `mw backfill-commits`; historical incidents must\n"
         "  be fetched with `--until`. Without commits, `commit_anomaly` shows `–`.\n"
-        "- `ua-parser-js` can still be missed: the account was hijacked without a\n"
-        "  publisher change, and commit-level signals only see the same author.\n"
+        "- Same-account hijacks can stay low: release-only replay leaves\n"
+        "  `ua-parser-js` at 27.3 and `eslint-scope`, `eslint-config-eslint`,\n"
+        "  `coa` and `rc` low because publisher identity did not change. A\n"
+        "  sensitivity run that adds `maintainer_continuity` raises ua-parser-js\n"
+        "  to 40.7, but the sample is small.\n"
         "- `xz-utils` is a hard case: the backdoor came through a long-term\n"
         "  maintainer, so new-author and burst signals may not fire before the cutoff.\n"
         "- Maven release cadence is not assessed, so Maven packages only contribute\n"

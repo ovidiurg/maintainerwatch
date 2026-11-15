@@ -15,7 +15,7 @@ TARGET = 5000
 
 
 def get_json(url: str) -> dict:
-    request = urllib.request.Request(url, headers={"User-Agent": "MaintainerWatch/0.5"})
+    request = urllib.request.Request(url, headers={"User-Agent": "MaintainerWatch/0.5.1"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
 

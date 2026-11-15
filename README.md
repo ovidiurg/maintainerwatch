@@ -18,6 +18,19 @@ smoke test, command map, validation/coverage checks, data-handling rules and the
 boundary that untrusted package code must only run in an isolated dynamic
 worker.
 
+## Who is it for
+
+- **Open-source maintainers** who want an early, explainable signal that a
+  project’s release or maintainer activity has changed.
+- **Application security and supply-chain teams** triaging dependencies before
+  adoption, upgrades or incident response.
+- **Platform and CI/CD engineers** who need a local, read-only inventory signal
+  without sending package metadata to a SaaS service.
+- **Researchers and policy teams** studying maintainer concentration,
+  takeover patterns and registry hygiene with reproducible, versioned data.
+- **Not** an automated blocking system, malware verdict engine or target list.
+  A high score is a review request; a low score is not proof of safety.
+
 ## Scope
 
 - Ecosystems: **npm**, **PyPI**, **crates.io** and **Maven Central** (top or
@@ -29,7 +42,7 @@ worker.
   3. `account_age` — young maintainer account on a popular package
   4. `release_anomaly` — dormancy followed by a burst, or sudden release bursts
   5. `signing_gap` — missing provenance / signatures on recent releases
-  6. `typosquat` — name close to a top package (including homoglyphs), with low downloads
+  6. `typosquat` — name close to a top package (homoglyphs and keyboard-adjacent typos), with low downloads
   7. `license_inconsistency` — missing or non-SPDX license metadata
   8. `commit_anomaly` — new-author share and commit burst relative to the baseline
   9. `scorecard` — low OpenSSF Scorecard repository score
@@ -270,34 +283,44 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 14 November 2026)
+## Results (MVP, 15 November 2026)
 
-- 6,063 packages scored: 3,192 npm, 1,943 PyPI, 816 crates.io, 102 Maven
+- 13,387 packages scored: 5,125 npm, 5,800 PyPI, 2,350 crates.io, 102 Maven
   and 10 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 582,496 versions, 242,652 commits, 11,018 maintainers, 1,375 repositories,
-  4,967 OSV records, 18,612 runtime dependency edges (PyPI extras excluded).
+- 1,387,273 versions, 243,608 commits, 22,206 maintainers, 1,375 repositories,
+  10,005 OSV records, 46,243 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 8 high, 1,475 medium, 4,580 low. OIDC/bot publishers are ignored.
+- Risk bands: 8 high, 2,861 medium, 10,518 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
   packages; PyPI `publisher_change` uses a capped snapshot value.
 - deps.dev impact enrichment covers 869 packages. Top impact: tslib 1.62M
   dependents, inherits 1.33M, function-bind 1.30M, es-errors 1.26M, hasown 1.24M.
-- Highest risk scores are currently dominated by obscure low-adoption packages
-  (b.js, 4a, b4, b5, b7 at 68.0); they are triage candidates, not malware labels.
-- Pre-incident replay: event-stream 59.0, colors 27.3, node-ipc 24.1,
-  ua-parser-js 25.0, xz-utils 39.3. At threshold 40 the 27-package benign
-  sample gives precision 0.333, recall 0.400, false-positive rate 0.148.
-- Validation sample: 72 of 114 known positives at threshold 40 (precision
-  0.935, FPR 0.021); 69 at threshold 50. The main MVP DB has no labelled
-  positives; validation is the true-positive evidence.
+- Highest numerical scores include obscure low-adoption packages (`b.js`, `4a`,
+  `b4`, `b5`, `b7` at 68.0 and `p-resolver`/`p01` at 88.0); they are capped to
+  medium without behavioural/advisory evidence and remain triage candidates,
+  not malware labels. `pypi/langchain-ai` reaches 100 but remains medium
+  because its evidence is name-similarity/hygiene, not a confirmed compromise.
+- Pre-incident replay (9 incidents): event-stream 62.9 high; xz-utils 44.8
+  medium; ua-parser-js 27.3; colors 22.0; node-ipc 19.7; same-account hijacks
+  `eslint-scope`, `eslint-config-eslint`, `coa` and `rc` remain low. At
+  threshold 40 the 46-package benign replay sample gives precision 0.182,
+  recall 0.222, false-positive rate 0.196 — replay remains a diagnostic, not a
+  production detector. A sensitivity run that adds `maintainer_continuity`
+  to replay (weight 15) moves ua-parser-js from 27.3 to 40.7 without adding a
+  benign package above 40; the 9-incident sample is too small to treat this as
+  a stable production threshold.
+- Validation v2 sample: 328 of 489 known positives at threshold 40 (precision
+  0.973, FPR 0.009); 87 at threshold 50. High-band precision is 1.0, but
+  high-band recall is deliberately conservative; see
+  [docs/validation/evaluation-v2.md](docs/validation/evaluation-v2.md).
 - GitHub enrichment is impact-ranked and bounded: the latest pass covered 90
   repositories and 11,335 commits with a two-page commit window.
   Install-script scanning flags only high-risk npm install scripts.
-- Bulk package ingestion used `--no-github`; SQLite is 328 MB and the request
-  cache is 4.4 GB.
+- Bulk package ingestion used `--no-github`; SQLite is 738 MB and the request
+  cache is 7.1 GB.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
@@ -322,6 +345,19 @@ GuardDog results are optional context too (`guarddog_risk_score`,
 `guarddog_findings`). Dynamic execution is delegated to `worker/` and runs only
 in an isolated gVisor/Docker sandbox; it is never executed in the analyst
 process. Set `dynamic.worker_url` and run the worker separately.
+**Known blind spots:** if a maintainer account is compromised but the attacker
+publishes under the *same publisher identity*, MaintainerWatch may not see a
+control change. `publisher_change` stays zero and the replay score can remain
+low even when the release is malicious. Documented examples: release-only
+replay leaves `ua-parser-js` at 27.3; adding `maintainer_continuity` raises it
+to 40.7, while `eslint-scope`, `eslint-config-eslint`, `coa` and `rc` remain
+low.
+Other blind spots: long-term maintainer social engineering (`xz`), removed or
+renamed packages with no usable history, attacks outside package registries
+(CI actions/build systems), and the absence of dynamic execution in the analyst
+process. A low score is not a claim that a package is safe; see
+[docs/incident-validation.md](docs/incident-validation.md).
+
 See [docs/methodology.md](docs/methodology.md) for the model.
 
 ## Ethics and privacy

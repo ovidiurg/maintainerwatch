@@ -117,3 +117,18 @@ def test_evaluate_synthetic(tmp_path):
     )
     assert filtered["coverage"]["positives_in_db"] == 0
     conn.close()
+
+
+def test_evaluate_report_paths_split_v1_and_v2(tmp_path):
+    from mw.validation import _report_paths
+
+    cfg = load_config()
+    cfg.db_path = str(tmp_path / "validation-v2" / "maintainerwatch.sqlite")
+    report_dir, report_path = _report_paths(cfg, tmp_path)
+    assert report_dir.name == "v2"
+    assert report_path.name == "evaluation-v2.md"
+
+    cfg.db_path = str(tmp_path / "validation" / "maintainerwatch.sqlite")
+    report_dir, report_path = _report_paths(cfg, tmp_path)
+    assert report_dir.name == "v1"
+    assert report_path.name == "evaluation.md"

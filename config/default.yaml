@@ -26,7 +26,7 @@ weights:
   commit_anomaly: 15
   scorecard: 10
   dependency_risk: 15
-  maintainer_continuity: 10
+  maintainer_continuity: 15
   install_script: 15
   osv_risk: 10
   depsdev_findings: 10
@@ -47,7 +47,7 @@ automation_patterns:
   - '^github-actions'
   - 'no-reply@github\.com$'
 
-model_version: "0.5.0"
+model_version: "0.5.1"
 
 alerts:
   rules:

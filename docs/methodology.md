@@ -56,14 +56,14 @@ to the same canonical identity.
 | `account_age` | 15 | Age of the repository owner account; younger is riskier. |
 | `release_anomaly` | 10 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. A never-provenance package gets an age/popularity-aware baseline; low-adoption npm packages are medium-capped. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
-| `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names) to a top package, with low downloads. |
+| `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names), homoglyph-normalized equality, or a same-length keyboard-adjacent typo to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
 | `commit_anomaly` | 15 | New-author share in a 90-day window and commit burst (30 days vs the previous 90 days) from sampled GitHub commits. |
 | `scorecard` | 10 | Low OpenSSF Scorecard repository score; value = max(0, (7 - score) / 7). |
 | `dependency_risk` | 15 | Log-scaled transitive fan-in (200+ dependents = 1.0) plus a smaller fan-out component. |
 | `install_script` | 15 | npm preinstall/install/postinstall/prepare scripts: only high-risk download/eval/child-process patterns make the signal applicable. |
 | `osv_risk` | 10 | Version-aware OSV match: a `MAL-*` advisory affecting the current version scores 1.0; another current advisory scores 0.5. Historical advisories fixed before the current version are not applicable. |
-| `maintainer_continuity` | 10 | Recent top-author handover or newcomer dominance in commit history; single maintainer on a long-lived project is a weaker case. |
+| `maintainer_continuity` | 15 | Recent top-author handover or newcomer dominance in commit history; single maintainer on a long-lived project is a weaker case. Weight calibrated on pre-incident replay, not the current-state validation set. |
 | `depsdev_findings` | 10 | deps.dev version findings: `MALICIOUS` 1.0, `VULNERABLE` 0.5, `DEPRECATED` 0.4, `LOW_USAGE` 0.3, `COOLDOWN` 0.2. |
 | `package_age` | 10 | Replay-only signal: age of the first release before the cutoff; younger packages score higher. |
 
@@ -199,6 +199,8 @@ evidence and model version, so a score can be verified.
   are excluded.
 - Commit history is sampled (default two pages); a long-term maintainer is not
   "new", and an account hijack that keeps the same author can still be missed.
+  Replay examples: `ua-parser-js`, `eslint-scope`, `eslint-config-eslint`,
+  `coa` and `rc`; all kept the visible publisher identity.
 - `commit_anomaly` is high-recall/low-precision and should be used as a triage
   aid, not as a standalone alarm.
 - GitLab contributor counts are all-time rather than 12 months, and public

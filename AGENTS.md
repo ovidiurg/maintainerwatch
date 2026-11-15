@@ -17,8 +17,13 @@ Key facts:
 - Default database: `data/maintainerwatch.sqlite`.
 - Default config: `config/default.yaml`; validation configs live in `config/`.
 - Do not commit `data/`, caches, tokens or credentials.
+- Bulk priority seeds are prepared by `scripts/prepare_npm_priority.py`,
+  `scripts/prepare_pypi_priority.py`, `scripts/prepare_crates_priority.py` and
+  `scripts/prepare_priority_seeds.py`; ingested data stays local.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
+- Current local baseline (15 Nov 2026): 13,387 packages (5,125 npm, 5,800 PyPI,
+  2,350 crates, 102 Maven, 10 GitHub), app 0.4.13, model 0.5.1.
 
 ## Install
 
@@ -63,6 +68,7 @@ curl 'http://127.0.0.1:8000/impact?limit=2'
 | Registry ingest | `mw ingest --system npm|pypi|crates|maven|github [--top N|--seed-file F] [--no-github]` |
 | Recurring pipeline | `mw maintain [--limit N] [--no-export]` |
 | Identity resolution | `mw resolve [--limit N]` |
+| Priority seed generation | `python scripts/prepare_npm_priority.py`; `python scripts/prepare_pypi_priority.py`; `python scripts/prepare_crates_priority.py` |
 | Dependency/license/commit backfills | `mw backfill-deps`, `mw backfill-licenses`, `mw backfill-commits` |
 | Impact data | `mw enrich-impact --limit N`; `mw prioritize-impact` |
 | Advisory findings | `mw enrich-findings --limit N`; `mw backfill-osv --malicious-only` |
@@ -83,10 +89,12 @@ Use `mw --help` and `mw COMMAND --help` for the authoritative option list.
 3. Run `pytest` and `python -m compileall -q src scripts tests`.
 4. Run coverage with `pytest --cov=src/mw --cov-config=.coveragerc
    --cov-fail-under=75`.
-5. Update `README.md` / `INSTALL.md` / `docs/api.md` when commands, config,
-   endpoints or metrics change.
-6. Do not commit `data/`, caches, tokens or credentials.
-7. For a public deployment, follow the dual-use and GDPR guidance; do not make
+5. Run `python -m compileall -q src scripts tests`; check `mw --help` and the
+   affected `mw COMMAND --help` output after CLI changes.
+6. Update `README.md` / `INSTALL.md` / `docs/api.md` and all generated result
+   numbers when commands, config, endpoints or metrics change.
+7. Do not commit `data/`, caches, tokens or credentials.
+8. For a public deployment, follow the dual-use and GDPR guidance; do not make
    automatic accusations about maintainers.
 
 ## Environment variables

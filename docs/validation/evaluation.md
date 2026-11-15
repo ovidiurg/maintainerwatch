@@ -1,6 +1,6 @@
 # Validation evaluation
 
-Generated: 2026-11-14T19:08:00.577298+00:00 · model 0.5.0
+Generated: 2026-11-14T23:52:56.265062+00:00 · model 0.5.1
 
 > Baseline: current-state scores from the validation ingest, not a pre-incident replay. Use it to compare model versions on the same sample.
 
@@ -65,7 +65,7 @@ Generated: 2026-11-14T19:08:00.577298+00:00 · model 0.5.0
 
 ## Takeover slice
 
-Pre-incident replay for event-stream, ua-parser-js, colors, node-ipc and xz is in [incident-validation.md](../incident-validation.md).
+Pre-incident replay for 9 historical incidents (event-stream, ua-parser-js, colors, node-ipc, eslint-scope, eslint-config-eslint, coa, rc and xz) is in [incident-validation.md](../incident-validation.md).
 
 ## Caveats
 

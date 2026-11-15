@@ -12,6 +12,7 @@
   <nav>
     <a class="brand" href="./">MaintainerWatch</a>
     <div class="nav-links">
+      <a href="#audience">Who it’s for</a>
       <a href="#signals">Signals</a>
       <a href="#quickstart">Quick start</a>
       <a href="#validation">Validation</a>
@@ -36,9 +37,9 @@
 
 <main>
   <section class="stats" aria-label="Project at a glance">
-    <div><strong>6,063</strong><span>packages scored</span></div>
+    <div><strong>13,387</strong><span>packages scored</span></div>
     <div><strong>14</strong><span>explainable signals</span></div>
-    <div><strong>0.864</strong><span>validation ROC-AUC</span></div>
+    <div><strong>0.879</strong><span>validation ROC-AUC (v2)</span></div>
     <div><strong>869</strong><span>impact-enriched packages</span></div>
   </section>
 
@@ -67,6 +68,36 @@
     </div>
   </section>
 
+  <section id="audience">
+    <h2>Who is it for?</h2>
+    <p class="section-lede">
+      MaintainerWatch is a triage and research aid, not an automatic verdict.
+    </p>
+    <div class="grid two">
+      <article class="card">
+        <h3>Defenders and maintainers</h3>
+        <p>
+          Open-source maintainers, application security teams and platform
+          engineers can use it to review dependency changes, maintainer
+          handovers and release behaviour before adoption or upgrades.
+        </p>
+      </article>
+      <article class="card">
+        <h3>Researchers and policy teams</h3>
+        <p>
+          Researchers can reproduce the dataset, validation slices and
+          ablations locally. Policy teams can study concentration and hygiene
+          patterns without turning the output into a public target list.
+        </p>
+      </article>
+    </div>
+    <p class="note">
+      It is <strong>not</strong> a malware verdict engine, an automated blocking
+      system or a target list. A high score means “review this”; a low score is
+      not proof of safety.
+    </p>
+  </section>
+
   <section id="signals">
     <h2>Signals</h2>
     <div class="grid two">
@@ -76,7 +107,7 @@
         <li><code>account_age</code> — young maintainer account</li>
         <li><code>release_anomaly</code> — dormancy, burst or unusual cadence</li>
         <li><code>signing_gap</code> — missing signatures or provenance</li>
-        <li><code>typosquat</code> — name close to a popular package, including homoglyphs</li>
+        <li><code>typosquat</code> — name close to a popular package (homoglyphs and keyboard-adjacent typos)</li>
         <li><code>license_inconsistency</code> — missing or conflicting license metadata</li>
       </ul>
       <ul class="signal-list">
@@ -128,15 +159,21 @@ mw report --out data/report.html</code></pre>
       predictive performance.
     </p>
     <div class="metrics">
-      <div><strong>0.864</strong><span>ROC-AUC</span></div>
-      <div><strong>0.839</strong><span>PR-AUC / average precision</span></div>
-      <div><strong>0.935</strong><span>precision @ threshold 40</span></div>
-      <div><strong>0.021</strong><span>false-positive rate @ 40</span></div>
+      <div><strong>0.879</strong><span>ROC-AUC (v2)</span></div>
+      <div><strong>0.863</strong><span>PR-AUC / average precision</span></div>
+      <div><strong>0.973</strong><span>precision @ threshold 40</span></div>
+      <div><strong>0.009</strong><span>false-positive rate @ 40</span></div>
     </div>
     <p class="note">
-      Pre-incident replay is harder: AUC 0.485, because many malicious packages
-      are new at the cutoff and have no usable history. The report includes
-      temporal slices, calibration bins and leave-one-signal-out ablations.
+      The expanded v2 sample has 489 positives / 1,008 controls. Its 2026 test
+      slice reaches 0.947 AUC and 0.997 precision at threshold 40, while the
+      small pre-2026 train slice remains weak. Pre-incident replay is harder
+      (AUC 0.485): many malicious packages are new at the cutoff. A compromised
+      maintainer account that keeps the same publisher identity can also stay
+      low — ua-parser-js is the documented example, though a
+      maintainer-continuity sensitivity raises it to 40.7 on a very small
+      incident sample. The report includes temporal slices, calibration bins
+      and ablations.
     </p>
   </section>
 

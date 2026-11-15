@@ -21,7 +21,7 @@ CRATES = "https://crates.io/api/v1/crates?per_page=100&page={page}&sort=download
 
 
 def get_json(url: str) -> dict:
-    request = urllib.request.Request(url, headers={"User-Agent": "MaintainerWatch/0.4"})
+    request = urllib.request.Request(url, headers={"User-Agent": "MaintainerWatch/0.5.1"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
 

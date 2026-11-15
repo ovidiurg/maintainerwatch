@@ -106,7 +106,7 @@ class Config(BaseModel):
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.5.0"
+    model_version: str = "0.5.1"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",

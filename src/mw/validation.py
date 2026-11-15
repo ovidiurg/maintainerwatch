@@ -165,6 +165,13 @@ def _temporal_metrics(
     return out
 
 
+def _report_paths(cfg: Config, dataset_dir: Path) -> tuple[Path, Path]:
+    is_v2 = "validation-v2" in str(cfg.db_path)
+    report_dir = ROOT / "validation" / ("v2" if is_v2 else "v1")
+    docs_dir = ROOT / "docs" / "validation"
+    return report_dir, docs_dir / ("evaluation-v2.md" if is_v2 else "evaluation.md")
+
+
 def evaluate(
     conn,
     cfg: Config,
@@ -293,15 +300,13 @@ def evaluate(
     }
 
     if write_report:
-        dataset_dir.mkdir(parents=True, exist_ok=True)
-        (dataset_dir / "evaluation.json").write_text(
+        report_dir, report_path = _report_paths(cfg, dataset_dir)
+        report_dir.mkdir(parents=True, exist_ok=True)
+        (report_dir / "evaluation.json").write_text(
             json.dumps(result, indent=2), encoding="utf-8"
         )
-        docs_dir = ROOT / "docs" / "validation"
-        docs_dir.mkdir(parents=True, exist_ok=True)
-        (docs_dir / "evaluation.md").write_text(
-            _markdown_report(result), encoding="utf-8"
-        )
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(_markdown_report(result), encoding="utf-8")
     return result
 
 
@@ -466,8 +471,9 @@ def _markdown_report(result: dict) -> str:
         "",
         "## Takeover slice",
         "",
-        "Pre-incident replay for event-stream, ua-parser-js, colors, node-ipc and "
-        "xz is in [incident-validation.md](../incident-validation.md).",
+        "Pre-incident replay for 9 historical incidents (event-stream, "
+        "ua-parser-js, colors, node-ipc, eslint-scope, eslint-config-eslint, "
+        "coa, rc and xz) is in [incident-validation.md](../incident-validation.md).",
         "",
         "## Caveats",
         "",

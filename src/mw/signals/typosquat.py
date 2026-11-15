@@ -4,10 +4,56 @@ from ..models import SignalEvidence
 from .base import Context
 
 TARGET_MIN_DOWNLOADS = 100_000
+KEYBOARD_ROWS = [
+    "`1234567890-=",
+    "qwertyuiop[]\\",
+    "asdfghjkl;'",
+    "zxcvbnm,./",
+]
+KEYBOARD_POSITIONS = {
+    char: (row, col)
+    for row, chars in enumerate(KEYBOARD_ROWS)
+    for col, char in enumerate(chars)
+}
+
 HOMOGLYPHS = str.maketrans({
     "0": "o", "1": "l", "3": "e", "4": "a", "5": "s", "7": "t",
     "@": "a", "$": "s", "!": "i", "|": "l",
 })
+
+
+def keyboard_adjacent(left: str, right: str) -> bool:
+    a = KEYBOARD_POSITIONS.get(left)
+    b = KEYBOARD_POSITIONS.get(right)
+    if a is None or b is None:
+        return False
+    return abs(a[0] - b[0]) <= 1 and abs(a[1] - b[1]) <= 1
+
+
+def keyboard_typo(left: str, right: str) -> bool:
+    if len(left) != len(right) or left == right:
+        return False
+    mismatches = [
+        (a, b) for a, b in zip(left, right) if a != b
+    ]
+    return bool(mismatches) and all(keyboard_adjacent(a, b) for a, b in mismatches)
+
+
+_LENGTH_INDEX_CACHE: dict[int, tuple[list[str], dict[int, list[str]]]] = {}
+
+
+def _length_index(top_names: list[str]) -> dict[int, list[str]]:
+    key = id(top_names)
+    cached = _LENGTH_INDEX_CACHE.get(key)
+    if cached is not None and cached[0] is top_names:
+        return cached[1]
+    index: dict[int, list[str]] = {}
+    for candidate in top_names:
+        index.setdefault(len(candidate), []).append(candidate)
+    if len(_LENGTH_INDEX_CACHE) > 32:
+        _LENGTH_INDEX_CACHE.clear()
+    _LENGTH_INDEX_CACHE[key] = (top_names, index)
+    return index
 
 
 def normalize_homoglyphs(name: str) -> str:
@@ -59,24 +105,34 @@ def compute(ctx: Context) -> SignalEvidence:
 
     name = ctx.name.lower()
     normalized_name = normalize_homoglyphs(name)
-    best: tuple[int, str | None, bool] = (999, None, False)
-    for candidate in ctx.top_names:
-        other = candidate.lower()
-        if other == name or abs(len(other) - len(name)) > 2:
-            continue
-        normalized_other = normalize_homoglyphs(other)
-        distance = min(
-            levenshtein(name, other),
-            levenshtein(normalized_name, normalized_other),
-        )
-        homoglyph = normalized_name == normalized_other and name != other
-        if distance < best[0]:
-            best = (distance, other, homoglyph)
-            if distance == 1:
-                break
+    best: tuple[int, str | None, bool, bool] = (999, None, False, False)
+    index = _length_index(ctx.top_names)
+    for length in range(len(name) - 2, len(name) + 3):
+        for candidate in index.get(length, []):
+            other = candidate.lower()
+            if other == name:
+                continue
+            normalized_other = normalize_homoglyphs(other)
+            distance = min(
+                levenshtein(name, other),
+                levenshtein(normalized_name, normalized_other),
+            )
+            homoglyph = normalized_name == normalized_other and name != other
+            keyboard = keyboard_typo(name, other)
+            if distance < best[0]:
+                best = (distance, other, homoglyph, keyboard)
+                if distance == 1:
+                    break
+        if best[0] == 1:
+            break
 
-    distance, nearest, homoglyph = best
-    suspicious = homoglyph or distance == 1 or (distance == 2 and len(name) > 8)
+    distance, nearest, homoglyph, keyboard = best
+    suspicious = (
+        homoglyph
+        or keyboard
+        or distance == 1
+        or (distance == 2 and len(name) > 8)
+    )
     if suspicious and ctx.downloads_weekly < 1000:
         value = 1.0
     elif suspicious:
@@ -90,6 +146,7 @@ def compute(ctx: Context) -> SignalEvidence:
             "distance": distance,
             "nearest": nearest,
             "homoglyph": homoglyph,
+            "keyboard_typo": keyboard,
             "downloads_weekly": ctx.downloads_weekly,
         },
     )

@@ -105,6 +105,15 @@ def test_typosquat_homoglyph_normalization(conn):
     assert ev.evidence["homoglyph"] is True
 
 
+def test_typosquat_keyboard_adjacent_typo(conn):
+    _add_package(conn, name="reqyestz", downloads=10)
+    ctx = Context(conn=conn, system="npm", name="reqyestz",
+                  downloads_weekly=10, top_names=["requests"])
+    ev = typosquat.compute(ctx)
+    assert ev.value == 1.0
+    assert ev.evidence["keyboard_typo"] is True
+
+
 def test_typosquat_ignores_existing_top_package(conn):
     _add_package(conn, name="requests", downloads=10_000_000)
     ctx = Context(conn=conn, system="npm", name="requests",

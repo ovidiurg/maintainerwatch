@@ -58,10 +58,12 @@ a larger, year-stratified, non-OSV positive sample. The local DB currently has
 | Train (<2026) | 0.665 | 0.307 | 0.636 / 0.117 / 0.010 |
 | Test (>=2026) | 0.947 | 0.975 | 0.997 / 0.851 / 0.005 |
 
-The positive mix is Datadog 463, tstromberg 65, DependencyWatch 53, OSV 4;
+The full-sample Brier score is **0.1452**. The positive mix is Datadog 463, tstromberg 65, DependencyWatch 53, OSV 4;
 cutoffs are 2026: 468, 2025: 110, 2024: 7. The temporal split is diagnostic,
-not a fully historical control population. See
-`docs/validation/evaluation-v2.md`.
+not a fully historical control population. Running
+`mw evaluate-validation --config config/validation-v2.yaml` writes
+`validation/v2/evaluation.json` and `docs/validation/evaluation-v2.md` without
+overwriting the v1 report. See `docs/validation/evaluation-v2.md`.
 
 ## Pre-incident replay
 
