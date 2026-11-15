@@ -1,0 +1,90 @@
+ecosystems:
+  - npm
+  - pypi
+
+# Number of top packages to ingest per ecosystem (smoke test: 200).
+top_n: 2000
+
+github_token_env: GITHUB_TOKEN
+gitlab_token_env: GITLAB_TOKEN
+
+http:
+  timeout_s: 20
+  cache_ttl_h: 24
+  rate_limit_qps: 5
+  user_agent: "MaintainerWatch/0.4 (+https://example.org/maintainerwatch)"
+
+# Signal weights used by the 0-100 explainable score.
+weights:
+  publisher_change: 30
+  bus_factor: 20
+  account_age: 15
+  release_anomaly: 10
+  signing_gap: 10
+  typosquat: 10
+  license_inconsistency: 5
+  commit_anomaly: 15
+  scorecard: 10
+  dependency_risk: 15
+  maintainer_continuity: 15
+  install_script: 15
+  osv_risk: 10
+  depsdev_findings: 10
+  package_age: 10
+
+# Confidence levels accepted for identity-gated signals.
+min_identity_confidence: medium
+
+# Publisher identities that are automation, not people. Transitions to/from
+# these are ignored by publisher_change (OIDC trusted publishing is a security
+# improvement, not a takeover).
+automation_identities:
+  - npm-oidc-no-reply@github.com
+  - storybookbot@gmail.com
+automation_patterns:
+  - '\+oss-bot@'
+  - '\[bot\]'
+  - '^github-actions'
+  - 'no-reply@github\.com$'
+
+model_version: "0.5.2"
+
+alerts:
+  rules:
+    - name: high-risk
+      min_score: 45
+      min_signal: 0.5
+      limit: 100
+    - name: publisher-change
+      min_score: 30
+      signal: publisher_change
+      min_signal: 0.5
+      limit: 100
+  webhook: null
+  webhook_format: generic   # generic | slack | discord
+  email: null
+  timeout_s: 10
+  smtp:
+    host: null
+    port: 587
+    username: null
+    password_env: SMTP_PASSWORD  # pragma: allowlist secret
+    sender: null
+    use_tls: true
+
+api:
+  api_key_env: MAINTAINERWATCH_API_KEY  # pragma: allowlist secret
+  # 0 disables the in-memory per-client rate limit.
+  rate_limit_rpm: 0
+
+osint:
+  # Minimal, passive, role-related sources only.
+  keybase: true
+  github_email: true
+  pypi_provenance: true
+  gpg: true
+
+dynamic:
+  worker_url: null
+  token_env: MAINTAINERWATCH_DYNAMIC_TOKEN
+  timeout_s: 600

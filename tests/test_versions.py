@@ -17,3 +17,11 @@ def test_versions_are_consistent_across_package_and_configs():
     assert default.model_version == MODEL_VERSION
     for path in sorted((ROOT / "config").glob("validation*.yaml")):
         assert load_config(path).model_version == MODEL_VERSION, path.name
+
+
+def test_packaged_default_config_is_current():
+    import yaml
+
+    repo = yaml.safe_load((ROOT / "config/default.yaml").read_text(encoding="utf-8"))
+    packaged = yaml.safe_load((ROOT / "src/mw/data/default.yaml").read_text(encoding="utf-8"))
+    assert packaged == repo

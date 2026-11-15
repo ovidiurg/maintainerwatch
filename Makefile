@@ -1,6 +1,6 @@
 PYTHON ?= python3
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -28,6 +28,9 @@ docker-run:
 		-v "$$(pwd)/data:/app/data" \
 		--user "$$(id -u):$$(id -g)" \
 		maintainerwatch:latest
+
+docker-report:
+	docker compose run --rm api mw report --out /app/data/report.html
 
 maintain:
 	mw maintain

@@ -934,7 +934,7 @@ def maintain(
             path, count = export_dataset(cfg, fmt)
             exported[fmt] = {"path": str(path), "records": count}
         results["export"] = exported
-        path, count = build_report(cfg)
+        path, count = build_report(cfg, cfg.data_dir / "report.html")
         results["report"] = {"path": str(path), "records": count}
 
     return results

@@ -91,10 +91,20 @@ curl http://127.0.0.1:8000/health
 # Run a one-off job in the same image.
 docker compose run --rm api mw ingest --system npm --top 100
 docker compose run --rm api mw maintain
+
+# Generate the static report into the mounted data directory.
+docker compose run --rm api mw report --out /app/data/report.html
+ls -lh data/report.html
+
+# Serve it locally if you do not want to open file:// directly.
+python3 -m http.server 8080 --directory data
+# http://127.0.0.1:8080/report.html
 ```
 
 `docker-compose.yml` runs the container as the host UID/GID and mounts
-`./data`; make sure that directory is writable. For a read-only API deployment,
+`./data`; make sure that directory is writable. The API serves JSON only; the
+HTML report is a static file generated into `/app/data/report.html`. `mw
+maintain` writes `data/report.html` in the same volume. For a read-only API deployment,
 the container only needs read access to the SQLite file and its `-wal`/`-shm`
 companions.
 

@@ -200,7 +200,23 @@ make validate             # incident replay report
 make docker               # docker build -t maintainerwatch:latest .
 make docker-run           # run with ./data mounted on :8000
 docker compose up -d --build
+make docker-report        # generate ./data/report.html in the container
 ```
+
+### Docker report access
+
+```bash
+docker compose run --rm api mw report --out /app/data/report.html
+ls -lh data/report.html
+python3 -m http.server 8080 --directory data
+# open http://127.0.0.1:8080/report.html
+```
+
+The report is a static file, not an API endpoint. The compose service mounts
+`./data` at `/app/data`, so writing to `/app/data/report.html` makes it visible
+on the host as `./data/report.html`. Without a volume, use
+`docker cp <container>:/app/data/report.html ./report.html`, or mount a host
+directory and run with `--user "$(id -u):$(id -g)"`.
 
 `mw maintain` is the cron-friendly post-ingest pipeline; `mw snapshot` records
 the current maintainer snapshots. See [docs/operations.md](docs/operations.md)

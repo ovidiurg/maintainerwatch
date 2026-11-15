@@ -23,7 +23,7 @@ Key facts:
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
 - Current local baseline (15 Nov 2026): 13,646 packages (5,130 npm, 5,800 PyPI,
-  2,350 crates, 301 Maven, 65 GitHub), app 0.4.14, model 0.5.2.
+  2,350 crates, 301 Maven, 65 GitHub), app 0.4.15, model 0.5.2.
 
 ## Install
 

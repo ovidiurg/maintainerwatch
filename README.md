@@ -257,7 +257,28 @@ make check            # tests, build and twine check
 ./scripts/build_reproducible.sh   # builds twice and compares hashes
 make docker           # container image
 docker compose up -d --build      # serve on :8000 with ./data mounted
+make docker-report    # write ./data/report.html from the container
 ```
+
+Docker report workflow:
+
+```bash
+# Rebuild scores/report with the database mounted at ./data.
+docker compose run --rm api mw report --out /app/data/report.html
+
+# The file is then on the host:
+ls -lh data/report.html
+xdg-open data/report.html    # or open it in a browser
+
+# If you prefer HTTP instead of file://:
+python3 -m http.server 8080 --directory data
+# http://127.0.0.1:8080/report.html
+```
+
+The API does not serve the static HTML report; generate it into `/app/data`
+(the compose bind mount) and open it from the host, or serve `data/` with a
+static file server. `mw maintain` also writes `data/report.html` when run
+inside the compose volume.
 
 `mw maintain` runs the recurring post-ingest pipeline (backfills, identity
 resolution, snapshots, scoring, exports and the report); `mw snapshot` records
@@ -283,7 +304,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.14 · model 0.5.2)
+## Results (MVP, 15 November 2026 · app 0.4.15 · model 0.5.2)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,

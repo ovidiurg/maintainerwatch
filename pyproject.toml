@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "maintainerwatch"
-version = "0.4.14"
+version = "0.4.15"
 description = "Open maintainer-level software supply-chain risk intelligence"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,6 +33,7 @@ dependencies = [
   "polars>=0.20",
   "fastapi>=0.110",
   "uvicorn>=0.27",
+  "packaging>=23",
 ]
 
 [project.optional-dependencies]
