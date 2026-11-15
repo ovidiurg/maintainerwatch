@@ -1,0 +1,13 @@
+{
+  "dataset_version": "historical",
+  "schema_version": "1.0",
+  "counts": {
+    "incidents": 30,
+    "incident_packages": 30
+  },
+  "files": {
+    "incidents.jsonl": "4ae1be935446e9a324c0a9ec1bcc716a90cab5d30f7030ecff0504ce70ffe84a",
+    "incident_packages.jsonl": "11de5718e6fb656ba20a1c1e86253c8a4c18e6ac00719c51529db78856d18d7d"
+  },
+  "notes": "Historical OSV MAL labels; excluded from current-state v1 metrics."
+}

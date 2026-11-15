@@ -141,9 +141,10 @@ mw evaluate-validation --config config/validation.yaml
 mw calibrate --candidate config/calibration-candidate.yaml
 ```
 
-If the package has been removed from the registry, it may remain a label with
-`sample_available: false` but will not contribute a score. Do not force-add a
-control that overlaps the new positive package.
+If the package has been removed from the registry, do **not** put it in the v1
+current-state cohort: use `validation/historical/` instead. Historical labels
+remain available for version-aware/replay work but do not change current-state
+AUC/PR-AUC. Do not force-add a control that overlaps the new positive package.
 
 For a temporary check without touching the tracked dataset, copy
 `validation/v1` to a local directory and use
@@ -151,12 +152,11 @@ For a temporary check without touching the tracked dataset, copy
 
 ## First cycle result (2026-11-15)
 
-Promoted 30 manually reviewed OSV `MAL-*` packages into `validation/v1`.
-The v1 database now has 144 scored positives and 240 controls; v2 is unchanged.
-The added labels are deliberately harder than the original sample and lowered
-v1 AUC from 0.863 to 0.848 and threshold-40 recall from 0.632 to 0.507. No
-weights were changed: the candidate-with-baseline calibration passed the v2
-test guardrails, so the labels were retained for future calibration rounds.
+Reviewed 30 OSV `MAL-*` candidates. Their affected versions had been removed
+from the registry, so they were moved to `validation/historical/` rather than
+kept in the v1 current-state cohort. v1 was restored to its prior baseline
+(AUC 0.862, PR-AUC 0.838); v2 is unchanged. No weights were changed. This is a
+label-scope correction, not a model regression.
 
 ## Weekly loop
 

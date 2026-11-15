@@ -9,32 +9,31 @@ redistributed.
 
 | File | Contents |
 |---|---|
-| `incidents.jsonl` | One row per incident/campaign (650 rows). |
-| `incident_packages.jsonl` | One row per affected package/incident (31,515 rows). |
+| `incidents.jsonl` | One row per incident/campaign (620 rows). |
+| `incident_packages.jsonl` | One row per affected package/incident (31,485 rows). |
 | `controls.jsonl` | Matched benign controls (1,148 rows). |
 | `sources.yaml` | Source registry with licences and attribution. |
 | `manifest.json` | Counts, hashes, source list, generation time. |
 
-Current counts (2026-11-15): **650 incidents**, **31,515 incident packages**,
-**1,148 controls**. Recent incidents (2024+) are prioritised: 561 of 650
-incidents are high priority. The 2026-11-15 promotion added 30 manually reviewed
-OSV MAL labels.
+Current counts (2026-11-13): **620 incidents**, **31,485 incident packages**,
+**1,148 controls**. Recent incidents (2024+) are prioritised: 529 of 620
+incidents are high priority.
 
-## Preliminary evaluation (2026-11-15)
+## Preliminary evaluation (2026-11-13)
 
 A case-control sample was ingested into `data/validation` (120 positives plus
-120 matched controls per npm/PyPI seed list), then extended with 30 reviewed
-OSV MAL labels. 386 packages were scored; the database retained **144 positives**
-and **240 controls** (most PyPI malicious packages had already been removed).
+120 matched controls per npm/PyPI seed list). 354 packages were scored; the
+database retained **114 positives** and **240 controls** (most PyPI malicious
+packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.848 |
-| PR-AUC / average precision | 0.832 |
-| Brier score | 0.1605 |
-| Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 1.0 / 0.87 |
-| Threshold 40: precision / recall / FPR | 0.986 / 0.507 / 0.004 |
-| Threshold 50: precision / recall / FPR | 1.0 / 0.479 / 0.0 |
+| AUC | 0.862 |
+| PR-AUC / average precision | 0.838 |
+| Brier score | 0.1222 |
+| Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 0.98 / 0.75 |
+| Threshold 40: precision / recall / FPR | 0.986 / 0.632 / 0.004 |
+| Threshold 50: precision / recall / FPR | 1.0 / 0.605 / 0.0 |
 
 The sample is npm-heavy and dominated by `malicious_package`; the takeover
 slice is reported separately in `docs/incident-validation.md`. The generated
@@ -46,6 +45,14 @@ the label sources; treat them as triage evidence, not independent predictive
 proof. See
 `docs/validation/evaluation.md` for the generated report and caveats.
 
+
+## Historical-only cohort
+
+`validation/historical/` contains 30 manually reviewed OSV `MAL-*` labels whose
+malicious versions have been removed from the registry. They are kept for
+historical/version-aware work and are **not** part of the v1 current-state
+metrics. Promoting historical labels directly into v1 makes current-state
+metrics artificially pessimistic.
 
 ## Validation v2 — expanded sample
 

@@ -113,3 +113,12 @@ def test_calibration_history_and_drift(tmp_path):
     summary = calibration.drift_summary(history)
     assert summary["runs"] == 1
     assert summary["deltas"]["auc"] == 0.0
+
+
+def test_propose_weight_candidates_is_bounded_and_unique():
+    weights = {"publisher_change": 30, "typosquat": 10, "osv_risk": 0}
+    candidates = calibration.propose_weight_candidates(weights, limit=8)
+    assert candidates[0] == weights
+    assert len(candidates) <= 8
+    assert len({tuple(sorted(item.items())) for item in candidates}) == len(candidates)
+    assert all(value >= 0 for item in candidates for value in item.values())

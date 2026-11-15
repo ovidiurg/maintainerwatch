@@ -373,6 +373,126 @@ def drift_summary(history: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def propose_weight_candidates(
+    weights: dict[str, int],
+    *,
+    fractions: tuple[float, ...] = (0.75, 1.25, 0.5, 1.5),
+    limit: int = 80,
+) -> list[dict[str, int]]:
+    """Return unique nearby weight sets; the baseline is always first."""
+    baseline = {name: int(value) for name, value in weights.items()}
+    candidates: list[dict[str, int]] = [baseline]
+    seen = {tuple(sorted(baseline.items()))}
+    for name, value in sorted(weights.items()):
+        if value <= 0:
+            continue
+        for fraction in fractions:
+            candidate = dict(baseline)
+            candidate[name] = max(0, int(round(value * fraction)))
+            key = tuple(sorted(candidate.items()))
+            if key not in seen:
+                seen.add(key)
+                candidates.append(candidate)
+            if len(candidates) >= limit:
+                return candidates
+    return candidates
+
+
+def _selection_score(v1: dict[str, Any], v2_train: dict[str, Any]) -> tuple[float, float, float]:
+    def value(result: dict[str, Any], name: str) -> float:
+        return float(result["metrics"].get(name) or 0.0)
+    return (
+        round((value(v1, "average_precision") + value(v2_train, "average_precision")) / 2, 4),
+        round((value(v1, "auc") + value(v2_train, "auc")) / 2, 4),
+        round((_threshold(v1, 40.0)["recall"] + _threshold(v2_train, 40.0)["recall"]) / 2, 4),
+    )
+
+
+def search(
+    baseline_cfg: Config,
+    v1_cfg: Config,
+    v2_cfg: Config,
+    *,
+    start_weights: dict[str, int] | None = None,
+    split_date: str = DEFAULT_SPLIT_DATE,
+    max_candidates: int = 80,
+) -> dict[str, Any]:
+    """Search nearby weights on v1 + v2 train only; v2 test is held out."""
+    weights = dict(start_weights or baseline_cfg.weights)
+    candidates = propose_weight_candidates(weights, limit=max_candidates)
+    conn1 = db.connect(v1_cfg.db_path)
+    db.init_db(conn1)
+    conn2 = db.connect(v2_cfg.db_path)
+    db.init_db(conn2)
+    baseline_v1 = evaluate_sample(
+        conn1, "validation/v1", baseline_cfg.weights, v1_cfg.model_version,
+        split_date=split_date,
+    )
+    baseline_train = evaluate_sample(
+        conn2, "validation/v1", baseline_cfg.weights, v2_cfg.model_version,
+        split="train", split_date=split_date,
+    )
+    baseline_test = evaluate_sample(
+        conn2, "validation/v1", baseline_cfg.weights, v2_cfg.model_version,
+        split="test", split_date=split_date,
+    )
+    ranked = []
+    for candidate_weights in candidates:
+        v1 = evaluate_sample(
+            conn1, "validation/v1", candidate_weights, v1_cfg.model_version,
+            split_date=split_date,
+        )
+        train = evaluate_sample(
+            conn2, "validation/v1", candidate_weights, v2_cfg.model_version,
+            split="train", split_date=split_date,
+        )
+        ranked.append({
+            "weights": candidate_weights,
+            "selection_score": _selection_score(v1, train),
+            "v1": v1,
+            "v2_train": train,
+        })
+    ranked.sort(key=lambda item: item["selection_score"], reverse=True)
+    selected = ranked[0]
+    selected_test = evaluate_sample(
+        conn2, "validation/v1", selected["weights"], v2_cfg.model_version,
+        split="test", split_date=split_date,
+    )
+    conn1.close()
+    conn2.close()
+    baseline = {
+        "v2_test": baseline_test,
+        "v1": baseline_v1,
+        "v2_train": baseline_train,
+    }
+    candidate = {
+        "v2_test": selected_test,
+        "v1": selected["v1"],
+        "v2_train": selected["v2_train"],
+    }
+    checks = guardrails(baseline, candidate)
+    return {
+        "search": {
+            "candidates": len(ranked),
+            "selection": "v1 + v2 train PR-AUC/AUC/recall; v2 test held out",
+            "selected_weights": selected["weights"],
+            "selected_score": selected["selection_score"],
+            "top": ranked[:10],
+        },
+        "baseline": baseline,
+        "candidate": candidate,
+        "deltas": {
+            "v1": compare(baseline_v1, selected["v1"]),
+            "v2_train": compare(baseline_train, selected["v2_train"]),
+            "v2_test": compare(baseline_test, selected_test),
+        },
+        "guardrails": checks,
+        "passed": checks["passed"],
+        "baseline_model_version": baseline_cfg.model_version,
+        "candidate_model_version": v1_cfg.model_version,
+    }
+
+
 def markdown(result: dict[str, Any]) -> str:
     lines = [
         "# Calibration report",

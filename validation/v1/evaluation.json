@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-15T22:21:11.688529+00:00",
+  "generated_at": "2026-11-15T22:27:13.883554+00:00",
   "model_version": "0.5.2",
   "dataset_dir": "validation/v1",
   "split": null,
   "split_date": null,
   "coverage": {
-    "positives_in_dataset": 29196,
-    "positives_in_db": 144,
+    "positives_in_dataset": 29166,
+    "positives_in_db": 114,
     "controls_in_dataset": 1148,
     "controls_in_db": 240
   },
@@ -14,28 +14,28 @@
     "precision_at_10": 1.0,
     "precision_at_25": 1.0,
     "precision_at_50": 1.0,
-    "precision_at_100": 0.87,
-    "auc": 0.848,
-    "average_precision": 0.832,
-    "brier_score": 0.1605,
+    "precision_at_100": 0.76,
+    "auc": 0.862,
+    "average_precision": 0.838,
+    "brier_score": 0.1222,
     "calibration": [
       {
         "bin": "0-10",
-        "count": 129,
-        "mean_score": 6.0,
-        "positive_rate": 0.07
+        "count": 128,
+        "mean_score": 6.1,
+        "positive_rate": 0.062
       },
       {
         "bin": "10-20",
-        "count": 110,
-        "mean_score": 14.7,
-        "positive_rate": 0.309
+        "count": 100,
+        "mean_score": 14.8,
+        "positive_rate": 0.24
       },
       {
         "bin": "20-30",
-        "count": 60,
-        "mean_score": 24.5,
-        "positive_rate": 0.45
+        "count": 42,
+        "mean_score": 23.5,
+        "positive_rate": 0.214
       },
       {
         "bin": "30-40",
@@ -45,9 +45,9 @@
       },
       {
         "bin": "40-50",
-        "count": 5,
-        "mean_score": 46.5,
-        "positive_rate": 0.8
+        "count": 4,
+        "mean_score": 46.1,
+        "positive_rate": 0.75
       },
       {
         "bin": "50-60",
@@ -83,62 +83,47 @@
     "thresholds": [
       {
         "threshold": 25.0,
-        "tp": 90,
+        "tp": 74,
         "fp": 20,
-        "fn": 54,
+        "fn": 40,
         "tn": 220,
-        "precision": 0.818,
-        "recall": 0.625,
+        "precision": 0.787,
+        "recall": 0.649,
         "false_positive_rate": 0.083
       },
       {
         "threshold": 40.0,
-        "tp": 73,
+        "tp": 72,
         "fp": 1,
-        "fn": 71,
+        "fn": 42,
         "tn": 239,
         "precision": 0.986,
-        "recall": 0.507,
+        "recall": 0.632,
         "false_positive_rate": 0.004
       },
       {
         "threshold": 50.0,
         "tp": 69,
         "fp": 0,
-        "fn": 75,
+        "fn": 45,
         "tn": 240,
         "precision": 1.0,
-        "recall": 0.479,
+        "recall": 0.605,
         "false_positive_rate": 0.0
       },
       {
         "threshold": 60.0,
         "tp": 62,
         "fp": 0,
-        "fn": 82,
+        "fn": 52,
         "tn": 240,
         "precision": 1.0,
-        "recall": 0.431,
+        "recall": 0.544,
         "false_positive_rate": 0.0
       }
     ]
   },
   "temporal": {
-    "2023": {
-      "count": 17,
-      "auc": 0.772,
-      "average_precision": 0.182,
-      "threshold_40": {
-        "threshold": 40.0,
-        "tp": 0,
-        "fp": 1,
-        "fn": 17,
-        "tn": 239,
-        "precision": 0.0,
-        "recall": 0.0,
-        "false_positive_rate": 0.004
-      }
-    },
     "2024": {
       "count": 1,
       "auc": 1.0,
@@ -155,17 +140,17 @@
       }
     },
     "2025": {
-      "count": 15,
-      "auc": 0.783,
-      "average_precision": 0.282,
+      "count": 2,
+      "auc": 0.507,
+      "average_precision": 0.254,
       "threshold_40": {
         "threshold": 40.0,
-        "tp": 2,
+        "tp": 1,
         "fp": 1,
-        "fn": 13,
+        "fn": 1,
         "tn": 239,
-        "precision": 0.667,
-        "recall": 0.133,
+        "precision": 0.5,
+        "recall": 0.5,
         "false_positive_rate": 0.004
       }
     },
@@ -187,9 +172,9 @@
   },
   "positives_by_attack_type": {
     "malicious_package": {
-      "count": 140,
-      "mean_score": 44.5,
-      "median_score": 47.4,
+      "count": 110,
+      "mean_score": 50.6,
+      "median_score": 62.9,
       "high_band": 69
     },
     "typosquat": {
@@ -207,17 +192,17 @@
   },
   "positives_by_priority": {
     "high": {
-      "count": 144,
-      "mean_score": 43.9,
-      "median_score": 44.4,
+      "count": 114,
+      "mean_score": 49.6,
+      "median_score": 62.9,
       "high_band": 69
     }
   },
   "positives_by_system": {
     "npm": {
-      "count": 143,
-      "mean_score": 43.8,
-      "median_score": 42.0,
+      "count": 113,
+      "mean_score": 49.5,
+      "median_score": 62.9,
       "high_band": 68
     },
     "pypi": {

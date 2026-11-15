@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+import yaml
 
 from . import calibration, db, pipeline, validation
 from .config import load_config
@@ -125,7 +126,9 @@ def evaluate_validation(
 
 @app.command("calibrate")
 def calibrate(
-    candidate: str = typer.Option(..., help="Candidate YAML config with weights."),
+    candidate: Optional[str] = typer.Option(
+        None, help="Candidate YAML config with weights (required unless --search)."
+    ),
     baseline: Optional[str] = typer.Option(None, help="Baseline config file path."),
     validation: str = typer.Option("config/validation.yaml", help="v1 validation config."),
     validation_v2: str = typer.Option("config/validation-v2.yaml", help="v2 validation config."),
@@ -134,16 +137,53 @@ def calibrate(
     history: str = typer.Option(
         "data/calibration/history.jsonl", help="Append-only calibration history."
     ),
+    search: bool = typer.Option(False, help="Search nearby weights on v1 + v2 train."),
+    search_max: int = typer.Option(80, help="Maximum candidate weight sets."),
+    search_out: str = typer.Option(
+        "data/calibration/candidate.yaml", help="Write the selected candidate config."
+    ),
     fail_on_regression: bool = typer.Option(False, help="Exit 1 if guardrails fail."),
 ) -> None:
-    """Compare candidate weights with the baseline on temporal validation."""
+    """Compare or search weights on temporal validation."""
+    if not candidate and not search:
+        raise typer.BadParameter("--candidate is required unless --search is used")
+    base_cfg = load_config(baseline)
+    v1_cfg = load_config(validation)
+    v2_cfg = load_config(validation_v2)
+    if search:
+        start = load_config(candidate) if candidate else base_cfg
+        result = calibration.search(
+            base_cfg, v1_cfg, v2_cfg,
+            start_weights=start.weights,
+            split_date=split_date,
+            max_candidates=search_max,
+        )
+        out_path = Path(out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        candidate_path = Path(search_out)
+        candidate_path.parent.mkdir(parents=True, exist_ok=True)
+        candidate_path.write_text(yaml.safe_dump({
+            "weights": result["search"]["selected_weights"],
+            "model_version": result["candidate_model_version"],
+        }, sort_keys=False), encoding="utf-8")
+        typer.echo(json.dumps({
+            "path": str(out_path),
+            "candidate": str(candidate_path),
+            "passed": result["passed"],
+            "selected_weights": result["search"]["selected_weights"],
+            "selection_score": result["search"]["selected_score"],
+            "guardrails": result["guardrails"],
+        }, indent=2))
+        if fail_on_regression and not result["passed"]:
+            raise typer.Exit(code=1)
+        return
+
+    assert candidate
     if not Path(candidate).is_file():
         raise typer.BadParameter(f"candidate config not found: {candidate}")
     result = calibration.run(
-        load_config(baseline),
-        load_config(candidate),
-        load_config(validation),
-        load_config(validation_v2),
+        base_cfg, load_config(candidate), v1_cfg, v2_cfg,
         split_date=split_date,
     )
     out_path = Path(out)

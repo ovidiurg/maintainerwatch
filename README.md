@@ -200,6 +200,7 @@ mw score-all --config config/validation-obscure.yaml
 mw export [--format parquet|csv|json|spdx|cyclonedx|osv] [--config PATH]
 mw report [--out report.html] [--config PATH]
 mw calibrate --candidate config/calibration-candidate.yaml [--fail-on-regression]
+mw calibrate --search [--search-max 80]
 ```
 
 `mw export` writes under the configured `data_dir`; `mw report` builds a static
@@ -266,6 +267,7 @@ docker compose up -d --build      # serve on :8000 with ./data mounted
 make docker-report    # write ./data/report.html from the container
 make docker-smoke     # full image/CLI/report/API smoke test
 make calibration      # compare candidate weights with the baseline
+make calibration-search # search nearby weights on v1 + v2 train
 make calibration-drift # render append-only calibration history
 make label-intake      # collect candidate OSV MAL labels for review
 ```
@@ -299,8 +301,8 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.848, PR-AUC 0.832, Brier 0.161, precision@25 1.0, and at threshold 40
-precision 0.986 / recall 0.507 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.862, PR-AUC 0.838, Brier 0.1222, precision@25 1.0, and at threshold 40
+precision 0.986 / recall 0.632 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 A larger, year-stratified, non-OSV sample (`config/validation-v2.yaml`) gives
 489 positives / 1,008 controls, AUC 0.879, threshold-40 precision 0.973 /
 recall 0.671 / FPR 0.009; the 2026 test slice is 0.997 precision / 0.851 recall,
@@ -314,7 +316,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.16 · model 0.5.2)
+## Results (MVP, 15 November 2026 · app 0.4.17 · model 0.5.2)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
