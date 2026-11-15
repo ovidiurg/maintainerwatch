@@ -28,9 +28,9 @@ packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.862 |
-| PR-AUC / average precision | 0.838 |
-| Brier score | 0.1223 |
+| AUC | 0.863 |
+| PR-AUC / average precision | 0.839 |
+| Brier score | 0.122 |
 | Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 0.98 / 0.75 |
 | Threshold 40: precision / recall / FPR | 0.986 / 0.632 / 0.004 |
 | Threshold 50: precision / recall / FPR | 1.0 / 0.605 / 0.0 |
