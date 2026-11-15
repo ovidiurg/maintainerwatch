@@ -299,8 +299,8 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.863, PR-AUC 0.839, Brier 0.122, precision@25 1.0, and at threshold 40
-precision 0.986 / recall 0.632 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.848, PR-AUC 0.832, Brier 0.161, precision@25 1.0, and at threshold 40
+precision 0.986 / recall 0.507 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 A larger, year-stratified, non-OSV sample (`config/validation-v2.yaml`) gives
 489 positives / 1,008 controls, AUC 0.879, threshold-40 precision 0.973 /
 recall 0.671 / FPR 0.009; the 2026 test slice is 0.997 precision / 0.851 recall,

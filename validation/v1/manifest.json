@@ -5,8 +5,8 @@
   "builder": "scripts/build_validation_dataset.py",
   "recent_from": "2024-01-01",
   "counts": {
-    "incidents": 620,
-    "incident_packages": 31485,
+    "incidents": 650,
+    "incident_packages": 31515,
     "controls": 1148
   },
   "incidents_by_year": {
@@ -126,8 +126,8 @@
     }
   },
   "files": {
-    "incidents.jsonl": "80affb8a429252b8827fe9027d188ec057e2039a5c20a6be45d694157eb47efc",
-    "incident_packages.jsonl": "ada6d8119cc62871559b435a4ea64f64c4063e82138016f4b1d79f67e5e81151",
+    "incidents.jsonl": "0f050374e15761f3736a38178c43c7e01052df10cbfd51f933d875d823ca891e",
+    "incident_packages.jsonl": "c520406c1630ad2d5c13f7aff44669c170b72b9d3cdc69cd0bed17ddc8bac0de",
     "controls.jsonl": "ef9cd68e70debde5eac3dcf118309afa986c53c3e906a61291dccec88d4b11a0",
     "sources.yaml": "f68b7044d75edf64b4c861f153ba5bd6953966c0843b6a44582af580bfd4b622"
   },

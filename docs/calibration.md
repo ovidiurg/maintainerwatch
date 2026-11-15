@@ -149,6 +149,15 @@ For a temporary check without touching the tracked dataset, copy
 `validation/v1` to a local directory and use
 `mw evaluate-validation --dataset validation/local`; commit only after review.
 
+## First cycle result (2026-11-15)
+
+Promoted 30 manually reviewed OSV `MAL-*` packages into `validation/v1`.
+The v1 database now has 144 scored positives and 240 controls; v2 is unchanged.
+The added labels are deliberately harder than the original sample and lowered
+v1 AUC from 0.863 to 0.848 and threshold-40 recall from 0.632 to 0.507. No
+weights were changed: the candidate-with-baseline calibration passed the v2
+test guardrails, so the labels were retained for future calibration rounds.
+
 ## Weekly loop
 
 1. Add new labels from OSV MAL/advisories, documented incidents and
