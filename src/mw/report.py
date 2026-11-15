@@ -10,7 +10,8 @@ from jinja2 import Template
 from . import db
 from .config import Config
 from .impact import impact_tier
-from .risk import describe_risk
+from .risk import describe_risk, has_high_confidence
+from .signals import SIGNALS
 
 INCIDENTS = [
     ("npm", "event-stream"),
@@ -58,13 +59,15 @@ TEMPLATE = """<!doctype html>
 
 <h2>Top risk</h2>
 <table>
-  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Risk type</th><th>Short description</th><th>Next step</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Fan-in trans.</th><th>Dependents</th><th>Impact</th><th>Scorecard</th><th>Repo</th></tr>
+  <tr><th>System</th><th>Package</th><th>Score</th><th>Band</th><th>Confidence</th><th>Coverage</th><th>Risk type</th><th>Short description</th><th>Next step</th><th>Downloads/wk</th><th>OSV</th><th>Fan-in</th><th>Fan-in trans.</th><th>Dependents</th><th>Impact</th><th>Scorecard</th><th>Repo</th></tr>
   {% for r in top %}
   <tr>
     <td>{{ r.system }}</td>
     <td>{{ r.name }}</td>
     <td>{{ r.score }}</td>
     <td class="{{ r.band }}">{{ r.band }}</td>
+    <td class="{{ 'high' if r.confidence == 'high' else 'medium' }}">{{ r.confidence }}</td>
+    <td>{{ "%.0f%%"|format(r.coverage * 100) }}</td>
     <td>{{ r.risk_type or "-" }}</td>
     <td>{{ r.risk_note or "-" }}</td>
     <td>{{ r.next_step or "-" }}</td>
@@ -100,7 +103,9 @@ install_script (15), osv_risk (10), depsdev_findings (10). Bands: &lt;25 low,
 &lt;50 medium, else high. A numerical high score is capped to medium unless one
 high-confidence signal (publisher_change, commit_anomaly, osv_risk,
 depsdev_findings, install_script or maintainer_continuity) is at least 0.5.
-Identity-gated signals only use links with high/medium confidence. Risk type,
+Confidence is `high` only when such a signal is present; otherwise the row is
+`evidence-only`. Coverage is the applicable signal weight divided by the total
+model weight. Identity-gated signals only use links with high/medium confidence. Risk type,
 short description and next investigation step are shown for medium/high scores
 and derived from the dominant signals.</p>
 <p class="muted">Only public, role-related data is used. See docs/gdpr.md.</p>
@@ -127,7 +132,7 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
     ).fetchall()
 
     signal_rows = conn.execute(
-        """SELECT system, name, signal_type, value, evidence_json
+        """SELECT system, name, signal_type, value, band, evidence_json
            FROM signals WHERE model_version = ?""",
         (cfg.model_version,),
     ).fetchall()
@@ -138,6 +143,7 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
         signals[(row["system"], row["name"])][row["signal_type"]] = {
             "value": row["value"],
             "evidence": json.loads(row["evidence_json"] or "{}"),
+            "applicable": bool(row["band"]),
         }
 
     records = []
@@ -147,6 +153,19 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
         record["risk_note"] = ""
         record["next_step"] = ""
         record["impact_tier"] = impact_tier(record.get("dependent_count"))
+        signal_map = signals[(record["system"], record["name"])]
+        record["confidence"] = (
+            "high" if has_high_confidence(signal_map) else "evidence-only"
+        )
+        applicable_weight = sum(
+            cfg.weights.get(name, 0)
+            for name, signal in signal_map.items()
+            if signal.get("applicable")
+        )
+        total_weight = sum(cfg.weights.get(name, 0) for name in SIGNALS)
+        record["coverage"] = (
+            applicable_weight / total_weight if total_weight else 0.0
+        )
         if record["band"] in {"medium", "high"}:
             record["risk_type"], record["risk_note"], record["next_step"] = describe_risk(
                 signals[(record["system"], record["name"])]

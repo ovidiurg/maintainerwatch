@@ -35,4 +35,8 @@ def test_build_report_includes_risk_and_impact(tmp_path):
     assert "MaintainerWatch" in html
     assert "Maintainer takeover" in html
     assert "critical" in html
+    assert "Confidence" in html
+    assert "Coverage" in html
+    assert "evidence-only" in html
+    assert "high" in html
     assert "a" in html
