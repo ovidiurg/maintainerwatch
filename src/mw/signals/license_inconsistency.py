@@ -141,6 +141,16 @@ def compute(ctx: Context) -> SignalEvidence:
             evidence={"license": None, "reason": "missing license metadata"},
         )
 
+    if raw.upper() == "NOASSERTION":
+        return SignalEvidence(
+            value=0.0,
+            applicable=False,
+            evidence={
+                "license": raw,
+                "reason": "GitHub license detector returned NOASSERTION",
+            },
+        )
+
     normalized = raw.lower().replace(" license", "").replace(" licence", "").strip()
     if normalized in UNKNOWN:
         return SignalEvidence(

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T08:35:58.249925+00:00",
+  "generated_at": "2026-11-15T18:38:39.691849+00:00",
   "model_version": "0.5.2",
   "dataset_dir": "validation/v1",
   "split": null,
@@ -27,15 +27,15 @@
       },
       {
         "bin": "10-20",
-        "count": 409,
+        "count": 410,
         "mean_score": 14.3,
-        "positive_rate": 0.178
+        "positive_rate": 0.18
       },
       {
         "bin": "20-30",
-        "count": 171,
+        "count": 170,
         "mean_score": 24.6,
-        "positive_rate": 0.281
+        "positive_rate": 0.276
       },
       {
         "bin": "30-40",
@@ -126,7 +126,7 @@
   "temporal": {
     "2024": {
       "count": 10,
-      "auc": 0.652,
+      "auc": 0.651,
       "average_precision": 0.361,
       "threshold_40": {
         "threshold": 40.0,
@@ -141,8 +141,8 @@
     },
     "2025": {
       "count": 110,
-      "auc": 0.667,
-      "average_precision": 0.228,
+      "auc": 0.666,
+      "average_precision": 0.227,
       "threshold_40": {
         "threshold": 40.0,
         "tp": 9,
@@ -157,7 +157,7 @@
     "2026": {
       "count": 369,
       "auc": 0.948,
-      "average_precision": 0.932,
+      "average_precision": 0.933,
       "threshold_40": {
         "threshold": 40.0,
         "tp": 314,
@@ -185,7 +185,7 @@
     },
     "worm": {
       "count": 31,
-      "mean_score": 15.8,
+      "mean_score": 15.5,
       "median_score": 13.8,
       "high_band": 0
     }

@@ -31,6 +31,33 @@ def _headers(token: str | None) -> dict[str, str]:
     return h
 
 
+def detect_license_text(text: str | None) -> str | None:
+    """Best-effort SPDX detection for repositories GitHub labels NOASSERTION."""
+    if not text:
+        return None
+    if re.search(r"GNU GENERAL PUBLIC LICENSE\s+Version\s+3\b", text, re.I):
+        return "GPL-3.0"
+    if re.search(r"GNU GENERAL PUBLIC LICENSE\s+Version\s+2\b", text, re.I):
+        return "GPL-2.0"
+    if re.search(r"GNU AFFERO GENERAL PUBLIC LICENSE\s+Version\s+3\b", text, re.I):
+        return "AGPL-3.0"
+    if re.search(r"GNU LESSER GENERAL PUBLIC LICENSE\s+Version\s+2\.1\b", text, re.I):
+        return "LGPL-2.1"
+    if re.search(r"GNU LESSER GENERAL PUBLIC LICENSE\s+Version\s+3\b", text, re.I):
+        return "LGPL-3.0"
+    if re.search(r"Apache License\s+Version\s+2\.0", text, re.I):
+        return "Apache-2.0"
+    if re.search(r"Mozilla Public License\s+Version\s+2\.0", text, re.I):
+        return "MPL-2.0"
+    if re.search(r"MIT License", text, re.I):
+        return "MIT"
+    if re.search(r"BSD\s+3-Clause", text, re.I):
+        return "BSD-3-Clause"
+    if re.search(r"BSD\s+2-Clause", text, re.I):
+        return "BSD-2-Clause"
+    return None
+
+
 def fetch_repo_stats(
     client: CachedClient,
     system: str,

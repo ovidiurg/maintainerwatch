@@ -268,7 +268,7 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.862, PR-AUC 0.838, Brier 0.122, precision@25 1.0, and at threshold 40
+0.863, PR-AUC 0.839, Brier 0.122, precision@25 1.0, and at threshold 40
 precision 0.986 / recall 0.632 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 A larger, year-stratified, non-OSV sample (`config/validation-v2.yaml`) gives
 489 positives / 1,008 controls, AUC 0.879, threshold-40 precision 0.973 /
@@ -291,7 +291,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 1,413,269 versions, 243,608 commits, 22,653 maintainers, 1,375 repositories,
   10,014 OSV records, 47,443 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 7 high, 2,978 medium, 10,661 low. OIDC/bot publishers are ignored.
+- Risk bands: 7 high, 2,956 medium, 10,683 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224

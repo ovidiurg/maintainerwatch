@@ -1,6 +1,6 @@
 # Validation evaluation
 
-Generated: 2026-11-15T08:35:37.796148+00:00 · model 0.5.2
+Generated: 2026-11-15T18:38:18.936736+00:00 · model 0.5.2
 
 > Baseline: current-state scores from the validation ingest, not a pre-incident replay. Use it to compare model versions on the same sample.
 
@@ -19,9 +19,9 @@ Generated: 2026-11-15T08:35:37.796148+00:00 · model 0.5.2
 | Precision@25 | 1.0 |
 | Precision@50 | 1.0 |
 | Precision@100 | 0.76 |
-| AUC | 0.862 |
-| PR-AUC / average precision | 0.838 |
-| Brier score | 0.1223 |
+| AUC | 0.863 |
+| PR-AUC / average precision | 0.839 |
+| Brier score | 0.122 |
 
 ## Threshold metrics
 
@@ -38,7 +38,7 @@ Generated: 2026-11-15T08:35:37.796148+00:00 · model 0.5.2
 |---|---|---|---|---|
 | 2024 | 1 | 1.0 | 1.0 | 0.5 / 1.0 / 0.004 |
 | 2025 | 2 | 0.507 | 0.254 | 0.5 / 0.5 / 0.004 |
-| 2026 | 111 | 0.867 | 0.838 | 0.986 / 0.631 / 0.004 |
+| 2026 | 111 | 0.868 | 0.839 | 0.986 / 0.631 / 0.004 |
 
 ## Calibration
 
@@ -59,7 +59,7 @@ Generated: 2026-11-15T08:35:37.796148+00:00 · model 0.5.2
 
 | Type | Count | Mean | Median | High |
 |---|---|---|---|---|
-| malicious_package | 110 | 50.5 | 62.9 | 69 |
+| malicious_package | 110 | 50.6 | 62.9 | 69 |
 | typosquat | 2 | 24.7 | 24.7 | 0 |
 | worm | 2 | 21.0 | 21.0 | 0 |
 

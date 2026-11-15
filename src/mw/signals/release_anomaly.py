@@ -39,13 +39,24 @@ def compute(ctx: Context) -> SignalEvidence:
             evidence={"reason": "all releases share a timestamp"},
         )
 
+    prior_gap = median(positive_gaps)
+    if prior_gap < 0.01:
+        return SignalEvidence(
+            value=0.0,
+            applicable=False,
+            evidence={
+                "reason": "release timestamps are clustered; cadence is not assessable",
+                "last_gap_days": round(gaps[-1], 5),
+                "median_gap_days": round(prior_gap, 5),
+            },
+        )
+
     history = [math.log1p(g) for g in positive_gaps]
     med = median(history)
     mad = median_absolute_deviation(history)
     scale = max(mad, 1.0)
     z = (math.log1p(gaps[-1]) - med) / scale
 
-    prior_gap = median(positive_gaps)
     dormancy = 1.0 if gaps[-1] > max(180.0, 6.0 * prior_gap) else 0.0
 
     last = dates[-1]

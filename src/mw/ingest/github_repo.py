@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import base64
+
 from ..models import Maintainer, Package, Version
-from .github import _headers, API, parse_github_repo
+from .github import _headers, API, detect_license_text, parse_github_repo
 from .http import CachedClient
 
 SEED_GITHUB = ["tukaani-project/xz"]
@@ -90,13 +92,28 @@ def fetch_package(
         for identity in sorted(identities)
     ]
 
+    license_id = (meta.get("license") or {}).get("spdx_id")
+    if license_id in {None, "NOASSERTION"}:
+        license_doc = client.get_json(
+            f"{API}/repos/{owner}/{repo}/license", headers=headers
+        ) or {}
+        encoded = license_doc.get("content")
+        if encoded:
+            try:
+                text = base64.b64decode(encoded).decode("utf-8", errors="replace")
+            except (ValueError, TypeError):
+                text = None
+            license_id = detect_license_text(text) or license_id
+    if license_id == "NOASSERTION":
+        license_id = None
+
     pkg = Package(
         system="github",
         name=name,
         normalized=normalize_name(name),
         downloads_weekly=0,
         repo_url=meta.get("html_url"),
-        license=(meta.get("license") or {}).get("spdx_id"),
+        license=license_id,
         first_seen=meta.get("created_at"),
     )
     return pkg, versions, maintainers

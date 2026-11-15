@@ -953,3 +953,26 @@ def test_maven_metadata_latest():
         "</versions></versioning></metadata>"
     ) == "2"
     assert _metadata_latest("<metadata/>") is None
+
+
+def test_license_noassertion_not_risk(conn):
+    _add_package(conn)
+    ev = license_inconsistency.compute(
+        Context(conn=conn, system="github", name="pkg", license="NOASSERTION")
+    )
+    assert ev.applicable is False
+    assert ev.value == 0.0
+
+
+def test_release_anomaly_clustered_timestamps_not_applicable(conn):
+    _add_package(conn)
+    _add_versions(conn, [
+        ("1.0.0", "2025-01-01T00:00:00+00:00", "a"),
+        ("1.0.1", "2025-01-01T00:01:00+00:00", "a"),
+        ("1.0.2", "2025-01-01T00:02:00+00:00", "a"),
+        ("1.0.3", "2025-01-01T00:03:00+00:00", "a"),
+        ("1.0.4", "2025-01-31T00:00:00+00:00", "a"),
+    ])
+    ev = release_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
+    assert ev.applicable is False
+    assert "clustered" in ev.evidence["reason"]

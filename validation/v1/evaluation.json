@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-15T08:35:37.796148+00:00",
+  "generated_at": "2026-11-15T18:38:18.936736+00:00",
   "model_version": "0.5.2",
   "dataset_dir": "validation/v1",
   "split": null,
@@ -15,9 +15,9 @@
     "precision_at_25": 1.0,
     "precision_at_50": 1.0,
     "precision_at_100": 0.76,
-    "auc": 0.862,
-    "average_precision": 0.838,
-    "brier_score": 0.1223,
+    "auc": 0.863,
+    "average_precision": 0.839,
+    "brier_score": 0.122,
     "calibration": [
       {
         "bin": "0-10",
@@ -156,8 +156,8 @@
     },
     "2026": {
       "count": 111,
-      "auc": 0.867,
-      "average_precision": 0.838,
+      "auc": 0.868,
+      "average_precision": 0.839,
       "threshold_40": {
         "threshold": 40.0,
         "tp": 70,
@@ -173,7 +173,7 @@
   "positives_by_attack_type": {
     "malicious_package": {
       "count": 110,
-      "mean_score": 50.5,
+      "mean_score": 50.6,
       "median_score": 62.9,
       "high_band": 69
     },
@@ -193,7 +193,7 @@
   "positives_by_priority": {
     "high": {
       "count": 114,
-      "mean_score": 49.5,
+      "mean_score": 49.6,
       "median_score": 62.9,
       "high_band": 69
     }

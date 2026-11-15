@@ -54,7 +54,7 @@ to the same canonical identity.
 | `publisher_change` | 30 | A canonical publisher identity changed between releases in the last 365 days (value = min(1, changes / 2)), or between current maintainers and a 180-365 day snapshot (value capped at 0.5). |
 | `bus_factor` | 20 | Share of repository contributions held by the top author (12 months). |
 | `account_age` | 15 | Age of the repository owner account; younger is riskier. |
-| `release_anomaly` | 10 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, where release cadence is not assessed. |
+| `release_anomaly` | 10 | Dormancy followed by a release, or a burst of releases, from the release-time series. Not applicable for Maven, or when release timestamps are clustered below a 0.01-day median gap (batch/CI tags such as npm/cli). |
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. A never-provenance package gets an age/popularity-aware baseline; low-adoption npm packages are medium-capped. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names), homoglyph-normalized equality, or a same-length keyboard-adjacent typo to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
@@ -69,6 +69,9 @@ to the same canonical identity.
 
 ## License sources
 
+For GitHub release timelines, `NOASSERTION` from the GitHub license detector is
+treated as unknown rather than missing; when GitHub exposes a license file, its
+text is checked for common SPDX families (GPL, LGPL, Apache, MIT, BSD, MPL).
 License metadata is cross-checked across sources: the registry license
 (PyPI `license_expression`/`license` or the package field) against the PyPI
 Trove classifier, and the declared license against the GitHub repository

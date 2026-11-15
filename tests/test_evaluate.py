@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from mw.evaluate import metrics_at, replay_score
+from mw.ingest.github import detect_license_text
 from mw.ingest.github_repo import fetch_package as fetch_github_package
 from mw.models import SignalEvidence
 
@@ -64,3 +65,28 @@ def test_github_repo_release_versions():
     assert [v.version for v in versions] == ["v1.0.0", "v1.1.0"]
     assert versions[1].publisher_name == "bob"
     assert {m.identity for m in maintainers} == {"o", "alice", "bob"}
+
+
+def test_github_noassertion_license_fallback():
+    import base64
+
+    api = "https://api.github.com"
+    gpl = "GNU GENERAL PUBLIC LICENSE\nVersion 2, June 1991\n"
+    docs = {
+        f"{api}/repos/o/r": {
+            "html_url": "https://github.com/o/r",
+            "created_at": "2020-01-01T00:00:00Z",
+            "license": {"spdx_id": "NOASSERTION"},
+            "owner": {"login": "o"},
+        },
+        f"{api}/repos/o/r/releases?per_page=100": [],
+        f"{api}/repos/o/r/tags?per_page=100": [{"name": "v1.0.0"}],
+        f"{api}/repos/o/r/license": {
+            "content": base64.b64encode(gpl.encode()).decode(),
+        },
+    }
+    result = fetch_github_package(FakeClient(docs), "o/r", token="test")
+    assert result is not None
+    package, _, _ = result
+    assert package.license == "GPL-2.0"
+    assert detect_license_text(gpl) == "GPL-2.0"

@@ -1,6 +1,6 @@
 # Validation evaluation
 
-Generated: 2026-11-15T08:35:58.249925+00:00 · model 0.5.2
+Generated: 2026-11-15T18:38:39.691849+00:00 · model 0.5.2
 
 > Baseline: current-state scores from the validation ingest, not a pre-incident replay. Use it to compare model versions on the same sample.
 
@@ -36,17 +36,17 @@ Generated: 2026-11-15T08:35:58.249925+00:00 · model 0.5.2
 
 | Cutoff year | Positives | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
 |---|---|---|---|---|
-| 2024 | 10 | 0.652 | 0.361 | 0.357 / 0.5 / 0.009 |
-| 2025 | 110 | 0.667 | 0.228 | 0.5 / 0.082 / 0.009 |
-| 2026 | 369 | 0.948 | 0.932 | 0.972 / 0.851 / 0.009 |
+| 2024 | 10 | 0.651 | 0.361 | 0.357 / 0.5 / 0.009 |
+| 2025 | 110 | 0.666 | 0.227 | 0.5 / 0.082 / 0.009 |
+| 2026 | 369 | 0.948 | 0.933 | 0.972 / 0.851 / 0.009 |
 
 ## Calibration
 
 | Score bin | Count | Mean score | Positive rate |
 |---|---|---|---|
 | 0-10 | 552 | 5.9 | 0.067 |
-| 10-20 | 409 | 14.3 | 0.178 |
-| 20-30 | 171 | 24.6 | 0.281 |
+| 10-20 | 410 | 14.3 | 0.18 |
+| 20-30 | 170 | 24.6 | 0.276 |
 | 30-40 | 28 | 33.7 | 0.107 |
 | 40-50 | 249 | 47.8 | 0.968 |
 | 50-60 | 2 | 53.5 | 0.5 |
@@ -61,7 +61,7 @@ Generated: 2026-11-15T08:35:58.249925+00:00 · model 0.5.2
 |---|---|---|---|---|
 | malicious_package | 455 | 41.1 | 48.0 | 87 |
 | typosquat | 3 | 18.2 | 27.3 | 0 |
-| worm | 31 | 15.8 | 13.8 | 0 |
+| worm | 31 | 15.5 | 13.8 | 0 |
 
 ## Takeover slice
 
