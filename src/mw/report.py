@@ -17,7 +17,11 @@ INCIDENTS = [
     ("npm", "ua-parser-js"),
     ("npm", "colors"),
     ("npm", "node-ipc"),
-    ("pypi", "ctx"),
+    ("npm", "eslint-scope"),
+    ("npm", "eslint-config-eslint"),
+    ("npm", "coa"),
+    ("npm", "rc"),
+    ("github", "tukaani-project/xz"),
 ]
 
 TEMPLATE = """<!doctype html>
@@ -89,12 +93,16 @@ TEMPLATE = """<!doctype html>
 
 <h2>Method</h2>
 <p>Score = 100 × Σ(weight × value) / Σ(weight) over applicable signals:
-publisher_change (30), bus_factor (20), account_age (15), release_anomaly (15),
+publisher_change (30), bus_factor (20), account_age (15), release_anomaly (10),
 signing_gap (10), typosquat (10), license_inconsistency (5), commit_anomaly (15),
-scorecard (10), dependency_risk (15), install_script (15). Bands: &lt;25 low,
-&lt;50 medium, else high. Identity-gated signals only use links with high/medium
-confidence. Risk type, short description and next investigation step are shown for
-medium/high scores and derived from the dominant signals.</p>
+scorecard (10), dependency_risk (15), maintainer_continuity (15),
+install_script (15), osv_risk (10), depsdev_findings (10). Bands: &lt;25 low,
+&lt;50 medium, else high. A numerical high score is capped to medium unless one
+high-confidence signal (publisher_change, commit_anomaly, osv_risk,
+depsdev_findings, install_script or maintainer_continuity) is at least 0.5.
+Identity-gated signals only use links with high/medium confidence. Risk type,
+short description and next investigation step are shown for medium/high scores
+and derived from the dominant signals.</p>
 <p class="muted">Only public, role-related data is used. See docs/gdpr.md.</p>
 </body>
 </html>
