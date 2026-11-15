@@ -37,7 +37,8 @@ def main() -> None:
     names: list[str] = []
     seen: set[str] = set()
     for group in GROUPS:
-        url = f"{SEARCH}?q={urllib.parse.quote(f'g:\"{group}\"')}&rows=200&wt=json"
+        query = f'g:"{group}"'
+        url = f"{SEARCH}?q={urllib.parse.quote(query)}&rows=200&wt=json"
         try:
             docs = ((get_json(url).get("response") or {}).get("docs") or [])
         except OSError:
