@@ -58,7 +58,7 @@ to the same canonical identity.
 | `signing_gap` | 10 | Share of the latest 5 non-yanked releases without provenance/signatures. A never-provenance package gets an age/popularity-aware baseline; low-adoption npm packages are medium-capped. Not applicable for crates.io/Maven (no signing data) or PyPI when no recent release is signed. |
 | `typosquat` | 10 | Damerau-Levenshtein distance 1 (or 2 for long names), homoglyph-normalized equality, or a same-length keyboard-adjacent typo to a top package, with low downloads. |
 | `license_inconsistency` | 5 | Missing, unknown, non-SPDX license metadata, or disagreement between the registry license, the PyPI classifier and the GitHub repository license. This is a metadata signal, not a legal audit. |
-| `commit_anomaly` | 15 | New-author share in a 90-day window and commit burst (30 days vs the previous 90 days) from sampled GitHub commits. |
+| `commit_anomaly` | 15 | New-author share in a 90-day window and commit burst (30 days vs the previous 90 days) from sampled GitHub commits. A burst without new authors does not alone grant high-confidence status. |
 | `scorecard` | 10 | Low OpenSSF Scorecard repository score; value = max(0, (7 - score) / 7). |
 | `dependency_risk` | 15 | Log-scaled transitive fan-in (200+ dependents = 1.0) plus a smaller fan-out component. |
 | `install_script` | 15 | npm preinstall/install/postinstall/prepare scripts: only high-risk download/eval/child-process patterns make the signal applicable. |
@@ -164,7 +164,11 @@ over applicable signals. Bands: `< 25` low, `< 50` medium, otherwise high,
 but a high numerical score is capped to medium unless one high-confidence
 behavioural/advisory signal is present (`publisher_change`,
 `commit_anomaly`, `osv_risk`, `depsdev_findings`, `install_script`,
-`maintainer_continuity`).
+`maintainer_continuity`). For `commit_anomaly`, high confidence additionally
+requires new-author evidence; a same-author release burst is insufficient.
+For GitHub and Maven, `publisher_change` and `commit_anomaly` alone are not
+treated as high-confidence; an advisory/content signal is required because
+release-author and commit-sample noise is higher there.
 `inputs_hash` is the SHA-256 of the canonical JSON of applicable signal values,
 evidence and model version, so a score can be verified.
 

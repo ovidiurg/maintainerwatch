@@ -52,3 +52,26 @@ def test_high_confidence_accepts_signal_evidence():
     assert has_high_confidence({
         "publisher_change": SignalEvidence(value=0.5),
     }) is True
+
+
+def test_high_confidence_commit_anomaly_needs_new_author():
+    burst_only = {
+        "commit_anomaly": {
+            "value": 1.0,
+            "evidence": {"new_author_share": 0.0, "new_author_value": 0.0},
+        }
+    }
+    assert has_high_confidence(burst_only) is False
+    assert has_high_confidence({
+        "commit_anomaly": {
+            "value": 1.0,
+            "evidence": {"new_author_share": 0.7, "new_author_value": 0.4},
+        }
+    }) is True
+
+
+def test_high_confidence_platform_gate():
+    assert has_high_confidence({"publisher_change": _sig(0.75)}, system="github") is False
+    assert has_high_confidence({"commit_anomaly": _sig(0.99)}, system="maven") is False
+    assert has_high_confidence({"publisher_change": _sig(0.75)}, system="npm") is True
+    assert has_high_confidence({"osv_risk": _sig(1.0)}, system="maven") is True

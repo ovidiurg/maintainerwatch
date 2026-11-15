@@ -10,12 +10,35 @@ HIGH_CONFIDENCE_SIGNALS = {
 }
 
 
-def has_high_confidence(signals: dict) -> bool:
+def has_high_confidence(signals: dict, system: str | None = None) -> bool:
     for name in HIGH_CONFIDENCE_SIGNALS:
         signal = signals.get(name)
         if signal is None:
             continue
-        value = signal.get("value", 0) if isinstance(signal, dict) else getattr(signal, "value", 0)
+        value = (
+            signal.get("value", 0)
+            if isinstance(signal, dict)
+            else getattr(signal, "value", 0)
+        )
+        if (
+            system in {"github", "maven"}
+            and name in {"publisher_change", "commit_anomaly"}
+        ):
+            # Release authors and GitHub commit samples are noisy on these
+            # ecosystems; require an advisory/content signal for high confidence.
+            continue
+        if name == "commit_anomaly":
+            evidence = (
+                signal.get("evidence") or {}
+                if isinstance(signal, dict)
+                else getattr(signal, "evidence", {}) or {}
+            )
+            if value >= 0.5 and (
+                float(evidence.get("new_author_share") or 0.0) >= 0.5
+                or float(evidence.get("new_author_value") or 0.0) >= 0.5
+            ):
+                return True
+            continue
         if value >= 0.5:
             return True
     return False

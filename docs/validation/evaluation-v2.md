@@ -1,6 +1,6 @@
 # Validation evaluation
 
-Generated: 2026-11-14T23:52:56.707364+00:00 · model 0.5.1
+Generated: 2026-11-15T08:35:58.249925+00:00 · model 0.5.2
 
 > Baseline: current-state scores from the validation ingest, not a pre-incident replay. Use it to compare model versions on the same sample.
 

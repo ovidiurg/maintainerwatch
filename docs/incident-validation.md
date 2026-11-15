@@ -25,6 +25,16 @@ not proof of compromise, and a low score is a miss to be reported honestly.
 | coa | npm/coa | 2021-10-21 | 0.00 | 0.80 | 0.30 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
 | rc | npm/rc | 2021-11-14 | 0.00 | 0.00 | 0.30 | – | 6.0 | low | publisher_change, release_anomaly, signing_gap |
 | tukaani-project/xz | github/tukaani-project/xz | 2024-02-23 | – | 0.12 | – | 0.67 | 44.8 | medium | release_anomaly, commit_anomaly |
+| eslint-config-prettier | npm/eslint-config-prettier | 2025-07-17 | 0.50 | 0.70 | 0.60 | – | 56.0 | high | publisher_change, release_anomaly, signing_gap |
+| eslint-plugin-prettier | npm/eslint-plugin-prettier | 2025-07-17 | 0.00 | 0.00 | 0.00 | – | 0.0 | low | publisher_change, release_anomaly, signing_gap |
+| is | npm/is | 2025-07-17 | 0.00 | 0.80 | 0.30 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
+| got-fetch | npm/got-fetch | 2025-07-17 | 0.00 | 0.14 | – | – | 3.5 | low | publisher_change, release_anomaly |
+| synckit | npm/synckit | 2025-07-17 | 0.00 | 0.70 | 0.40 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
+| @pkgr/core | npm/@pkgr/core | 2025-07-17 | 0.00 | 0.70 | 0.00 | – | 14.0 | low | publisher_change, release_anomaly, signing_gap |
+| napi-postinstall | npm/napi-postinstall | 2025-07-17 | 0.00 | 0.23 | 0.00 | – | 17.2 | low | publisher_change, release_anomaly, signing_gap, package_age |
+| reviewdog/action-setup | github/reviewdog/action-setup | 2025-03-10 | – | 0.00 | – | – | 0.0 | low | release_anomaly |
+| keyv | npm/keyv | 2026-08-03 | 0.00 | 0.00 | 0.60 | – | 12.0 | low | publisher_change, release_anomaly, signing_gap |
+| file-entry-cache | npm/file-entry-cache | 2026-08-03 | 0.00 | 0.09 | 0.80 | – | 17.8 | low | publisher_change, release_anomaly, signing_gap |
 
 ## Metrics
 
@@ -32,20 +42,20 @@ Benign sample: 46 packages with no known compromise, cutoff 2024-01-01. The labe
 
 | Threshold | TP | FP | FN | TN | Precision | Recall | False-positive rate |
 |---|---|---|---|---|---|---|---|
-| 25 | 3 | 10 | 6 | 36 | 0.231 | 0.333 | 0.217 |
-| 40 | 2 | 8 | 7 | 38 | 0.200 | 0.222 | 0.174 |
-| 50 | 1 | 6 | 8 | 40 | 0.143 | 0.111 | 0.130 |
+| 25 | 4 | 10 | 15 | 36 | 0.286 | 0.211 | 0.217 |
+| 40 | 3 | 8 | 16 | 38 | 0.273 | 0.158 | 0.174 |
+| 50 | 2 | 6 | 17 | 40 | 0.250 | 0.105 | 0.130 |
 
 ## Maintainer-continuity sensitivity
 
 The baseline replay above excludes `maintainer_continuity`. A diagnostic
-sensitivity run on the same 9 incidents and 46 benign packages, adding
+sensitivity run on the same 19 incidents and 46 benign packages, adding
 that signal, gives:
 
 | Weight | TP | FP | Precision | Recall | FPR |
 |---|---|---|---|---|---|
-| 10 | 2 | 8 | 0.200 | 0.222 | 0.174 |
-| 15 | 3 | 8 | 0.273 | 0.333 | 0.174 |
+| 10 | 3 | 8 | 0.273 | 0.158 | 0.174 |
+| 15 | 4 | 8 | 0.333 | 0.211 | 0.174 |
 
 At weight 15, `ua-parser-js` reaches 40.7 and `event-stream` reaches
 68.0; no additional benign package crosses 40. The sample is too small
@@ -62,6 +72,16 @@ to treat this as a production threshold.
 - **coa** (2021-10-21): Compromised maintainer account; malicious coa releases. replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
 - **rc** (2021-11-14): Compromised maintainer account; malicious rc releases. replay=6.0 (low), signals=publisher_change, release_anomaly, signing_gap.
 - **tukaani-project/xz** (2024-02-23): Maintainer/commit-level backdoor; release-only signals are expected to miss it. replay=44.8 (medium), signals=release_anomaly, commit_anomaly.
+- **eslint-config-prettier** (2025-07-17): npnjs.com phishing campaign; malicious releases published through a compromised maintainer. replay=56.0 (high), signals=publisher_change, release_anomaly, signing_gap.
+- **eslint-plugin-prettier** (2025-07-17): Same npnjs.com campaign; companion package with malicious releases. replay=0.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **is** (2025-07-17): Maintainer phishing campaign; Scavenger malware shipped through the is package. replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **got-fetch** (2025-07-17): Maintainer phishing campaign; Pycoon stealer in rogue releases. replay=3.5 (low), signals=publisher_change, release_anomaly.
+- **synckit** (2025-07-17): Maintainer phishing campaign; malicious release without a matching source change. replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **@pkgr/core** (2025-07-17): Maintainer phishing campaign; Scavenger payload in a rogue release. replay=14.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **napi-postinstall** (2025-07-17): Maintainer phishing campaign; install path executed attacker-controlled code. replay=17.2 (low), signals=publisher_change, release_anomaly, signing_gap, package_age.
+- **reviewdog/action-setup** (2025-03-10): Compromised contributor token used to publish malicious GitHub Action releases. replay=0.0 (low), signals=release_anomaly.
+- **keyv** (2026-08-03): jaredwray account takeover; ChainDrop preinstall credential harvester. replay=12.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **file-entry-cache** (2026-08-03): Same ChainDrop worm campaign in the jaredwray package family. replay=17.8 (low), signals=publisher_change, release_anomaly, signing_gap.
 
 ## Limitations
 

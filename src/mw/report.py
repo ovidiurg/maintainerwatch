@@ -103,7 +103,10 @@ install_script (15), osv_risk (10), depsdev_findings (10). Bands: &lt;25 low,
 &lt;50 medium, else high. A numerical high score is capped to medium unless one
 high-confidence signal (publisher_change, commit_anomaly, osv_risk,
 depsdev_findings, install_script or maintainer_continuity) is at least 0.5.
-Confidence is `high` only when such a signal is present; otherwise the row is
+`commit_anomaly` additionally requires new-author evidence; a release burst by
+the same author does not alone qualify. GitHub/Maven publisher or commit
+changes also need an advisory/content signal. Confidence is `high` only
+when such a signal is present; otherwise the row is
 `evidence-only`. Coverage is the applicable signal weight divided by the total
 model weight. Identity-gated signals only use links with high/medium confidence. Risk type,
 short description and next investigation step are shown for medium/high scores
@@ -155,7 +158,9 @@ def build_report(cfg: Config, out: str | Path = "report.html") -> tuple[Path, in
         record["impact_tier"] = impact_tier(record.get("dependent_count"))
         signal_map = signals[(record["system"], record["name"])]
         record["confidence"] = (
-            "high" if has_high_confidence(signal_map) else "evidence-only"
+            "high"
+            if has_high_confidence(signal_map, record["system"])
+            else "evidence-only"
         )
         applicable_weight = sum(
             cfg.weights.get(name, 0)

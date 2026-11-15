@@ -283,15 +283,15 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026)
+## Results (MVP, 15 November 2026 · app 0.4.14 · model 0.5.2)
 
-- 13,387 packages scored: 5,125 npm, 5,800 PyPI, 2,350 crates.io, 102 Maven
-  and 10 GitHub repositories. The expansion mixes high-usage packages,
+- 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
+  and 65 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 1,387,273 versions, 243,608 commits, 22,206 maintainers, 1,375 repositories,
-  10,005 OSV records, 46,243 runtime dependency edges (PyPI extras excluded).
+- 1,413,269 versions, 243,608 commits, 22,653 maintainers, 1,375 repositories,
+  10,014 OSV records, 47,443 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 8 high, 2,861 medium, 10,518 low. OIDC/bot publishers are ignored.
+- Risk bands: 7 high, 2,978 medium, 10,661 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -303,15 +303,22 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   medium without behavioural/advisory evidence and remain triage candidates,
   not malware labels. `pypi/langchain-ai` reaches 100 but remains medium
   because its evidence is name-similarity/hygiene, not a confirmed compromise.
-- Pre-incident replay (9 incidents): event-stream 62.9 high; xz-utils 44.8
-  medium; ua-parser-js 27.3; colors 22.0; node-ipc 19.7; same-account hijacks
-  `eslint-scope`, `eslint-config-eslint`, `coa` and `rc` remain low. At
-  threshold 40 the 46-package benign replay sample gives precision 0.182,
-  recall 0.222, false-positive rate 0.196 — replay remains a diagnostic, not a
-  production detector. A sensitivity run that adds `maintainer_continuity`
+- Pre-incident replay (19 incidents): event-stream 62.9 high;
+  eslint-config-prettier 56.0 high; xz-utils 44.8 medium; ua-parser-js 27.3;
+  colors 22.0; node-ipc 19.7; the 2025 npm phishing and 2026 ChainDrop packages
+  are mostly low, and same-account hijacks remain a blind spot. At threshold 40
+  the 46-package benign replay sample gives precision 0.273, recall 0.158,
+  false-positive rate 0.174 — replay remains a diagnostic, not a production
+  detector. A sensitivity run that adds `maintainer_continuity`
   to replay (weight 15) moves ua-parser-js from 27.3 to 40.7 without adding a
-  benign package above 40; the 9-incident sample is too small to treat this as
-  a stable production threshold.
+  benign package above 40; the 19-incident sample is still too small to treat
+  this as a stable production threshold.
+- External cross-check of the current high band (OSV plus deps.dev) confirms
+  all **7/7** high packages as malicious. A same-author release burst had
+  incorrectly promoted `crates/num_threads` to high; the high-confidence gate
+  now requires new-author evidence, so it is medium at 51.4 (evidence-only).
+  None of the seven npm high packages has Sigstore/Rekor provenance, so the
+  validation is advisory-based rather than signature-based.
 - Validation v2 sample: 328 of 489 known positives at threshold 40 (precision
   0.973, FPR 0.009); 87 at threshold 50. High-band precision is 1.0, but
   high-band recall is deliberately conservative; see
@@ -319,8 +326,8 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - GitHub enrichment is impact-ranked and bounded: the latest pass covered 90
   repositories and 11,335 commits with a two-page commit window.
   Install-script scanning flags only high-risk npm install scripts.
-- Bulk package ingestion used `--no-github`; SQLite is 738 MB and the request
-  cache is 7.1 GB.
+- Bulk package ingestion used `--no-github`; SQLite is 800 MB and the request
+  cache is 7.2 GB.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
@@ -334,8 +341,11 @@ A weighted sum of applicable signals, normalised to 0–100, with an
 are review candidates rather than confirmed high risk. High-band scores are
 reserved for packages with high-confidence behavioural/advisory evidence
 (`publisher_change`, `commit_anomaly`, `osv_risk`, `depsdev_findings`,
-`install_script`, `maintainer_continuity`); other high numerical scores are
-kept at medium. Obscure low-adoption packages use a medium-capped unsigned
+`install_script`, `maintainer_continuity`); `commit_anomaly` also needs
+new-author evidence, so a same-author release burst alone does not grant the
+high band. On GitHub and Maven, publisher/commit changes alone do not qualify;
+an advisory/content signal is required. Other high numerical scores are kept at
+medium. Obscure low-adoption packages use a medium-capped unsigned
 baseline. `scan`/API also expose maintainer count,
 commit-author count/span, GuardDog findings and static content flags as context. Repository metadata (archived, owner
 type, stars/forks/issues), individual Scorecard checks and static tarball scan

@@ -1035,7 +1035,7 @@ def score_all(cfg: Config) -> dict:
         score, band, inputs_hash = compute_score(
             signals, cfg.weights, cfg.model_version
         )
-        if band == "high" and not has_high_confidence(signals):
+        if band == "high" and not has_high_confidence(signals, system):
             band = "medium"
         ts = computed_at()
 

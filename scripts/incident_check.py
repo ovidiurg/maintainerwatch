@@ -27,6 +27,26 @@ INCIDENTS = [
      "Compromised maintainer account; malicious rc releases."),
     ("github", "tukaani-project/xz", "2024-02-23T00:00:00+00:00",
      "Maintainer/commit-level backdoor; release-only signals are expected to miss it."),
+    ("npm", "eslint-config-prettier", "2025-07-17T00:00:00+00:00",
+     "npnjs.com phishing campaign; malicious releases published through a compromised maintainer."),
+    ("npm", "eslint-plugin-prettier", "2025-07-17T00:00:00+00:00",
+     "Same npnjs.com campaign; companion package with malicious releases."),
+    ("npm", "is", "2025-07-17T00:00:00+00:00",
+     "Maintainer phishing campaign; Scavenger malware shipped through the is package."),
+    ("npm", "got-fetch", "2025-07-17T00:00:00+00:00",
+     "Maintainer phishing campaign; Pycoon stealer in rogue releases."),
+    ("npm", "synckit", "2025-07-17T00:00:00+00:00",
+     "Maintainer phishing campaign; malicious release without a matching source change."),
+    ("npm", "@pkgr/core", "2025-07-17T00:00:00+00:00",
+     "Maintainer phishing campaign; Scavenger payload in a rogue release."),
+    ("npm", "napi-postinstall", "2025-07-17T00:00:00+00:00",
+     "Maintainer phishing campaign; install path executed attacker-controlled code."),
+    ("github", "reviewdog/action-setup", "2025-03-10T00:00:00+00:00",
+     "Compromised contributor token used to publish malicious GitHub Action releases."),
+    ("npm", "keyv", "2026-08-03T00:00:00+00:00",
+     "jaredwray account takeover; ChainDrop preinstall credential harvester."),
+    ("npm", "file-entry-cache", "2026-08-03T00:00:00+00:00",
+     "Same ChainDrop worm campaign in the jaredwray package family."),
 ]
 
 # Packages with no known compromise in the evaluation window. Absence of a known
@@ -128,12 +148,12 @@ def main() -> None:
     lines.append(
         "\n## Maintainer-continuity sensitivity\n\n"
         "The baseline replay above excludes `maintainer_continuity`. A diagnostic\n"
-        "sensitivity run on the same 9 incidents and 46 benign packages, adding\n"
+        "sensitivity run on the same 19 incidents and 46 benign packages, adding\n"
         "that signal, gives:\n\n"
         "| Weight | TP | FP | Precision | Recall | FPR |\n"
         "|---|---|---|---|---|---|\n"
-        "| 10 | 2 | 8 | 0.200 | 0.222 | 0.174 |\n"
-        "| 15 | 3 | 8 | 0.273 | 0.333 | 0.174 |\n\n"
+        "| 10 | 3 | 8 | 0.273 | 0.158 | 0.174 |\n"
+        "| 15 | 4 | 8 | 0.333 | 0.211 | 0.174 |\n\n"
         "At weight 15, `ua-parser-js` reaches 40.7 and `event-stream` reaches\n"
         "68.0; no additional benign package crosses 40. The sample is too small\n"
         "to treat this as a production threshold.\n"

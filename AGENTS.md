@@ -22,8 +22,8 @@ Key facts:
   `scripts/prepare_priority_seeds.py`; ingested data stays local.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
-- Current local baseline (15 Nov 2026): 13,387 packages (5,125 npm, 5,800 PyPI,
-  2,350 crates, 102 Maven, 10 GitHub), app 0.4.13, model 0.5.1.
+- Current local baseline (15 Nov 2026): 13,646 packages (5,130 npm, 5,800 PyPI,
+  2,350 crates, 301 Maven, 65 GitHub), app 0.4.14, model 0.5.2.
 
 ## Install
 
@@ -96,6 +96,20 @@ Use `mw --help` and `mw COMMAND --help` for the authoritative option list.
 7. Do not commit `data/`, caches, tokens or credentials.
 8. For a public deployment, follow the dual-use and GDPR guidance; do not make
    automatic accusations about maintainers.
+
+## OSV integration and upstream contributions
+
+MaintainerWatch consumes the public OSV API and OSV-format records; it does not
+modify `google/osv.dev`. If contributing upstream or extending the integration,
+read and follow the upstream
+[`AGENTS.md`](https://github.com/google/osv.dev/blob/master/AGENTS.md):
+
+- use the OSV schema/API, not website scraping;
+- follow Conventional Commits and the repository-specific test/lint commands;
+- keep Go code behind the database interfaces required by the migration;
+- never hand-edit generated files (`*_pb2.py`, `*.pb.go`, `queries.sql.go`,
+  `schema_generated.json`);
+- update the upstream `AGENTS.md` for major architectural or workflow changes.
 
 ## Environment variables
 
