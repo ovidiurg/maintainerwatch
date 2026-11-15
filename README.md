@@ -267,6 +267,7 @@ make docker-report    # write ./data/report.html from the container
 make docker-smoke     # full image/CLI/report/API smoke test
 make calibration      # compare candidate weights with the baseline
 make calibration-drift # render append-only calibration history
+make label-intake      # collect candidate OSV MAL labels for review
 ```
 
 Docker report workflow:

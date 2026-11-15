@@ -1,7 +1,8 @@
 PYTHON ?= python3
 CANDIDATE ?= config/calibration-candidate.yaml
+LABELS_INPUT ?= data/feedback/packages.jsonl
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-drift maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration label-intake calibration-drift maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -41,6 +42,9 @@ calibration:
 
 calibration-drift:
 	$(PYTHON) scripts/calibration_drift.py
+
+label-intake:
+	$(PYTHON) scripts/intake_osv_labels.py --input $(LABELS_INPUT)
 
 maintain:
 	mw maintain

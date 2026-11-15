@@ -24,7 +24,7 @@ Key facts:
 - `src/mw/data/default.yaml` is tracked package data and must stay identical to
   `config/default.yaml`. The repository ignores only root `/data/`, not package
   data under `src/mw/data/`. `tests/test_versions.py` enforces this.
-- Current checks: **172 tests**, coverage **76.12%**, CI green on Python 3.11–3.13; Docker smoke
+- Current checks: **174 tests**, coverage **76.12%**, CI green on Python 3.11–3.13; Docker smoke
   runs on relevant pull requests and on explicit manual dispatch only.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
@@ -107,6 +107,7 @@ git.
 | Isolated dynamic worker | `mw scan-dynamic --limit N` (requires `dynamic.worker_url`) |
 | Score/search | `mw score-all`; `mw scan PACKAGE --system SYSTEM`; `mw alerts --min-score 40` |
 | Validation | `mw evaluate-validation --config config/validation.yaml`; `mw evaluate-ablations --config config/validation.yaml`; `mw calibrate --candidate config/calibration-candidate.yaml`; `python scripts/calibration_drift.py` |
+| Label intake | `python scripts/intake_osv_labels.py --input data/feedback/packages.jsonl` |
 | Export/report/API | `mw export --format json|spdx|cyclonedx|osv`; `mw report`; `mw serve` |
 | Docker report | `make docker-report`; `docker compose run --rm api mw report --out /app/data/report.html` |
 | Privacy removal | `mw delete-package --system SYSTEM --name PACKAGE --yes` (dry-run without `--yes`) |
