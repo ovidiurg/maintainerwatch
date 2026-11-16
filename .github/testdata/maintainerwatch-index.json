@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "model_version": "0.5.3",
+  "packages": {
+    "npm:test-pkg": {
+      "system": "npm",
+      "name": "test-pkg",
+      "score": 80.0,
+      "band": "high",
+      "confidence": "high",
+      "coverage": 0.3,
+      "risk_type": "Maintainer takeover"
+    }
+  }
+}

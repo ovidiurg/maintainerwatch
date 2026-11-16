@@ -10,6 +10,9 @@ inputs:
   index-sha256:
     description: Optional SHA-256 of the index file
     required: false
+  index-path:
+    description: Local index path (for private/offline tests); takes precedence over index-url
+    required: false
   package-spec:
     description: Optional Python package spec; empty installs the action checkout
     default: ""
@@ -22,6 +25,9 @@ inputs:
   comment:
     description: Post one sticky PR summary comment (default false)
     default: "false"
+  upload-sarif:
+    description: Upload SARIF to GitHub code scanning (default true)
+    default: "true"
 runs:
   using: composite
   steps:
@@ -38,7 +44,12 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        curl -fsSL "${{ inputs.index-url }}" -o "$RUNNER_TEMP/maintainerwatch-index.json"
+        if [ -n "${{ inputs.index-path }}" ]; then
+          cp "${{ inputs.index-path }}" "$RUNNER_TEMP/maintainerwatch-index.json"
+        else
+          test -n "${{ inputs.index-url }}"
+          curl -fsSL "${{ inputs.index-url }}" -o "$RUNNER_TEMP/maintainerwatch-index.json"
+        fi
         if [ -n "${{ inputs.index-sha256 }}" ]; then
           echo "${{ inputs.index-sha256 }}  $RUNNER_TEMP/maintainerwatch-index.json" | sha256sum -c -
         fi
@@ -54,6 +65,7 @@ runs:
           --out "$RUNNER_TEMP/maintainerwatch.sarif" \
           --fail-on "${{ inputs.fail-on }}"
     - name: Upload SARIF
+      if: ${{ inputs.upload-sarif == 'true' }}
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: ${{ runner.temp }}/maintainerwatch.sarif
