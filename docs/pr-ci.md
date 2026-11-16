@@ -92,6 +92,14 @@ mw scan-diff \
 Default policy is advisory: `--fail-on none`. Use `medium` or `high` only after
 local validation.
 
+### Blocking merges
+
+`fail-on: high` makes the action check fail, but GitHub only blocks the merge
+when that check is required by branch protection or a repository ruleset. On a
+public repository, enable a required status check named `scan` on `main`; the
+workflow in `.github/workflows/pr-scan.yml` provides it. Private repositories
+need GitHub Pro for branch protection.
+
 ## GitHub Action
 
 The composite action installs the action checkout by default (the package is
