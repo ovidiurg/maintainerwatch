@@ -4,6 +4,8 @@ This directory is the persistent, append-only calibration log.
 
 - `history.jsonl`: one record per baseline/candidate evaluation.
 - `holdout.json`: the v2 temporal test policy and usage state.
+- `replay-history.jsonl` and `docs/validation/replay-drift.md`: the separate
+  replay diagnostic track (currently v4); this is not used for weight search.
 
 Anti-overfitting rules:
 

@@ -117,9 +117,17 @@ Run the baseline calibration and drift report weekly, without retuning weights:
 ```
 
 `make calibration-loop` writes `validation/calibration/history.jsonl` and
-`docs/validation/calibration-drift.md`. It intentionally does **not** run
+`docs/validation/calibration-drift.md`. If the local v4 validation database is
+present, it also writes `validation/calibration/replay-history.jsonl` and
+`docs/validation/replay-drift.md`. It intentionally does **not** run
 `mw calibrate --search`; repeated search against the same v2 test slice would
 overfit the holdout. Use search only with a new/rolling holdout.
+
+Run the v4 replay checkpoint directly with:
+
+```bash
+make replay-v4
+```
 
 ## Database performance
 
