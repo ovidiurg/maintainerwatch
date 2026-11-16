@@ -370,13 +370,13 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 
 ## Results (MVP, 15 November 2026 · app 0.4.23 · model 0.5.3)
 
-- 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
+- 15,902 packages scored: 6,804 npm, 6,382 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 1,413,269 versions, 243,608 commits, 22,653 maintainers, 1,375 repositories,
-  10,014 OSV records, 47,443 runtime dependency edges (PyPI extras excluded).
+- 1,682,714 versions, 243,608 commits, 28,603 maintainers, 1,375 repositories,
+  10,334 OSV records, 55,559 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 7 high, 3,124 medium, 10,515 low. OIDC/bot publishers are ignored.
+- Risk bands: 10 high, 3,578 medium, 12,314 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -399,11 +399,14 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   benign package above 40; the 19-incident sample is still too small to treat
   this as a stable production threshold.
 - External cross-check of the current high band (OSV plus deps.dev) confirms
-  all **7/7** high packages as malicious. A same-author release burst had
-  incorrectly promoted `crates/num_threads` to high; the high-confidence gate
-  now requires new-author evidence, so it is medium at 51.4 (evidence-only).
-  None of the seven npm high packages has Sigstore/Rekor provenance, so the
-  validation is advisory-based rather than signature-based.
+  **7 of 10** high-band packages as malicious. The other three
+  (`@cloudbase/wx-cloud-client-sdk`, `png-js`, `jws`) are high-download
+  packages currently driven by publisher/continuity evidence without an
+  advisory; they need review and are a precision warning, not malware labels.
+  A same-author release burst had incorrectly promoted `crates/num_threads` to
+  high; the high-confidence gate now requires new-author evidence, so it is
+  medium at 51.4 (evidence-only). The seven malicious npm packages do not have
+  Sigstore/Rekor provenance, so validation is advisory-based.
 - Validation v2 sample: 328 of 489 known positives at threshold 40 (precision
   0.970, FPR 0.010); 327 at threshold 50. High-band precision is 1.0, but
   high-band recall is deliberately conservative; see
@@ -411,7 +414,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - GitHub enrichment is impact-ranked and bounded: the latest pass covered 90
   repositories and 11,335 commits with a two-page commit window.
   Install-script scanning flags only high-risk npm install scripts.
-- Bulk package ingestion used `--no-github`; SQLite is 800 MB and the request
+- Bulk package ingestion used `--no-github`; SQLite is 1.1 GB and the request
   cache is 7.2 GB.
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
