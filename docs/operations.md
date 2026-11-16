@@ -154,6 +154,18 @@ sqlite3 data/maintainerwatch.sqlite "VACUUM;"
 `VACUUM` needs free disk space roughly equal to the database size and should
 run while the API is stopped. Do not run it from cron on every ingest.
 
+## GitLab forge backfill
+
+GitLab repository support uses the GitLab API, which rate-limits unauthenticated
+requests. Set `GITLAB_TOKEN` and run:
+
+```bash
+python scripts/backfill_gitlab.py --commits
+```
+
+The script only selects `gitlab.com` URLs; self-hosted GitLab URLs need a
+separate API host and are not covered by the public API path.
+
 ## Backups
 
 SQLite is a single file plus `-wal`/`-shm` while connections are open. Use the
