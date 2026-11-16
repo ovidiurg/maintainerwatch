@@ -135,7 +135,8 @@ def calibrate(
     split_date: str = typer.Option("2026-01-01", help="v2 test split date."),
     out: str = typer.Option("data/calibration.json", help="JSON report path."),
     history: str = typer.Option(
-        "data/calibration/history.jsonl", help="Append-only calibration history."
+        "validation/calibration/history.jsonl",
+        help="Append-only calibration history.",
     ),
     search: bool = typer.Option(False, help="Search nearby weights on v1 + v2 train."),
     search_max: int = typer.Option(80, help="Maximum candidate weight sets."),
@@ -143,6 +144,12 @@ def calibrate(
         0, help="Bootstrap resamples for the selected search candidate."
     ),
     bootstrap_seed: int = typer.Option(42, help="Bootstrap random seed."),
+    min_auc_gain: float = typer.Option(
+        0.005, help="Minimum lower-CI AUC gain to recommend apply."
+    ),
+    min_pr_gain: float = typer.Option(
+        0.005, help="Minimum lower-CI PR-AUC gain to recommend apply."
+    ),
     search_out: str = typer.Option(
         "data/calibration/candidate.yaml", help="Write the selected candidate config."
     ),
@@ -165,6 +172,8 @@ def calibrate(
             max_candidates=search_max,
             bootstrap=bootstrap,
             bootstrap_seed=bootstrap_seed,
+            min_auc_gain=min_auc_gain,
+            min_pr_gain=min_pr_gain,
         )
         out_path = Path(out)
         out_path.parent.mkdir(parents=True, exist_ok=True)

@@ -108,6 +108,19 @@ maintain` writes `data/report.html` in the same volume. For a read-only API depl
 the container only needs read access to the SQLite file and its `-wal`/`-shm`
 companions.
 
+## Calibration loop
+
+Run the baseline calibration and drift report weekly, without retuning weights:
+
+```cron
+0 5 * * 1 cd /opt/maintainerwatch && . .venv/bin/activate && make calibration-loop >> logs/calibration.log 2>&1
+```
+
+`make calibration-loop` writes `validation/calibration/history.jsonl` and
+`docs/validation/calibration-drift.md`. It intentionally does **not** run
+`mw calibrate --search`; repeated search against the same v2 test slice would
+overfit the holdout. Use search only with a new/rolling holdout.
+
 ## Backups
 
 SQLite is a single file plus `-wal`/`-shm` while connections are open. Use the

@@ -31,19 +31,18 @@ mw calibrate \
 cat data/calibration.md
 ```
 
-Outputs are local and git-ignored:
-
-- `data/calibration.json`
-- `data/calibration.md`
-- `data/calibration/history.jsonl`
-- `data/calibration/drift.md` (via `python scripts/calibration_drift.py`)
-
-The history is append-only. Inspect metric drift with:
+The persistent history lives in `validation/calibration/history.jsonl` and is
+committed. Run reports are local under `data/calibration/`.
 
 ```bash
-python scripts/calibration_drift.py
-cat data/calibration/drift.md
+make calibration-loop
+cat docs/validation/calibration-drift.md
 ```
+
+The loop deliberately runs only the baseline history/drift step. It does **not**
+run a new weight search automatically, because repeatedly searching the same
+v2 test slice would overfit the holdout. Run `mw calibrate --search` manually
+only when you have a new/rolling holdout.
 
 ## Guardrails
 
@@ -158,6 +157,16 @@ kept in the v1 current-state cohort. v1 was restored to its prior baseline
 (AUC 0.862, PR-AUC 0.838) before the later `signing_gap` calibration; the 0.5.3
 model then reached v1 AUC 0.875 and v2 AUC 0.891. This was a label-scope
 correction, not a model regression.
+
+## Rejected high-confidence candidates
+
+- **Static content scan**: tested on 378 v1 packages. Positives had 4 `wallet`
+  and 1 `install_hook` flag, while controls had 42 `install_hook`, 21 `wallet`
+  and 3 `network_exec` flags. It is too noisy for high-confidence and remains
+  context-only.
+- **Current-version OSV advisory**: already implemented as `osv_risk`; v2 has
+  0 current-version matches because most malicious versions were removed.
+  Historical advisory matching belongs in replay, not current-state high band.
 
 ## Weekly loop
 

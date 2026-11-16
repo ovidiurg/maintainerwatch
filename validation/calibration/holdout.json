@@ -1,0 +1,7 @@
+{
+  "name": "v2-2026",
+  "split_date": "2026-01-01",
+  "status": "consumed",
+  "used_for": "model 0.5.3 calibration and bootstrap",
+  "note": "Do not reuse this test slice for repeated candidate search."
+}

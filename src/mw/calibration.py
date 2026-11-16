@@ -420,6 +420,8 @@ def bootstrap_compare(
     *,
     iterations: int = 1000,
     seed: int = 42,
+    min_auc_gain: float = 0.005,
+    min_pr_gain: float = 0.005,
 ) -> dict[str, Any]:
     import random
 
@@ -461,7 +463,10 @@ def bootstrap_compare(
         name: round(sum(1 for value in values if value > 0) / iterations, 3)
         for name, values in deltas.items()
     }
-    stable_gain = ci["auc"][0] > 0 and ci["average_precision"][0] > 0
+    stable_gain = (
+        ci["auc"][0] >= min_auc_gain
+        and ci["average_precision"][0] >= min_pr_gain
+    )
     fpr_ok = ci["threshold_40_fpr"][1] <= 0.02
     high_precision_ok = ci["high_precision"][0] >= -0.02
     return {
@@ -471,8 +476,8 @@ def bootstrap_compare(
         "candidate_wins_fraction": win,
         "recommendation": "apply" if stable_gain and fpr_ok and high_precision_ok else "keep-baseline",
         "checks": {
-            "auc_ci_above_zero": ci["auc"][0] > 0,
-            "pr_auc_ci_above_zero": ci["average_precision"][0] > 0,
+            "auc_ci_lower_ge_min_gain": ci["auc"][0] >= min_auc_gain,
+            "pr_auc_ci_lower_ge_min_gain": ci["average_precision"][0] >= min_pr_gain,
             "fpr_ci_upper_le_0.02": fpr_ok,
             "high_precision_ci_lower_ge_minus_0.02": high_precision_ok,
         },
@@ -482,8 +487,8 @@ def bootstrap_compare(
 def propose_weight_candidates(
     weights: dict[str, int],
     *,
-    fractions: tuple[float, ...] = (0.75, 1.25, 0.5, 1.5),
-    limit: int = 80,
+    fractions: tuple[float, ...] = (0.9, 1.1),
+    limit: int = 40,
 ) -> list[dict[str, int]]:
     """Return unique nearby weight sets; the baseline is always first."""
     baseline = {name: int(value) for name, value in weights.items()}
@@ -524,6 +529,8 @@ def search(
     max_candidates: int = 80,
     bootstrap: int = 0,
     bootstrap_seed: int = 42,
+    min_auc_gain: float = 0.005,
+    min_pr_gain: float = 0.005,
 ) -> dict[str, Any]:
     """Search nearby weights on v1 + v2 train only; v2 test is held out."""
     weights = dict(start_weights or baseline_cfg.weights)
@@ -583,6 +590,8 @@ def search(
         bootstrap_compare(
             baseline_test, selected_test,
             iterations=bootstrap, seed=bootstrap_seed,
+            min_auc_gain=min_auc_gain,
+            min_pr_gain=min_pr_gain,
         )
         if bootstrap else None
     )

@@ -267,7 +267,8 @@ docker compose up -d --build      # serve on :8000 with ./data mounted
 make docker-report    # write ./data/report.html from the container
 make docker-smoke     # full image/CLI/report/API smoke test
 make calibration      # compare candidate weights with the baseline
-make calibration-search # search nearby weights on v1 + v2 train
+make calibration-search # explicit search; not part of the daily loop
+make calibration-loop   # baseline history + drift, without retuning
 make calibration-drift # render append-only calibration history
 make label-intake      # collect candidate OSV MAL labels for review
 ```
@@ -316,7 +317,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.20 · model 0.5.3)
+## Results (MVP, 15 November 2026 · app 0.4.21 · model 0.5.3)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,

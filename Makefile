@@ -2,7 +2,7 @@ PYTHON ?= python3
 CANDIDATE ?= config/calibration-candidate.yaml
 LABELS_INPUT ?= data/feedback/packages.jsonl
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-search label-intake calibration-drift maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search label-intake calibration-drift maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -42,6 +42,9 @@ calibration:
 
 calibration-search:
 	$(PYTHON) -m mw.cli calibrate --search --bootstrap 1000 --out data/calibration/search.json
+
+calibration-loop:
+	bash scripts/calibration_loop.sh
 
 calibration-drift:
 	$(PYTHON) scripts/calibration_drift.py

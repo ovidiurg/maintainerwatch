@@ -41,11 +41,11 @@ def markdown(history: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--history", default="data/calibration/history.jsonl",
+        "--history", default="validation/calibration/history.jsonl",
         help="Append-only calibration history.",
     )
     parser.add_argument(
-        "--out", default="data/calibration/drift.md",
+        "--out", default="docs/validation/calibration-drift.md",
         help="Markdown output path.",
     )
     args = parser.parse_args()

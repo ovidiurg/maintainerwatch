@@ -145,3 +145,28 @@ def test_bootstrap_compare_reports_ci():
     assert result["iterations"] == 100
     assert "ci_95_delta_candidate_minus_baseline" in result
     assert result["recommendation"] in {"apply", "keep-baseline"}
+
+
+def test_bootstrap_requires_minimum_effect_size():
+    baseline = {
+        "scores": {
+            "positive": [70.0, 60.0, 50.0],
+            "negative": [10.0, 20.0, 30.0],
+            "positive_bands": ["medium", "medium", "medium"],
+            "negative_bands": ["low", "low", "low"],
+        }
+    }
+    candidate = {
+        "scores": {
+            "positive": [70.1, 60.1, 50.1],
+            "negative": [10.0, 20.0, 30.0],
+            "positive_bands": ["medium", "medium", "medium"],
+            "negative_bands": ["low", "low", "low"],
+        }
+    }
+    result = calibration.bootstrap_compare(
+        baseline, candidate, iterations=100, min_auc_gain=0.01,
+        min_pr_gain=0.01,
+    )
+    assert result["checks"]["auc_ci_lower_ge_min_gain"] is False
+    assert result["recommendation"] == "keep-baseline"
