@@ -91,9 +91,10 @@ expand the mature-package universe (A2).
 `validation/v4/` applies the A2 maturity gate to the fresh v3 intake: **125 npm
 positives** with at least three pre-cutoff versions and the v1 controls. In
 pre-incident replay all 125 are replayable and all have applicable signals;
-AUC is **0.767**. Commit history was not fetched, so this is release-metadata
-only. It is a diagnostic replay holdout, not a current-state holdout and not
-yet wired into `mw calibrate`. See `docs/validation/evaluation-v4.md`.
+AUC is **0.764**. Commit history was backfilled for **59/125** packages (9,542
+commits); the rest had no valid repository or pre-cutoff commits. It is a
+diagnostic replay holdout, not a current-state holdout and not yet wired into
+`mw calibrate`. See `docs/validation/evaluation-v4.md`.
 
 ## Pre-incident replay
 

@@ -14,30 +14,33 @@ gate.
 | Replayable positives | 125 |
 | Replayable controls | 998 |
 | Positives with applicable replay signals | 125 / 125 |
-| Positives with pre-cutoff commits | 0 |
+| Positives with pre-cutoff commits | 59 |
+| Commit rows backfilled | 9,542 |
 
-Commit history was not fetched for the expanded cohort, so
-`commit_anomaly` is absent and the replay is release-metadata only.
+Commit history was backfilled for 59 of 125 packages; the remainder had no
+valid repository or no commits before the cutoff. Replay therefore combines
+release signals with partial commit history.
 
 ## Replay result
 
 | Metric | Value |
 |---|---:|
-| AUC | 0.767 |
+| AUC | 0.764 |
 | Precision@10 | 0.100 |
 | Precision@25 | 0.040 |
 | Precision@50 | 0.020 |
-| Threshold 25: precision / recall / FPR | 0.283 / 0.544 / 0.172 |
-| Threshold 40: precision / recall / FPR | 0.233 / 0.272 / 0.112 |
+| Threshold 25: precision / recall / FPR | 0.280 / 0.536 / 0.172 |
+| Threshold 40: precision / recall / FPR | 0.228 / 0.264 / 0.112 |
 | Threshold 50: precision / recall / FPR | 0.029 / 0.024 / 0.102 |
-| Threshold 60: precision / recall / FPR | 0.020 / 0.016 / 0.097 |
+| Threshold 60: precision / recall / FPR | 0.010 / 0.008 / 0.097 |
 
 ## Verdict
 
 **Usable as a diagnostic replay holdout**, unlike v3: the maturity gate removes
 the 326 no-history positives that made v3 invalid. It does **not** demonstrate
 current-state model quality and is not yet wired into `mw calibrate`, which
-still uses v1/v2.
+still uses v1/v2. Partial commit coverage (59/125) limits any comparison against
+the full-commit v1 replay.
 
 The low precision at high thresholds is a real warning: older controls carry
 release/signing signals and the fresh positives are mostly release-anomaly
