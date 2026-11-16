@@ -39,7 +39,7 @@
   <section class="stats" aria-label="Project at a glance">
     <div><strong>13,646</strong><span>packages scored</span></div>
     <div><strong>14</strong><span>explainable signals</span></div>
-    <div><strong>0.879</strong><span>validation ROC-AUC (v2)</span></div>
+    <div><strong>0.891</strong><span>validation ROC-AUC (v2)</span></div>
     <div><strong>869</strong><span>impact-enriched packages</span></div>
   </section>
 
@@ -159,14 +159,14 @@ mw report --out data/report.html</code></pre>
       predictive performance.
     </p>
     <div class="metrics">
-      <div><strong>0.879</strong><span>ROC-AUC (v2)</span></div>
-      <div><strong>0.863</strong><span>PR-AUC / average precision</span></div>
-      <div><strong>0.973</strong><span>precision @ threshold 40</span></div>
-      <div><strong>0.009</strong><span>false-positive rate @ 40</span></div>
+      <div><strong>0.891</strong><span>ROC-AUC (v2)</span></div>
+      <div><strong>0.878</strong><span>PR-AUC / average precision</span></div>
+      <div><strong>0.970</strong><span>precision @ threshold 40</span></div>
+      <div><strong>0.010</strong><span>false-positive rate @ 40</span></div>
     </div>
     <p class="note">
       The expanded v2 sample has 489 positives / 1,008 controls. Its 2026 test
-      slice reaches 0.947 AUC and 0.997 precision at threshold 40, while the
+      slice reaches 0.953 AUC and 0.969 precision at threshold 40, while the
       small pre-2026 train slice remains weak. Pre-incident replay is harder
       (AUC 0.485): many malicious packages are new at the cutoff. A compromised
       maintainer account that keeps the same publisher identity can also stay

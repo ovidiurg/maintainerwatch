@@ -7,7 +7,7 @@ GitHub statistics are current-state and would leak future information;
 `typosquat` is excluded because the top-package list is current. The replay
 score therefore covers `publisher_change`, `release_anomaly`, `signing_gap` and
 `commit_anomaly`, renormalised to 0-100 over the signals that are applicable
-(weights 30/10/10/15).
+(weights 30/10/15/15).
 
 A high replay score means the package looked risky *before* the incident. It is
 not proof of compromise, and a low score is a miss to be reported honestly.
@@ -16,25 +16,25 @@ not proof of compromise, and a low score is a miss to be reported honestly.
 
 | Incident | Package | Cutoff | publisher_change | release_anomaly | signing_gap | commit_anomaly | Replay score | Band | Applicable |
 |---|---|---|---|---|---|---|---|---|---|
-| event-stream | npm/event-stream | 2018-11-20 | 0.50 | 0.09 | 1.00 | 1.00 | 62.9 | high | publisher_change, release_anomaly, signing_gap, commit_anomaly |
+| event-stream | npm/event-stream | 2018-11-20 | 0.50 | 0.09 | 1.00 | 1.00 | 65.6 | high | publisher_change, release_anomaly, signing_gap, commit_anomaly |
 | ua-parser-js | npm/ua-parser-js | 2021-10-21 | 0.00 | 0.00 | – | 1.00 | 27.3 | medium | publisher_change, release_anomaly, commit_anomaly |
-| colors | npm/colors | 2022-01-07 | 0.00 | 0.80 | 0.30 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
-| node-ipc | npm/node-ipc | 2022-03-14 | 0.00 | 0.69 | 0.30 | – | 19.7 | low | publisher_change, release_anomaly, signing_gap |
-| eslint-scope | npm/eslint-scope | 2018-07-11 | 0.03 | 0.00 | 0.30 | 0.00 | 6.0 | low | publisher_change, release_anomaly, signing_gap, commit_anomaly |
-| eslint-config-eslint | npm/eslint-config-eslint | 2018-07-11 | 0.00 | 0.21 | 0.50 | 0.00 | 11.0 | low | publisher_change, release_anomaly, signing_gap, commit_anomaly |
-| coa | npm/coa | 2021-10-21 | 0.00 | 0.80 | 0.30 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
-| rc | npm/rc | 2021-11-14 | 0.00 | 0.00 | 0.30 | – | 6.0 | low | publisher_change, release_anomaly, signing_gap |
+| colors | npm/colors | 2022-01-07 | 0.00 | 0.80 | 0.30 | – | 22.7 | low | publisher_change, release_anomaly, signing_gap |
+| node-ipc | npm/node-ipc | 2022-03-14 | 0.00 | 0.69 | 0.30 | – | 20.6 | low | publisher_change, release_anomaly, signing_gap |
+| eslint-scope | npm/eslint-scope | 2018-07-11 | 0.03 | 0.00 | 0.30 | 0.00 | 7.7 | low | publisher_change, release_anomaly, signing_gap, commit_anomaly |
+| eslint-config-eslint | npm/eslint-config-eslint | 2018-07-11 | 0.00 | 0.21 | 0.50 | 0.00 | 13.7 | low | publisher_change, release_anomaly, signing_gap, commit_anomaly |
+| coa | npm/coa | 2021-10-21 | 0.00 | 0.80 | 0.30 | – | 22.7 | low | publisher_change, release_anomaly, signing_gap |
+| rc | npm/rc | 2021-11-14 | 0.00 | 0.00 | 0.30 | – | 8.2 | low | publisher_change, release_anomaly, signing_gap |
 | tukaani-project/xz | github/tukaani-project/xz | 2024-02-23 | – | 0.12 | – | 0.67 | 44.8 | medium | release_anomaly, commit_anomaly |
-| eslint-config-prettier | npm/eslint-config-prettier | 2025-07-17 | 0.50 | 0.70 | 0.60 | – | 56.0 | high | publisher_change, release_anomaly, signing_gap |
+| eslint-config-prettier | npm/eslint-config-prettier | 2025-07-17 | 0.50 | 0.70 | 0.60 | – | 56.4 | high | publisher_change, release_anomaly, signing_gap |
 | eslint-plugin-prettier | npm/eslint-plugin-prettier | 2025-07-17 | 0.00 | 0.00 | 0.00 | – | 0.0 | low | publisher_change, release_anomaly, signing_gap |
-| is | npm/is | 2025-07-17 | 0.00 | 0.80 | 0.30 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
+| is | npm/is | 2025-07-17 | 0.00 | 0.80 | 0.30 | – | 22.7 | low | publisher_change, release_anomaly, signing_gap |
 | got-fetch | npm/got-fetch | 2025-07-17 | 0.00 | 0.14 | – | – | 3.5 | low | publisher_change, release_anomaly |
-| synckit | npm/synckit | 2025-07-17 | 0.00 | 0.70 | 0.40 | – | 22.0 | low | publisher_change, release_anomaly, signing_gap |
-| @pkgr/core | npm/@pkgr/core | 2025-07-17 | 0.00 | 0.70 | 0.00 | – | 14.0 | low | publisher_change, release_anomaly, signing_gap |
-| napi-postinstall | npm/napi-postinstall | 2025-07-17 | 0.00 | 0.23 | 0.00 | – | 17.2 | low | publisher_change, release_anomaly, signing_gap, package_age |
+| synckit | npm/synckit | 2025-07-17 | 0.00 | 0.70 | 0.40 | – | 23.6 | low | publisher_change, release_anomaly, signing_gap |
+| @pkgr/core | npm/@pkgr/core | 2025-07-17 | 0.00 | 0.70 | 0.00 | – | 12.7 | low | publisher_change, release_anomaly, signing_gap |
+| napi-postinstall | npm/napi-postinstall | 2025-07-17 | 0.00 | 0.23 | 0.00 | – | 15.9 | low | publisher_change, release_anomaly, signing_gap, package_age |
 | reviewdog/action-setup | github/reviewdog/action-setup | 2025-03-10 | – | 0.00 | – | – | 0.0 | low | release_anomaly |
-| keyv | npm/keyv | 2026-08-03 | 0.00 | 0.00 | 0.60 | – | 12.0 | low | publisher_change, release_anomaly, signing_gap |
-| file-entry-cache | npm/file-entry-cache | 2026-08-03 | 0.00 | 0.09 | 0.80 | – | 17.8 | low | publisher_change, release_anomaly, signing_gap |
+| keyv | npm/keyv | 2026-08-03 | 0.00 | 0.00 | 0.60 | – | 16.4 | low | publisher_change, release_anomaly, signing_gap |
+| file-entry-cache | npm/file-entry-cache | 2026-08-03 | 0.00 | 0.09 | 0.80 | – | 23.5 | low | publisher_change, release_anomaly, signing_gap |
 
 ## Metrics
 
@@ -63,25 +63,25 @@ to treat this as a production threshold.
 
 ## Notes
 
-- **event-stream** (2018-11-20): Malicious flatmap-stream dependency introduced through a new publisher. replay=62.9 (high), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
+- **event-stream** (2018-11-20): Malicious flatmap-stream dependency introduced through a new publisher. replay=65.6 (high), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
 - **ua-parser-js** (2021-10-21): Maintainer account hijacked; malicious versions published. replay=27.3 (medium), signals=publisher_change, release_anomaly, commit_anomaly.
-- **colors** (2022-01-07): Maintainer intentionally broke releases (sabotage, not takeover). replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **node-ipc** (2022-03-14): Protestware release. replay=19.7 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **eslint-scope** (2018-07-11): Compromised eslint publisher account; malicious release used the same account. replay=6.0 (low), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
-- **eslint-config-eslint** (2018-07-11): Same compromised eslint account; companion malicious package. replay=11.0 (low), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
-- **coa** (2021-10-21): Compromised maintainer account; malicious coa releases. replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **rc** (2021-11-14): Compromised maintainer account; malicious rc releases. replay=6.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **colors** (2022-01-07): Maintainer intentionally broke releases (sabotage, not takeover). replay=22.7 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **node-ipc** (2022-03-14): Protestware release. replay=20.6 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **eslint-scope** (2018-07-11): Compromised eslint publisher account; malicious release used the same account. replay=7.7 (low), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
+- **eslint-config-eslint** (2018-07-11): Same compromised eslint account; companion malicious package. replay=13.7 (low), signals=publisher_change, release_anomaly, signing_gap, commit_anomaly.
+- **coa** (2021-10-21): Compromised maintainer account; malicious coa releases. replay=22.7 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **rc** (2021-11-14): Compromised maintainer account; malicious rc releases. replay=8.2 (low), signals=publisher_change, release_anomaly, signing_gap.
 - **tukaani-project/xz** (2024-02-23): Maintainer/commit-level backdoor; release-only signals are expected to miss it. replay=44.8 (medium), signals=release_anomaly, commit_anomaly.
-- **eslint-config-prettier** (2025-07-17): npnjs.com phishing campaign; malicious releases published through a compromised maintainer. replay=56.0 (high), signals=publisher_change, release_anomaly, signing_gap.
+- **eslint-config-prettier** (2025-07-17): npnjs.com phishing campaign; malicious releases published through a compromised maintainer. replay=56.4 (high), signals=publisher_change, release_anomaly, signing_gap.
 - **eslint-plugin-prettier** (2025-07-17): Same npnjs.com campaign; companion package with malicious releases. replay=0.0 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **is** (2025-07-17): Maintainer phishing campaign; Scavenger malware shipped through the is package. replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **is** (2025-07-17): Maintainer phishing campaign; Scavenger malware shipped through the is package. replay=22.7 (low), signals=publisher_change, release_anomaly, signing_gap.
 - **got-fetch** (2025-07-17): Maintainer phishing campaign; Pycoon stealer in rogue releases. replay=3.5 (low), signals=publisher_change, release_anomaly.
-- **synckit** (2025-07-17): Maintainer phishing campaign; malicious release without a matching source change. replay=22.0 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **@pkgr/core** (2025-07-17): Maintainer phishing campaign; Scavenger payload in a rogue release. replay=14.0 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **napi-postinstall** (2025-07-17): Maintainer phishing campaign; install path executed attacker-controlled code. replay=17.2 (low), signals=publisher_change, release_anomaly, signing_gap, package_age.
+- **synckit** (2025-07-17): Maintainer phishing campaign; malicious release without a matching source change. replay=23.6 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **@pkgr/core** (2025-07-17): Maintainer phishing campaign; Scavenger payload in a rogue release. replay=12.7 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **napi-postinstall** (2025-07-17): Maintainer phishing campaign; install path executed attacker-controlled code. replay=15.9 (low), signals=publisher_change, release_anomaly, signing_gap, package_age.
 - **reviewdog/action-setup** (2025-03-10): Compromised contributor token used to publish malicious GitHub Action releases. replay=0.0 (low), signals=release_anomaly.
-- **keyv** (2026-08-03): jaredwray account takeover; ChainDrop preinstall credential harvester. replay=12.0 (low), signals=publisher_change, release_anomaly, signing_gap.
-- **file-entry-cache** (2026-08-03): Same ChainDrop worm campaign in the jaredwray package family. replay=17.8 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **keyv** (2026-08-03): jaredwray account takeover; ChainDrop preinstall credential harvester. replay=16.4 (low), signals=publisher_change, release_anomaly, signing_gap.
+- **file-entry-cache** (2026-08-03): Same ChainDrop worm campaign in the jaredwray package family. replay=23.5 (low), signals=publisher_change, release_anomaly, signing_gap.
 
 ## Limitations
 

@@ -1,6 +1,6 @@
 # Validation evaluation
 
-Generated: 2026-11-15T22:27:13.883554+00:00 · model 0.5.2
+Generated: 2026-11-15T23:38:10.712631+00:00 · model 0.5.3
 
 > Baseline: current-state scores from the validation ingest, not a pre-incident replay. Use it to compare model versions on the same sample.
 
@@ -18,50 +18,50 @@ Generated: 2026-11-15T22:27:13.883554+00:00 · model 0.5.2
 | Precision@10 | 1.0 |
 | Precision@25 | 1.0 |
 | Precision@50 | 1.0 |
-| Precision@100 | 0.76 |
-| AUC | 0.862 |
-| PR-AUC / average precision | 0.838 |
-| Brier score | 0.1222 |
+| Precision@100 | 0.8 |
+| AUC | 0.875 |
+| PR-AUC / average precision | 0.855 |
+| Brier score | 0.1164 |
 
 ## Threshold metrics
 
 | Threshold | TP | FP | FN | TN | Precision | Recall | FPR |
 |---|---|---|---|---|---|---|---|
-| 25.0 | 74 | 20 | 40 | 220 | 0.787 | 0.649 | 0.083 |
-| 40.0 | 72 | 1 | 42 | 239 | 0.986 | 0.632 | 0.004 |
-| 50.0 | 69 | 0 | 45 | 240 | 1.0 | 0.605 | 0.0 |
+| 25.0 | 80 | 20 | 34 | 220 | 0.8 | 0.702 | 0.083 |
+| 40.0 | 72 | 2 | 42 | 238 | 0.973 | 0.632 | 0.008 |
+| 50.0 | 71 | 1 | 43 | 239 | 0.986 | 0.623 | 0.004 |
 | 60.0 | 62 | 0 | 52 | 240 | 1.0 | 0.544 | 0.0 |
 
 ## Temporal slices
 
 | Cutoff year | Positives | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
 |---|---|---|---|---|
-| 2024 | 1 | 1.0 | 1.0 | 0.5 / 1.0 / 0.004 |
-| 2025 | 2 | 0.507 | 0.254 | 0.5 / 0.5 / 0.004 |
-| 2026 | 111 | 0.867 | 0.838 | 0.986 / 0.631 / 0.004 |
+| 2024 | 1 | 1.0 | 1.0 | 0.333 / 1.0 / 0.008 |
+| 2025 | 2 | 0.505 | 0.171 | 0.333 / 0.5 / 0.008 |
+| 2026 | 111 | 0.88 | 0.856 | 0.972 / 0.631 / 0.008 |
 
 ## Calibration
 
 | Score bin | Count | Mean score | Positive rate |
 |---|---|---|---|
-| 0-10 | 128 | 6.1 | 0.062 |
-| 10-20 | 100 | 14.8 | 0.24 |
-| 20-30 | 42 | 23.5 | 0.214 |
-| 30-40 | 11 | 33.7 | 0.091 |
-| 40-50 | 4 | 46.1 | 0.75 |
-| 50-60 | 7 | 52.2 | 1 |
-| 60-70 | 12 | 62.7 | 1 |
-| 70-80 | 50 | 75.3 | 1 |
-| 80-90 | 0 | None | None |
+| 0-10 | 117 | 6.2 | 0.068 |
+| 10-20 | 102 | 14.6 | 0.186 |
+| 20-30 | 49 | 23.8 | 0.265 |
+| 30-40 | 12 | 33.3 | 0.167 |
+| 40-50 | 2 | 42.6 | 0.5 |
+| 50-60 | 10 | 55.3 | 0.9 |
+| 60-70 | 12 | 64.0 | 1 |
+| 70-80 | 19 | 72.0 | 1 |
+| 80-90 | 31 | 80.0 | 1 |
 | 90-100 | 0 | None | None |
 
 ## Positives by attack type
 
 | Type | Count | Mean | Median | High |
 |---|---|---|---|---|
-| malicious_package | 110 | 50.6 | 62.9 | 69 |
-| typosquat | 2 | 24.7 | 24.7 | 0 |
-| worm | 2 | 21.0 | 21.0 | 0 |
+| malicious_package | 110 | 52.7 | 63.8 | 70 |
+| typosquat | 2 | 26.2 | 26.2 | 1 |
+| worm | 2 | 21.2 | 21.2 | 0 |
 
 ## Takeover slice
 

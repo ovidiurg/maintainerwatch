@@ -116,6 +116,7 @@ def evaluate_sample(
     *,
     split: str | None = None,
     split_date: str = DEFAULT_SPLIT_DATE,
+    include_scores: bool = False,
 ) -> dict[str, Any]:
     signals = _load_signals(conn, model_version)
     positives, negatives = _dataset_samples(dataset_dir)
@@ -156,7 +157,7 @@ def evaluate_sample(
     for _, band, _, _ in positive_scores + negative_scores:
         bands[band] = bands.get(band, 0) + 1
 
-    return {
+    result = {
         "split": split or "all",
         "coverage": {
             "positives": len(positive_scores),
@@ -195,6 +196,14 @@ def evaluate_sample(
             "bands": bands,
         },
     }
+    if include_scores:
+        result["scores"] = {
+            "positive": pos_values,
+            "negative": neg_values,
+            "positive_bands": [item[1] for item in positive_scores],
+            "negative_bands": [item[1] for item in negative_scores],
+        }
+    return result
 
 
 def _threshold(result: dict[str, Any], value: float) -> dict[str, Any]:
@@ -373,6 +382,103 @@ def drift_summary(history: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _percentile(values: list[float], fraction: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * fraction
+    low = int(position)
+    high = min(low + 1, len(ordered) - 1)
+    weight = position - low
+    return ordered[low] * (1 - weight) + ordered[high] * weight
+
+
+def _bootstrap_metrics(
+    pos_values: list[float],
+    neg_values: list[float],
+    pos_bands: list[str],
+    neg_bands: list[str],
+) -> dict[str, float]:
+    th40 = validation.threshold_metrics(pos_values, neg_values, 40.0)
+    high_tp = sum(1 for band in pos_bands if band == "high")
+    high_fp = sum(1 for band in neg_bands if band == "high")
+    high_precision = high_tp / (high_tp + high_fp) if high_tp + high_fp else 0.0
+    return {
+        "auc": validation.auc(pos_values, neg_values) or 0.0,
+        "average_precision": validation.average_precision(pos_values, neg_values),
+        "brier_score": validation.brier_score(pos_values, neg_values),
+        "threshold_40_precision": th40["precision"],
+        "threshold_40_recall": th40["recall"],
+        "threshold_40_fpr": th40["false_positive_rate"],
+        "high_precision": round(high_precision, 3),
+    }
+
+
+def bootstrap_compare(
+    baseline: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    iterations: int = 1000,
+    seed: int = 42,
+) -> dict[str, Any]:
+    import random
+
+    base = baseline["scores"]
+    cand = candidate["scores"]
+    if not base["positive"] or not base["negative"]:
+        return {"iterations": 0, "error": "bootstrap needs positives and controls"}
+    rng = random.Random(seed)
+    names = (
+        "auc", "average_precision", "brier_score",
+        "threshold_40_precision", "threshold_40_recall",
+        "threshold_40_fpr", "high_precision",
+    )
+    deltas: dict[str, list[float]] = {name: [] for name in names}
+    for _ in range(iterations):
+        pos_idx = [rng.randrange(len(base["positive"])) for _ in base["positive"]]
+        neg_idx = [rng.randrange(len(base["negative"])) for _ in base["negative"]]
+        b_pos = [base["positive"][i] for i in pos_idx]
+        b_neg = [base["negative"][i] for i in neg_idx]
+        c_pos = [cand["positive"][i] for i in pos_idx]
+        c_neg = [cand["negative"][i] for i in neg_idx]
+        b = _bootstrap_metrics(
+            b_pos, b_neg,
+            [base["positive_bands"][i] for i in pos_idx],
+            [base["negative_bands"][i] for i in neg_idx],
+        )
+        c = _bootstrap_metrics(
+            c_pos, c_neg,
+            [cand["positive_bands"][i] for i in pos_idx],
+            [cand["negative_bands"][i] for i in neg_idx],
+        )
+        for name in names:
+            deltas[name].append(c[name] - b[name])
+    ci = {
+        name: [round(_percentile(values, 0.025), 4), round(_percentile(values, 0.975), 4)]
+        for name, values in deltas.items()
+    }
+    win = {
+        name: round(sum(1 for value in values if value > 0) / iterations, 3)
+        for name, values in deltas.items()
+    }
+    stable_gain = ci["auc"][0] > 0 and ci["average_precision"][0] > 0
+    fpr_ok = ci["threshold_40_fpr"][1] <= 0.02
+    high_precision_ok = ci["high_precision"][0] >= -0.02
+    return {
+        "iterations": iterations,
+        "seed": seed,
+        "ci_95_delta_candidate_minus_baseline": ci,
+        "candidate_wins_fraction": win,
+        "recommendation": "apply" if stable_gain and fpr_ok and high_precision_ok else "keep-baseline",
+        "checks": {
+            "auc_ci_above_zero": ci["auc"][0] > 0,
+            "pr_auc_ci_above_zero": ci["average_precision"][0] > 0,
+            "fpr_ci_upper_le_0.02": fpr_ok,
+            "high_precision_ci_lower_ge_minus_0.02": high_precision_ok,
+        },
+    }
+
+
 def propose_weight_candidates(
     weights: dict[str, int],
     *,
@@ -416,6 +522,8 @@ def search(
     start_weights: dict[str, int] | None = None,
     split_date: str = DEFAULT_SPLIT_DATE,
     max_candidates: int = 80,
+    bootstrap: int = 0,
+    bootstrap_seed: int = 42,
 ) -> dict[str, Any]:
     """Search nearby weights on v1 + v2 train only; v2 test is held out."""
     weights = dict(start_weights or baseline_cfg.weights)
@@ -434,7 +542,7 @@ def search(
     )
     baseline_test = evaluate_sample(
         conn2, "validation/v1", baseline_cfg.weights, v2_cfg.model_version,
-        split="test", split_date=split_date,
+        split="test", split_date=split_date, include_scores=bool(bootstrap),
     )
     ranked = []
     for candidate_weights in candidates:
@@ -456,7 +564,7 @@ def search(
     selected = ranked[0]
     selected_test = evaluate_sample(
         conn2, "validation/v1", selected["weights"], v2_cfg.model_version,
-        split="test", split_date=split_date,
+        split="test", split_date=split_date, include_scores=bool(bootstrap),
     )
     conn1.close()
     conn2.close()
@@ -471,7 +579,15 @@ def search(
         "v2_train": selected["v2_train"],
     }
     checks = guardrails(baseline, candidate)
+    bootstrap_result = (
+        bootstrap_compare(
+            baseline_test, selected_test,
+            iterations=bootstrap, seed=bootstrap_seed,
+        )
+        if bootstrap else None
+    )
     return {
+        "bootstrap": bootstrap_result,
         "search": {
             "candidates": len(ranked),
             "selection": "v1 + v2 train PR-AUC/AUC/recall; v2 test held out",

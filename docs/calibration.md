@@ -155,8 +155,9 @@ For a temporary check without touching the tracked dataset, copy
 Reviewed 30 OSV `MAL-*` candidates. Their affected versions had been removed
 from the registry, so they were moved to `validation/historical/` rather than
 kept in the v1 current-state cohort. v1 was restored to its prior baseline
-(AUC 0.862, PR-AUC 0.838); v2 is unchanged. No weights were changed. This is a
-label-scope correction, not a model regression.
+(AUC 0.862, PR-AUC 0.838) before the later `signing_gap` calibration; the 0.5.3
+model then reached v1 AUC 0.875 and v2 AUC 0.891. This was a label-scope
+correction, not a model regression.
 
 ## Weekly loop
 

@@ -200,7 +200,7 @@ mw score-all --config config/validation-obscure.yaml
 mw export [--format parquet|csv|json|spdx|cyclonedx|osv] [--config PATH]
 mw report [--out report.html] [--config PATH]
 mw calibrate --candidate config/calibration-candidate.yaml [--fail-on-regression]
-mw calibrate --search [--search-max 80]
+mw calibrate --search [--search-max 80] [--bootstrap 1000]
 ```
 
 `mw export` writes under the configured `data_dir`; `mw report` builds a static
@@ -301,11 +301,11 @@ The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
 A preliminary case-control evaluation on the validation database gives AUC
-0.862, PR-AUC 0.838, Brier 0.1222, precision@25 1.0, and at threshold 40
-precision 0.986 / recall 0.632 / FPR 0.004. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
+0.875, PR-AUC 0.855, Brier 0.1164, precision@25 1.0, and at threshold 40
+precision 0.973 / recall 0.632 / FPR 0.008. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
 A larger, year-stratified, non-OSV sample (`config/validation-v2.yaml`) gives
-489 positives / 1,008 controls, AUC 0.879, threshold-40 precision 0.973 /
-recall 0.671 / FPR 0.009; the 2026 test slice is 0.997 precision / 0.851 recall,
+489 positives / 1,008 controls, AUC 0.891, threshold-40 precision 0.970 /
+recall 0.671 / FPR 0.010; the 2026 test slice is 0.969 precision / 0.851 recall,
 while the small pre-2026 train slice remains weak. See [docs/validation/evaluation-v2.md](docs/validation/evaluation-v2.md).
 
 For a release, run `make check` and upload with `twine upload dist/*`.
@@ -316,7 +316,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.17 · model 0.5.2)
+## Results (MVP, 15 November 2026 · app 0.4.19 · model 0.5.3)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
@@ -324,7 +324,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 1,413,269 versions, 243,608 commits, 22,653 maintainers, 1,375 repositories,
   10,014 OSV records, 47,443 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 7 high, 2,956 medium, 10,683 low. OIDC/bot publishers are ignored.
+- Risk bands: 7 high, 3,124 medium, 10,515 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -336,9 +336,9 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   medium without behavioural/advisory evidence and remain triage candidates,
   not malware labels. `pypi/langchain-ai` reaches 100 but remains medium
   because its evidence is name-similarity/hygiene, not a confirmed compromise.
-- Pre-incident replay (19 incidents): event-stream 62.9 high;
-  eslint-config-prettier 56.0 high; xz-utils 44.8 medium; ua-parser-js 27.3;
-  colors 22.0; node-ipc 19.7; the 2025 npm phishing and 2026 ChainDrop packages
+- Pre-incident replay (19 incidents): event-stream 65.6 high;
+  eslint-config-prettier 56.4 high; xz-utils 44.8 medium; ua-parser-js 27.3;
+  colors 22.7; node-ipc 20.6; the 2025 npm phishing and 2026 ChainDrop packages
   are mostly low, and same-account hijacks remain a blind spot. At threshold 40
   the 46-package benign replay sample gives precision 0.273, recall 0.158,
   false-positive rate 0.174 — replay remains a diagnostic, not a production
@@ -353,7 +353,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   None of the seven npm high packages has Sigstore/Rekor provenance, so the
   validation is advisory-based rather than signature-based.
 - Validation v2 sample: 328 of 489 known positives at threshold 40 (precision
-  0.973, FPR 0.009); 87 at threshold 50. High-band precision is 1.0, but
+  0.970, FPR 0.010); 327 at threshold 50. High-band precision is 1.0, but
   high-band recall is deliberately conservative; see
   [docs/validation/evaluation-v2.md](docs/validation/evaluation-v2.md).
 - GitHub enrichment is impact-ranked and bounded: the latest pass covered 90

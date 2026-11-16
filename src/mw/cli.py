@@ -139,6 +139,10 @@ def calibrate(
     ),
     search: bool = typer.Option(False, help="Search nearby weights on v1 + v2 train."),
     search_max: int = typer.Option(80, help="Maximum candidate weight sets."),
+    bootstrap: int = typer.Option(
+        0, help="Bootstrap resamples for the selected search candidate."
+    ),
+    bootstrap_seed: int = typer.Option(42, help="Bootstrap random seed."),
     search_out: str = typer.Option(
         "data/calibration/candidate.yaml", help="Write the selected candidate config."
     ),
@@ -147,6 +151,8 @@ def calibrate(
     """Compare or search weights on temporal validation."""
     if not candidate and not search:
         raise typer.BadParameter("--candidate is required unless --search is used")
+    if bootstrap and not search:
+        raise typer.BadParameter("--bootstrap requires --search")
     base_cfg = load_config(baseline)
     v1_cfg = load_config(validation)
     v2_cfg = load_config(validation_v2)
@@ -157,6 +163,8 @@ def calibrate(
             start_weights=start.weights,
             split_date=split_date,
             max_candidates=search_max,
+            bootstrap=bootstrap,
+            bootstrap_seed=bootstrap_seed,
         )
         out_path = Path(out)
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -173,6 +181,7 @@ def calibrate(
             "passed": result["passed"],
             "selected_weights": result["search"]["selected_weights"],
             "selection_score": result["search"]["selected_score"],
+            "bootstrap": result.get("bootstrap"),
             "guardrails": result["guardrails"],
         }, indent=2))
         if fail_on_regression and not result["passed"]:

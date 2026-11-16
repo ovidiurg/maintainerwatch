@@ -28,12 +28,12 @@ packages had already been removed).
 
 | Metric | Value |
 |---|---|
-| AUC | 0.862 |
-| PR-AUC / average precision | 0.838 |
-| Brier score | 0.1222 |
-| Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 0.98 / 0.75 |
-| Threshold 40: precision / recall / FPR | 0.986 / 0.632 / 0.004 |
-| Threshold 50: precision / recall / FPR | 1.0 / 0.605 / 0.0 |
+| AUC | 0.875 |
+| PR-AUC / average precision | 0.855 |
+| Brier score | 0.1164 |
+| Precision@10 / @25 / @50 / @100 | 1.0 / 1.0 / 1.0 / 0.80 |
+| Threshold 40: precision / recall / FPR | 0.973 / 0.632 / 0.008 |
+| Threshold 50: precision / recall / FPR | 0.986 / 0.623 / 0.004 |
 
 The sample is npm-heavy and dominated by `malicious_package`; the takeover
 slice is reported separately in `docs/incident-validation.md`. The generated
@@ -62,11 +62,11 @@ a larger, year-stratified, non-OSV positive sample. The local DB currently has
 
 | Sample | AUC | PR-AUC | Threshold-40 precision / recall / FPR |
 |---|---:|---:|---|
-| Full | 0.879 | 0.863 | 0.973 / 0.671 / 0.009 |
-| Train (<2026) | 0.665 | 0.307 | 0.636 / 0.117 / 0.010 |
-| Test (>=2026) | 0.947 | 0.975 | 0.997 / 0.851 / 0.005 |
+| Full | 0.891 | 0.878 | 0.970 / 0.671 / 0.010 |
+| Train (<2026) | 0.705 | 0.269 | 0.474 / 0.082 / 0.010 |
+| Test (>=2026) | 0.953 | 0.940 | 0.969 / 0.851 / 0.010 |
 
-The full-sample Brier score is **0.1452**. The positive mix is Datadog 463, tstromberg 65, DependencyWatch 53, OSV 4;
+The full-sample Brier score is **0.1332**. The positive mix is Datadog 463, tstromberg 65, DependencyWatch 53, OSV 4;
 cutoffs are 2026: 468, 2025: 110, 2024: 7. The temporal split is diagnostic,
 not a fully historical control population. Running
 `mw evaluate-validation --config config/validation-v2.yaml` writes

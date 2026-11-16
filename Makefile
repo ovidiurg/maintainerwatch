@@ -41,7 +41,7 @@ calibration:
 	$(PYTHON) -m mw.cli calibrate --candidate $(CANDIDATE)
 
 calibration-search:
-	$(PYTHON) -m mw.cli calibrate --search --out data/calibration/search.json
+	$(PYTHON) -m mw.cli calibrate --search --bootstrap 1000 --out data/calibration/search.json
 
 calibration-drift:
 	$(PYTHON) scripts/calibration_drift.py

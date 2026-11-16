@@ -92,13 +92,13 @@ class Config(BaseModel):
             "bus_factor": 20,
             "account_age": 15,
             "release_anomaly": 10,
-            "signing_gap": 10,
+            "signing_gap": 15,
             "typosquat": 10,
             "license_inconsistency": 5,
             "commit_anomaly": 15,
             "scorecard": 10,
             "dependency_risk": 15,
-            "maintainer_continuity": 10,
+            "maintainer_continuity": 15,
             "install_script": 15,
             "osv_risk": 10,
             "depsdev_findings": 10,
@@ -106,7 +106,7 @@ class Config(BaseModel):
         }
     )
     min_identity_confidence: str = "medium"
-    model_version: str = "0.5.2"
+    model_version: str = "0.5.3"
     automation_identities: list[str] = Field(
         default_factory=lambda: [
             "npm-oidc-no-reply@github.com",

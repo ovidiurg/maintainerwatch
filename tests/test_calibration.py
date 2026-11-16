@@ -122,3 +122,26 @@ def test_propose_weight_candidates_is_bounded_and_unique():
     assert len(candidates) <= 8
     assert len({tuple(sorted(item.items())) for item in candidates}) == len(candidates)
     assert all(value >= 0 for item in candidates for value in item.values())
+
+
+def test_bootstrap_compare_reports_ci():
+    baseline = {
+        "scores": {
+            "positive": [90.0, 70.0, 60.0],
+            "negative": [10.0, 20.0, 30.0],
+            "positive_bands": ["high", "medium", "medium"],
+            "negative_bands": ["low", "low", "low"],
+        }
+    }
+    candidate = {
+        "scores": {
+            "positive": [95.0, 80.0, 70.0],
+            "negative": [10.0, 20.0, 30.0],
+            "positive_bands": ["high", "medium", "medium"],
+            "negative_bands": ["low", "low", "low"],
+        }
+    }
+    result = calibration.bootstrap_compare(baseline, candidate, iterations=100)
+    assert result["iterations"] == 100
+    assert "ci_95_delta_candidate_minus_baseline" in result
+    assert result["recommendation"] in {"apply", "keep-baseline"}

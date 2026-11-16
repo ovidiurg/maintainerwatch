@@ -77,7 +77,7 @@ GitHub statistics are current-state and would leak future information;
 `typosquat` is excluded because the top-package list is current. The replay
 score therefore covers `publisher_change`, `release_anomaly`, `signing_gap` and
 `commit_anomaly`, renormalised to 0-100 over the signals that are applicable
-(weights 30/10/10/15).
+(weights 30/10/15/15).
 
 A high replay score means the package looked risky *before* the incident. It is
 not proof of compromise, and a low score is a miss to be reported honestly.
