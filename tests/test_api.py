@@ -22,10 +22,12 @@ def _setup(tmp_path):
         [
             Package(system="npm", name="a", downloads_weekly=1),
             Package(system="npm", name="b", downloads_weekly=2),
+            Package(system="npm", name="@scope/scoped", downloads_weekly=3),
         ],
     )
     db.record_score(conn, "npm", "a", 60.0, "high", cfg.model_version, "hash-a", "2026-01-01")
     db.record_score(conn, "npm", "b", 20.0, "low", cfg.model_version, "hash-b", "2026-01-01")
+    db.record_score(conn, "npm", "@scope/scoped", 10.0, "low", cfg.model_version, "hash-c", "2026-01-01")
     db.record_signal(conn, "npm", "a", "publisher_change", 1.0, "high", "{}", cfg.model_version, "2026-01-01")
     db.record_signal(conn, "npm", "b", "publisher_change", 0.0, "low", "{}", cfg.model_version, "2026-01-01")
     db.upsert_impact(conn, [
@@ -45,13 +47,13 @@ def test_packages_pagination(tmp_path):
     assert first.status_code == 200
     assert len(first.json()) == 1
     assert first.json()[0]["name"] == "a"
-    assert first.headers["X-Total-Count"] == "2"
+    assert first.headers["X-Total-Count"] == "3"
     assert first.headers["X-Next-Offset"] == "1"
 
     second = client.get("/packages?limit=1&offset=1")
     assert second.status_code == 200
     assert second.json()[0]["name"] == "b"
-    assert second.headers["X-Next-Offset"] == ""
+    assert second.headers["X-Next-Offset"] == "2"
 
 
 def test_package_detail_and_health(tmp_path):
@@ -69,6 +71,10 @@ def test_package_detail_and_health(tmp_path):
 
     missing = client.get("/packages/npm/missing")
     assert missing.status_code == 404
+
+    scoped = client.get("/packages/npm/@scope/scoped")
+    assert scoped.status_code == 200
+    assert scoped.json()["name"] == "@scope/scoped"
 
 
 def test_packages_include_impact_and_min_dependents(tmp_path):
@@ -93,7 +99,7 @@ def test_impact_endpoint_orders_and_paginates(tmp_path):
     response = client.get("/impact?limit=1&offset=0")
     assert response.status_code == 200
     assert response.json()[0]["name"] == "a"
-    assert response.headers["X-Total-Count"] == "2"
+    assert response.headers["X-Total-Count"] == "3"
     assert response.headers["X-Next-Offset"] == "1"
 
     filtered = client.get("/impact?min_dependents=100")
