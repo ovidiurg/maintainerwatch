@@ -8,10 +8,12 @@ This cohort applies the A2 maturity gate to fresh OSV `MAL-*` advisories:
 - 125 npm positives and the matched v1 controls (998 replayable).
 
 It is a **pre-incident replay holdout**, not a current-state score holdout.
-Commit history was backfilled for **59 / 125** packages (9,542 commits) using
+Commit history was backfilled for **60 / 125** packages (9,742 commits) using
 `python scripts/backfill_validation_commits.py --dataset validation/v4 \
---config config/validation-v4.yaml --positives-only`. The rest had no valid
-repository or no pre-cutoff commits. See `docs/validation/evaluation-v4.md`.
+--config config/validation-v4.yaml --positives-only`. The remaining 65 split
+between 43 packages with no repository URL and 22 with a repository but no
+pre-cutoff commits (including deleted/private/fake repos). See
+`docs/validation/evaluation-v4.md`.
 
 The cohort is metadata only. Malicious samples are not downloaded or
 redistributed.
