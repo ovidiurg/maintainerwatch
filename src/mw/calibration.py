@@ -281,20 +281,25 @@ def run(
     candidate_cfg: Config,
     v1_cfg: Config,
     v2_cfg: Config,
+    v5_cfg: Config | None = None,
     *,
     split_date: str = DEFAULT_SPLIT_DATE,
 ) -> dict[str, Any]:
     results: dict[str, Any] = {"baseline": {}, "candidate": {}}
-    for label, cfg in (("v1", v1_cfg), ("v2_full", v2_cfg), ("v2_test", v2_cfg)):
+    tracks = [("v1", v1_cfg, "validation/v1"), ("v2_full", v2_cfg, "validation/v1"),
+              ("v2_test", v2_cfg, "validation/v1")]
+    if v5_cfg is not None:
+        tracks.append(("v5_full", v5_cfg, "validation/v5"))
+    for label, cfg, dataset in tracks:
         conn = db.connect(cfg.db_path)
         db.init_db(conn)
         split = "test" if label == "v2_test" else None
         results["baseline"][label] = evaluate_sample(
-            conn, "validation/v1", baseline_cfg.weights, cfg.model_version,
+            conn, dataset, baseline_cfg.weights, cfg.model_version,
             split=split, split_date=split_date,
         )
         results["candidate"][label] = evaluate_sample(
-            conn, "validation/v1", candidate_cfg.weights, cfg.model_version,
+            conn, dataset, candidate_cfg.weights, cfg.model_version,
             split=split, split_date=split_date,
         )
         conn.close()
@@ -629,7 +634,9 @@ def markdown(result: dict[str, Any]) -> str:
         "| Sample | AUC | PR-AUC | Th40 precision | Th40 recall | Th40 FPR | High precision | High recall |",
         "|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
-    for label in ("v1", "v2_full", "v2_test"):
+    for label in ("v1", "v2_full", "v2_test", "v5_full"):
+        if label not in result["baseline"]:
+            continue
         for side in ("baseline", "candidate"):
             item = result[side][label]
             th40 = _threshold(item, 40.0)

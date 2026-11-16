@@ -12,10 +12,9 @@ It contains **108 npm positives** and the matched v1 controls. The label means
 the current latest version is affected by a fresh OSV MAL advisory, not that the
 package was necessarily malicious at an earlier cutoff.
 
-This is a current-state diagnostic cohort, not a historical/replay cohort. It is
-not yet wired into `mw calibrate`; the OSV signal ablation is reported alongside
-the metrics so the label-source overlap is visible. See
-`docs/validation/evaluation-v5.md`.
+This is a current-state diagnostic cohort, not a historical/replay cohort.
+`mw calibrate` reports it as a diagnostic row; it is not part of search
+selection or the v2 guardrails. See `docs/validation/evaluation-v5.md`.
 
 The cohort is metadata only. Malicious samples are not downloaded or
 redistributed.

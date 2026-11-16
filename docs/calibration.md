@@ -9,6 +9,7 @@ change the model.
 - v1 case-control sample
 - v2 full sample
 - v2 temporal test slice (`>= 2026-01-01`)
+- v5 fresh current-state diagnostic when `config/validation-v5.yaml` exists
 - AUC, PR-AUC, Brier score and precision/recall/FPR at thresholds 25/40/50/60
 - high-band precision, recall and false-positive rate
 - evidence coverage and score distribution
@@ -16,6 +17,9 @@ change the model.
 The candidate weights are applied to the signal values already stored in the
 validation databases, so the command is fast and does not use post-cutoff
 labels to recompute candidate scores.
+
+v5 is shown as a **diagnostic** row only. It is not part of the search
+selection or the v2 guardrails; do not tune on it.
 
 ## Workflow
 
