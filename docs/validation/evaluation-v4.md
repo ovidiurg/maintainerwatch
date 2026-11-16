@@ -14,11 +14,11 @@ gate.
 | Replayable positives | 125 |
 | Replayable controls | 998 |
 | Positives with applicable replay signals | 125 / 125 |
-| Positives with pre-cutoff commits | 59 |
-| Commit rows backfilled | 9,542 |
+| Positives with pre-cutoff commits | 60 |
+| Commit rows backfilled | 9,742 |
 
-Commit history was backfilled for 59 of 125 packages; the remainder had no
-valid repository or no commits before the cutoff. Replay therefore combines
+Commit history was backfilled for 60 of 125 packages (43 had no repository URL;
+22 had a repository but no pre-cutoff commits). Replay therefore combines
 release signals with partial commit history.
 
 ## Replay result
@@ -39,7 +39,7 @@ release signals with partial commit history.
 **Usable as a diagnostic replay holdout**, unlike v3: the maturity gate removes
 the 326 no-history positives that made v3 invalid. It does **not** demonstrate
 current-state model quality and is not yet wired into `mw calibrate`, which
-still uses v1/v2. Partial commit coverage (59/125) limits any comparison against
+still uses v1/v2. Partial commit coverage (60/125) limits any comparison against
 the full-commit v1 replay.
 
 The low precision at high thresholds is a real warning: older controls carry

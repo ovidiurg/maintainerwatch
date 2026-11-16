@@ -37,10 +37,21 @@ def normalize_name(name: str) -> str:
 def parse_repo_url(value: str | None) -> str | None:
     if not value:
         return None
+    value = value.strip()
+    if value.startswith("github:"):
+        value = "https://github.com/" + value[len("github:"):]
+    elif value.startswith("gitlab:"):
+        value = "https://gitlab.com/" + value[len("gitlab:"):]
     if value.startswith("git+"):
         value = value[4:]
     if value.startswith("git://"):
         value = "https://" + value[6:]
+    if value.startswith("git+ssh://git@github.com/"):
+        value = "https://github.com/" + value[len("git+ssh://git@github.com/"):]
+    elif value.startswith("ssh://git@github.com/"):
+        value = "https://github.com/" + value[len("ssh://git@github.com/"):]
+    elif value.startswith("git@github.com:"):
+        value = "https://github.com/" + value[len("git@github.com:"):]
     if value.endswith(".git"):
         value = value[:-4]
     return value
