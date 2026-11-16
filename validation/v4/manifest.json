@@ -1,0 +1,18 @@
+{
+  "dataset_version": "v4",
+  "schema_version": "1.0",
+  "builder": "fresh OSV MAL mature cohort (2026-11-16)",
+  "fresh_after": "2026-01-01",
+  "selection": ">=3 pre-cutoff versions",
+  "counts": {
+    "incidents": 125,
+    "incident_packages": 125,
+    "controls": 1148
+  },
+  "files": {
+    "incidents.jsonl": "196a369995b0790c3cbfa78104ef698cea10f57f5c37ee0e2b6748d5034b89d6",
+    "incident_packages.jsonl": "d0d0bbcfa50d67073cfd7dadbc5616c3260ee9bff345391b68511ffe2961a04c",
+    "controls.jsonl": "ef9cd68e70debde5eac3dcf118309afa986c53c3e906a61291dccec88d4b11a0",
+    "sources.yaml": "f68b7044d75edf64b4c861f153ba5bd6953966c0843b6a44582af580bfd4b622"
+  }
+}
