@@ -16,6 +16,8 @@ MaintainerWatch ingests public package metadata, resolves maintainer identities
 with explicit confidence levels, derives fourteen explainable risk signals and
 publishes a versioned open dataset plus a CLI/report.
 
+**Website:** <https://ovidiurg.github.io/maintainerwatch/>
+
 ## For AI agents
 
 See [AGENTS.md](AGENTS.md) for a machine-oriented quick guide: safe install,
@@ -281,11 +283,9 @@ fallback to `gh auth token`; `MAINTAINERWATCH_API_KEY` protects the API.
 ## Project page
 
 A static landing page lives in [`site/`](site/) and is deployed by
-`.github/workflows/pages.yml` to GitHub Pages. After making the repository
-public, enable **Settings → Pages → Build and deployment → Source: GitHub
-Actions**. The expected URL is:
-
-`https://ovidiurg.github.io/maintainerwatch/`
+`.github/workflows/pages.yml` to GitHub Pages at
+<https://ovidiurg.github.io/maintainerwatch/>. If Pages is ever reset, enable
+**Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
 The page is self-contained and contains no local data or maintainer dossiers.
 Preview locally with `python -m http.server --directory site 8000`.
