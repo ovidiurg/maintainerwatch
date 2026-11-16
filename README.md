@@ -1,6 +1,11 @@
 # MaintainerWatch
 
-Open, cross-ecosystem **maintainer-level supply-chain risk intelligence**.
+Open-source **research preview** for cross-ecosystem **maintainer-level
+supply-chain risk intelligence**.
+
+MaintainerWatch performs **static analysis of public package metadata and
+bounded package archives**. It is a defensive research tool, not a production
+detector, and it never executes untrusted package code in the analyst process.
 
 Current incidents (xz-utils, event-stream, ua-parser-js, colors) were not
 CVE-driven: attackers gained control of package maintainership. Existing tools
@@ -75,7 +80,7 @@ GitHub authentication and troubleshooting.
 ### 2. Run the complete pipeline
 
 ```bash
-mw main --top 200 --no-github
+mw main --top 5000 --no-github
 ```
 
 That single command initialises the database, ingests npm/PyPI metadata,

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "maintainerwatch"
 version = "0.4.23"
-description = "Open maintainer-level software supply-chain risk intelligence"
+description = "Open-source research preview: static, metadata-driven maintainer-level supply-chain risk intelligence"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"

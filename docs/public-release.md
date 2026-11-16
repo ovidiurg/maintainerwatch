@@ -7,7 +7,7 @@
 - [ ] Secret scan is clean (`detect-secrets`).
 - [ ] No root `data/`, caches, reports, tokens, private docs or local databases
       are tracked.
-- [ ] `.opencode/` and private grant/roadmap notes remain ignored.
+- [ ] Local private notes and grant/roadmap drafts remain ignored.
 - [ ] License and attribution files are present.
 
 ## CI and packaging

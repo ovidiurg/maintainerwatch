@@ -2,8 +2,8 @@ ecosystems:
   - npm
   - pypi
 
-# Number of top packages to ingest per ecosystem (smoke test: 200).
-top_n: 2000
+# Number of top packages to ingest per ecosystem (default full run: 5000).
+top_n: 5000
 
 github_token_env: GITHUB_TOKEN
 gitlab_token_env: GITLAB_TOKEN

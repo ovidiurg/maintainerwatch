@@ -6,8 +6,10 @@ human documentation remains authoritative: read `README.md`, `INSTALL.md`,
 
 ## What this project is
 
-MaintainerWatch is a Python 3.11+ CLI and read-only FastAPI service for
-maintainer-level supply-chain risk intelligence. It ingests public registry
+MaintainerWatch is a Python 3.11+ **research preview**: a CLI and read-only
+FastAPI service for maintainer-level supply-chain risk intelligence. It performs
+static analysis of public registry/forge metadata and bounded package archives;
+it does not execute untrusted package code in the analyst process. It ingests public registry
 metadata into SQLite, computes explainable risk signals, and produces a scored
 dataset, alerts, exports and an HTML report.
 

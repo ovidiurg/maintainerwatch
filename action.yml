@@ -1,5 +1,5 @@
 name: MaintainerWatch dependency risk
-description: Scan dependency changes in a pull request against a compact MaintainerWatch risk index
+description: Statically scan dependency changes in a pull request against a compact MaintainerWatch risk index
 branding:
   icon: shield
   color: blue

@@ -57,7 +57,7 @@ python -c "from mw.config import load_config; print(bool(load_config().github_to
 After installation, one command runs the complete local pipeline:
 
 ```bash
-mw main --top 200 --no-github
+mw main --top 5000 --no-github
 ```
 
 It initialises the schema, ingests npm/PyPI metadata, enriches, scores, exports,
@@ -81,8 +81,8 @@ mw scan lodash --system npm
 A larger run:
 
 ```bash
-mw ingest --system npm --top 200
-mw ingest --system pypi --top 200
+mw ingest --system npm --top 5000
+mw ingest --system pypi --top 5000
 mw ingest --system crates --top 100
 mw ingest --system maven --top 50
 mw enrich-github --limit 100       # bounded repo stats, Scorecard and commits

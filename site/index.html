@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="MaintainerWatch — open, cross-ecosystem maintainer-level supply-chain risk intelligence.">
+  <meta name="description" content="MaintainerWatch — open-source research preview for static, metadata-driven maintainer-level supply-chain risk intelligence.">
   <title>MaintainerWatch — maintainer-level supply-chain risk intelligence</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -21,12 +21,13 @@
     </div>
   </nav>
   <div class="hero-copy">
-    <p class="eyebrow">Open source · Python · SQLite · FastAPI</p>
+    <p class="eyebrow">Open-source research preview · Python · SQLite · FastAPI</p>
     <h1>Risk intelligence for the people behind packages.</h1>
     <p class="lede">
-      MaintainerWatch ingests public registry metadata, resolves maintainer
-      identities, and computes explainable signals for maintainer-level
-      supply-chain risk across npm, PyPI, crates.io and Maven Central.
+      MaintainerWatch statically analyses public registry metadata and bounded
+      package archives, resolves maintainer identities, and computes explainable
+      signals for maintainer-level supply-chain risk across npm, PyPI, crates.io
+      and Maven Central. It never executes package code in the analyst process.
     </p>
     <div class="cta">
       <a class="button primary" href="https://github.com/ovidiurg/maintainerwatch">View the repository</a>
@@ -136,7 +137,7 @@ python -m venv .venv
 pip install .
 
 # One command: ingest → enrich → score → export → HTML report → CI index
-mw main --top 200 --no-github</code></pre>
+mw main --top 5000 --no-github</code></pre>
     <p>
       Minimal/offline run:
       <code>mw main --top 50 --no-github --no-enrich --no-export</code>.
