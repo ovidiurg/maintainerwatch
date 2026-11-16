@@ -58,7 +58,11 @@ def main() -> None:
     pos_scores = [item.score for item in positives]
     neg_scores = [item.score for item in negatives]
     combined = [(score, 1) for score in pos_scores] + [(score, 0) for score in neg_scores]
+    from datetime import datetime, timezone
     result = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model_version": cfg.model_version,
+        "dataset": args.dataset,
         "positives_in_dataset": len(positive_items),
         "positives_replayable": len(positives),
         "negatives_replayable": len(negatives),

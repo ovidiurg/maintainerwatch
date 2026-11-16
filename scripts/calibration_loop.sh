@@ -15,3 +15,11 @@ mkdir -p data/calibration
   --out data/calibration/latest.json \
   --history validation/calibration/history.jsonl
 .venv/bin/python scripts/calibration_drift.py
+
+if [ -f data/validation-v4/maintainerwatch.sqlite ]; then
+  .venv/bin/python scripts/validation_replay.py \
+    --dataset validation/v4 \
+    --config config/validation-v4.yaml \
+    --out data/validation-v4/replay.json
+  .venv/bin/python scripts/replay_drift.py
+fi
