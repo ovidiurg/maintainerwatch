@@ -64,7 +64,12 @@ or public Git URL.
     base-ref: origin/${{ github.base_ref }}
     fail-on: none
     comment: false
+    upload-sarif: true
 ```
+
+`index-path` is available for private/offline tests and takes precedence over
+`index-url`. `upload-sarif: false` is useful on environments without code
+scanning.
 
 Required permissions:
 
