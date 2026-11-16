@@ -1,0 +1,9 @@
+ecosystems:
+  - npm
+  - pypi
+
+data_dir: data/validation-v3
+db_path: data/validation-v3/maintainerwatch.sqlite
+
+top_n: 2000
+model_version: "0.5.3"

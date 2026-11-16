@@ -9,6 +9,9 @@ Anti-overfitting rules:
 
 - v2 test is the final holdout, not a tuning set.
 - Search selection uses v1 + v2 train only.
+- `validation/v3` is a fresh-OSV **diagnostic cohort**, not a cleared holdout;
+  it is rejected for tuning because 326 of 381 positives have no pre-cutoff
+  history.
 - Do not repeatedly search the same test slice. If a new candidate is needed,
   prefer a new/rolling holdout and freeze the current one.
 - Require a minimum lower-CI gain: AUC >= 0.005 and PR-AUC >= 0.005.

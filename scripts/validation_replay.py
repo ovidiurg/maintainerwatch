@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -14,8 +15,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> None:
-    cfg = load_config("config/validation-replay.yaml")
-    incidents, packages, controls = validation.load_dataset(ROOT / "validation" / "v1")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", default="validation/v1")
+    parser.add_argument("--config", default="config/validation-replay.yaml")
+    parser.add_argument("--out", default="data/validation/replay.json")
+    args = parser.parse_args()
+    cfg = load_config(args.config)
+    incidents, packages, controls = validation.load_dataset(ROOT / args.dataset)
     incident_by_id = {item["incident_id"]: item for item in incidents}
 
     positive_items: dict[tuple[str, str], str] = {}
@@ -73,7 +79,7 @@ def main() -> None:
             for item in sorted(positives, key=lambda item: item.score, reverse=True)
         ],
     }
-    out = ROOT / "data" / "validation" / "replay.json"
+    out = ROOT / args.out
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in result.items() if k != "positives"}, indent=2))
