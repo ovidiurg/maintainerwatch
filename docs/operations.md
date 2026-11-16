@@ -121,6 +121,31 @@ Run the baseline calibration and drift report weekly, without retuning weights:
 `mw calibrate --search`; repeated search against the same v2 test slice would
 overfit the holdout. Use search only with a new/rolling holdout.
 
+## Database performance
+
+The schema is indexed for the read paths used by the API, report and scoring,
+including:
+`packages(system, downloads_weekly)`, `scores(model_version, score)`,
+`signals(model_version, system, name)`, `osv(vuln_id)`, and expression indexes
+for the case-insensitive dependency, maintainer and publisher lookups. Existing
+databases get the indexes on the next `mw init`/`mw ingest`/`mw serve` call;
+no manual migration is required.
+
+Connections use WAL, `synchronous=NORMAL`, a 32 MB page cache and a 5 s busy
+timeout. Ingestion defers commits while it processes a package batch, so large
+seed runs do not pay one fsync per package. The dependency refresh uses the
+lower-name indexes instead of correlated full scans.
+
+For a large one-off rebuild after deleting/importing many packages, run:
+
+```bash
+sqlite3 data/maintainerwatch.sqlite "PRAGMA optimize;"
+sqlite3 data/maintainerwatch.sqlite "VACUUM;"
+```
+
+`VACUUM` needs free disk space roughly equal to the database size and should
+run while the API is stopped. Do not run it from cron on every ingest.
+
 ## Backups
 
 SQLite is a single file plus `-wal`/`-shm` while connections are open. Use the

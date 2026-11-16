@@ -99,17 +99,17 @@ def ingest_system(
                 (system, name, latest.version if latest else "", system, dep)
                 for dep in dep_names
             ]
-            db.clear_package_dependencies(conn, system, name)
+            db.clear_package_dependencies(conn, system, name, commit=False)
             if dep_rows:
-                db.upsert_dependencies(conn, dep_rows)
+                db.upsert_dependencies(conn, dep_rows, commit=False)
 
             packages.append(pkg)
             versions.extend(pkg_versions)
             maintainers.extend(pkg_maintainers)
 
-            db.upsert_packages(conn, [pkg])
-            db.upsert_versions(conn, pkg_versions)
-            db.upsert_maintainers(conn, pkg_maintainers)
+            db.upsert_packages(conn, [pkg], commit=False)
+            db.upsert_versions(conn, pkg_versions, commit=False)
+            db.upsert_maintainers(conn, pkg_maintainers, commit=False)
 
             identity_set = sorted({m.identity for m in pkg_maintainers})
             payload = json.dumps(identity_set, sort_keys=True)

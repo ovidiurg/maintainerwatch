@@ -127,6 +127,25 @@ CREATE INDEX IF NOT EXISTS idx_commits_pkg ON commits (system, name, committed_a
 CREATE INDEX IF NOT EXISTS idx_maintainers_identity ON maintainers (identity);
 CREATE INDEX IF NOT EXISTS idx_versions_publisher_email ON versions (publisher_email);
 CREATE INDEX IF NOT EXISTS idx_versions_publisher_name ON versions (publisher_name);
+CREATE INDEX IF NOT EXISTS idx_versions_publisher_email_lower
+  ON versions (LOWER(publisher_email));
+CREATE INDEX IF NOT EXISTS idx_versions_publisher_name_lower
+  ON versions (LOWER(publisher_name));
+CREATE INDEX IF NOT EXISTS idx_packages_top
+  ON packages (system, downloads_weekly DESC, name);
+CREATE INDEX IF NOT EXISTS idx_packages_name_lower
+  ON packages (system, LOWER(name));
+CREATE INDEX IF NOT EXISTS idx_scores_model_score
+  ON scores (model_version, score DESC, name);
+CREATE INDEX IF NOT EXISTS idx_signals_model
+  ON signals (model_version, system, name);
+CREATE INDEX IF NOT EXISTS idx_osv_vuln ON osv (vuln_id);
+CREATE INDEX IF NOT EXISTS idx_osv_pending
+  ON osv (vuln_id) WHERE affected_json IS NULL;
+CREATE INDEX IF NOT EXISTS idx_deps_dep_lower
+  ON dependencies (dep_system, LOWER(dep_name));
+CREATE INDEX IF NOT EXISTS idx_maintainers_identity_lower
+  ON maintainers (LOWER(identity));
 """
 
 
@@ -161,12 +180,22 @@ def connect(path: str | Path) -> sqlite3.Connection:
     path = Path(path)
     if str(path) != ":memory:":
         path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path))
+    conn = sqlite3.connect(str(path), timeout=30)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA temp_store=MEMORY")
+    conn.execute("PRAGMA cache_size=-32768")
+    conn.execute("PRAGMA mmap_size=67108864")
+    if str(path) != ":memory:":
+        # WAL keeps the read-only API responsive while ingest/score writes.
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
     return conn
 
 
-def upsert_packages(conn: sqlite3.Connection, packages: Iterable[Package]) -> None:
+def upsert_packages(
+    conn: sqlite3.Connection, packages: Iterable[Package], *, commit: bool = True
+) -> None:
     rows = [
         (p.system, p.name, p.normalized or p.name.lower(), p.downloads_weekly,
          p.osv_count, p.repo_url, p.license, p.license_classifier, p.first_seen)
@@ -187,10 +216,13 @@ def upsert_packages(conn: sqlite3.Connection, packages: Iterable[Package]) -> No
              first_seen=COALESCE(excluded.first_seen, packages.first_seen)""",
         rows,
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
-def upsert_versions(conn: sqlite3.Connection, versions: Iterable[Version]) -> None:
+def upsert_versions(
+    conn: sqlite3.Connection, versions: Iterable[Version], *, commit: bool = True
+) -> None:
     rows = [
         (v.system, v.name, v.version, v.published_at, v.publisher_name,
          v.publisher_email, v.publisher_key_id, int(v.has_sig),
@@ -214,10 +246,13 @@ def upsert_versions(conn: sqlite3.Connection, versions: Iterable[Version]) -> No
              install_script=COALESCE(excluded.install_script, versions.install_script)""",
         rows,
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
-def upsert_maintainers(conn: sqlite3.Connection, maintainers: Iterable[Maintainer]) -> None:
+def upsert_maintainers(
+    conn: sqlite3.Connection, maintainers: Iterable[Maintainer], *, commit: bool = True
+) -> None:
     rows = [
         (m.system, m.name, m.identity, m.role, m.source,
          m.account_created_at, m.first_seen, m.last_seen)
@@ -234,7 +269,8 @@ def upsert_maintainers(conn: sqlite3.Connection, maintainers: Iterable[Maintaine
              last_seen=COALESCE(excluded.last_seen, maintainers.last_seen)""",
         rows,
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def upsert_repo_stats(conn: sqlite3.Connection, stats: Iterable[RepoStats]) -> None:
@@ -406,6 +442,8 @@ def record_snapshot(
 def upsert_dependencies(
     conn: sqlite3.Connection,
     rows: Iterable[tuple[str, str, str, str, str]],
+    *,
+    commit: bool = True,
 ) -> None:
     conn.executemany(
         """INSERT OR IGNORE INTO dependencies
@@ -413,7 +451,8 @@ def upsert_dependencies(
            VALUES (?, ?, ?, ?, ?)""",
         list(rows),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def update_dependency_counts(conn: sqlite3.Connection) -> None:
@@ -466,12 +505,17 @@ def clear_dependencies(conn: sqlite3.Connection, system: str | None = None) -> N
 
 
 def clear_package_dependencies(
-    conn: sqlite3.Connection, system: str, name: str
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    *,
+    commit: bool = True,
 ) -> None:
     conn.execute(
         "DELETE FROM dependencies WHERE system=? AND name=?", (system, name)
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def upsert_commits(
