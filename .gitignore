@@ -17,3 +17,6 @@ docs/nlnet-proposal.md
 docs/roadmap.md
 
 .coverage
+
+*.sqlite-wal
+*.sqlite-shm
