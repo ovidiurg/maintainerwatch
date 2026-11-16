@@ -175,6 +175,14 @@ release-author and commit-sample noise is higher there.
 `inputs_hash` is the SHA-256 of the canonical JSON of applicable signal values,
 evidence and model version, so a score can be verified.
 
+## Download cohorts
+
+`downloads_weekly` is comparable only for npm and PyPI, which use last-week
+download counts. crates.io uses `recent_downloads` (a roughly 90-day window),
+so crates must be treated as a separate **download-unknown/recent** cohort, not
+with the npm/PyPI weekly thresholds. Maven and GitHub have no download figure
+and are also separate cohorts.
+
 ## Limitations
 
 - PyPI does not expose a per-release publisher in its JSON API.
