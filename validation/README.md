@@ -86,6 +86,15 @@ bias toward new/spam packages and older controls. See
 `docs/validation/evaluation-v3.md`. Do not tune on v3; the next step is to
 expand the mature-package universe (A2).
 
+## Mature fresh-OSV cohort — v4
+
+`validation/v4/` applies the A2 maturity gate to the fresh v3 intake: **125 npm
+positives** with at least three pre-cutoff versions and the v1 controls. In
+pre-incident replay all 125 are replayable and all have applicable signals;
+AUC is **0.767**. Commit history was not fetched, so this is release-metadata
+only. It is a diagnostic replay holdout, not a current-state holdout and not
+yet wired into `mw calibrate`. See `docs/validation/evaluation-v4.md`.
+
 ## Pre-incident replay
 
 `python scripts/validation_replay.py` rebuilds each package using only versions

@@ -12,6 +12,9 @@ Anti-overfitting rules:
 - `validation/v3` is a fresh-OSV **diagnostic cohort**, not a cleared holdout;
   it is rejected for tuning because 326 of 381 positives have no pre-cutoff
   history.
+- `validation/v4` is the mature-subset replay diagnostic (125 positives, all
+  applicable, AUC 0.767). It is not yet wired into `mw calibrate`; do not tune
+  on it.
 - Do not repeatedly search the same test slice. If a new candidate is needed,
   prefer a new/rolling holdout and freeze the current one.
 - Require a minimum lower-CI gain: AUC >= 0.005 and PR-AUC >= 0.005.
