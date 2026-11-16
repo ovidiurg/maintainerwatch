@@ -157,6 +157,9 @@ def calibrate(
     baseline: Optional[str] = typer.Option(None, help="Baseline config file path."),
     validation: str = typer.Option("config/validation.yaml", help="v1 validation config."),
     validation_v2: str = typer.Option("config/validation-v2.yaml", help="v2 validation config."),
+    validation_v5: str = typer.Option(
+        "config/validation-v5.yaml", help="v5 current-state diagnostic config."
+    ),
     split_date: str = typer.Option("2026-01-01", help="v2 test split date."),
     out: str = typer.Option("data/calibration.json", help="JSON report path."),
     history: str = typer.Option(
@@ -188,6 +191,7 @@ def calibrate(
     base_cfg = load_config(baseline)
     v1_cfg = load_config(validation)
     v2_cfg = load_config(validation_v2)
+    v5_cfg = load_config(validation_v5) if Path(validation_v5).is_file() else None
     if search:
         start = load_config(candidate) if candidate else base_cfg
         result = calibration.search(
@@ -226,7 +230,7 @@ def calibrate(
     if not Path(candidate).is_file():
         raise typer.BadParameter(f"candidate config not found: {candidate}")
     result = calibration.run(
-        base_cfg, load_config(candidate), v1_cfg, v2_cfg,
+        base_cfg, load_config(candidate), v1_cfg, v2_cfg, v5_cfg,
         split_date=split_date,
     )
     out_path = Path(out)

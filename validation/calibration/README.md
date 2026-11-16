@@ -18,8 +18,8 @@ Anti-overfitting rules:
   applicable, AUC 0.764). It is not yet wired into `mw calibrate`; do not tune
   on it.
 - `validation/v5` is a fresh current-state diagnostic (108 positives, AUC 0.931,
-  threshold-40 recall 0.269). It is not yet wired into `mw calibrate`; do not
-  tune on it.
+  threshold-40 recall 0.269). `mw calibrate` reports it as a diagnostic row but
+  does not include it in search selection or v2 guardrails; do not tune on it.
 - Do not repeatedly search the same test slice. If a new candidate is needed,
   prefer a new/rolling holdout and freeze the current one.
 - Require a minimum lower-CI gain: AUC >= 0.005 and PR-AUC >= 0.005.
