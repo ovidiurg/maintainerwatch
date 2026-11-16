@@ -1076,8 +1076,16 @@ def alerts(
         sql += """ AND EXISTS (
                      SELECT 1 FROM signals g
                      WHERE g.system = s.system AND g.name = s.name
+                       AND g.model_version = s.model_version
                        AND g.signal_type = ? AND g.value >= ?)"""
         args.extend([signal, min_signal])
+    elif min_signal > 0:
+        sql += """ AND EXISTS (
+                     SELECT 1 FROM signals g
+                     WHERE g.system = s.system AND g.name = s.name
+                       AND g.model_version = s.model_version
+                       AND g.band != '' AND g.value >= ?)"""
+        args.append(min_signal)
     sql += " ORDER BY s.score DESC, s.name ASC LIMIT ?"
     args.append(min(limit, 500))
     rows = conn.execute(sql, args).fetchall()

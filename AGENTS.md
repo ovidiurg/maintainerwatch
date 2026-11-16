@@ -24,12 +24,12 @@ Key facts:
 - `src/mw/data/default.yaml` is tracked package data and must stay identical to
   `config/default.yaml`. The repository ignores only root `/data/`, not package
   data under `src/mw/data/`. `tests/test_versions.py` enforces this.
-- Current checks: **176 tests**, coverage **75.78%**, CI green on Python 3.11–3.13; Docker smoke
+- Current checks: **178 tests**, coverage **75.88%**, CI green on Python 3.11–3.13; Docker smoke
   runs on relevant pull requests and on explicit manual dispatch only.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
 - Current local baseline (15 Nov 2026): 13,646 packages (5,130 npm, 5,800 PyPI,
-  2,350 crates, 301 Maven, 65 GitHub), app 0.4.19, model 0.5.3.
+  2,350 crates, 301 Maven, 65 GitHub), app 0.4.20, model 0.5.3.
 
 ## Install
 
@@ -64,7 +64,10 @@ For API checks:
 mw serve --host 127.0.0.1 --port 8000
 curl http://127.0.0.1:8000/health
 curl 'http://127.0.0.1:8000/packages?limit=2'
+curl 'http://127.0.0.1:8000/packages?band=high&limit=2'
 curl 'http://127.0.0.1:8000/impact?limit=2'
+curl 'http://127.0.0.1:8000/alerts?signal=osv_risk&min_signal=0.5&limit=2'
+curl 'http://127.0.0.1:8000/alert-rules'
 ```
 
 ## Docker smoke test

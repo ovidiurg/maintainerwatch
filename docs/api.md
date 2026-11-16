@@ -19,7 +19,7 @@ mw serve --host 127.0.0.1 --port 8000
 | GET | `/packages/{system}/{name}` | Score, signal evidence, context and dependencies for one package. |
 | GET | `/top` | First page of the highest-risk packages (`system`, `limit`, `offset`). |
 | GET | `/impact` | Impact-ranked packages (`system`, `min_dependents`, `limit`, `offset`). |
-| GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). |
+| GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). If `signal` is omitted, `min_signal` matches any applicable current-model signal. |
 | GET | `/alert-rules` | Runs the alert rules from `config/default.yaml` without delivering them. |
 
 ## Response shapes
