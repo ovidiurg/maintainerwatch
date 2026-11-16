@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "model_version": "0.5.3",
+  "packages": {
+    "npm:47cliens_server": {
+      "system": "npm",
+      "name": "47cliens_server",
+      "score": 63.8,
+      "band": "high",
+      "confidence": "high",
+      "coverage": 0.2051,
+      "risk_type": "Missing provenance"
+    }
+  }
+}
