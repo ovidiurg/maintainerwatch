@@ -7,6 +7,7 @@ import shutil
 import smtplib
 import subprocess
 import tempfile
+import time
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
@@ -14,7 +15,7 @@ from urllib.parse import quote
 
 import httpx
 
-from . import db, dynamic, snapshots
+from . import __version__, db, dynamic, snapshots
 from .config import Config
 from .impact import impact_score, impact_tier
 from .export import export_dataset
@@ -911,6 +912,89 @@ def backfill_snapshots(
     conn.commit()
     conn.close()
     return {"packages": len(rows), "snapshots": count}
+
+
+def run_all(
+    cfg: Config,
+    top_n: int | None = None,
+    with_github: bool = False,
+    enrich: bool = True,
+    export: bool = True,
+    build_index: bool = True,
+) -> dict:
+    """Run the complete, non-interactive pipeline and write a summary."""
+    started = time.monotonic()
+    started_at = datetime.now(timezone.utc).isoformat()
+    steps: dict[str, dict] = {}
+    errors: list[str] = []
+
+    def step(name: str, fn):
+        try:
+            result = fn()
+            steps[name] = {"ok": True, "result": result}
+            return result
+        except Exception as exc:  # best-effort pipeline; record and continue
+            steps[name] = {"ok": False, "error": str(exc)}
+            errors.append(f"{name}: {exc}")
+            return None
+
+    conn = _open(cfg)
+    db.init_db(conn)
+    conn.close()
+
+    for system in cfg.ecosystems:
+        step(
+            f"ingest:{system}",
+            lambda system=system: ingest_system(
+                cfg, system, top_n=top_n, with_github=with_github
+            ),
+        )
+
+    if enrich:
+        step("enrich:impact", lambda: enrich_impact(cfg, limit=500))
+        step("enrich:findings", lambda: enrich_findings(cfg, limit=500))
+        step("enrich:scorecard", lambda: enrich_scorecard(cfg, limit=500))
+        step("enrich:osv", lambda: backfill_osv(cfg, limit=500, malicious_only=True))
+
+    maintain_result = step(
+        "maintain",
+        lambda: maintain(cfg, with_commits=with_github, export=export),
+    )
+
+    index_path = None
+    if build_index:
+        def build_index_step():
+            from .ci_index import write_index
+            conn = _open(cfg)
+            path, count = write_index(
+                conn, cfg, Path(cfg.data_dir) / "maintainerwatch-index.json"
+            )
+            conn.close()
+            return {"path": str(path), "records": count}
+        index_result = step("ci-index", build_index_step)
+        if index_result:
+            index_path = index_result["path"]
+
+    finished_at = datetime.now(timezone.utc).isoformat()
+    summary = {
+        "ok": not errors,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "duration_s": round(time.monotonic() - started, 1),
+        "app_version": __version__,
+        "model_version": cfg.model_version,
+        "steps": steps,
+        "errors": errors,
+        "outputs": {
+            "report": str(Path(cfg.data_dir) / "report.html") if maintain_result else None,
+            "index": index_path,
+            "summary": str(Path(cfg.data_dir) / "main-summary.json"),
+        },
+    }
+    path = Path(cfg.data_dir) / "main-summary.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    return summary
 
 
 def maintain(

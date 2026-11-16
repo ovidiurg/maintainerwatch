@@ -124,22 +124,28 @@
 
   <section id="quickstart">
     <h2>Quick start</h2>
-    <p class="section-lede">The default database and caches stay local under <code>data/</code>.</p>
+    <p class="section-lede">
+      Install from the checkout, then run one command. The database, exports and
+      report stay local under <code>data/</code>.
+    </p>
     <pre><code>git clone https://github.com/ovidiurg/maintainerwatch.git
 cd maintainerwatch
 
 python -m venv .venv
 . .venv/bin/activate
-pip install -e ".[dev]"
+pip install .
 
-mw init
-mw ingest --system npm --top 20 --no-github
-mw score-all
-mw scan lodash --system npm
-mw report --out data/report.html</code></pre>
+# One command: ingest → enrich → score → export → HTML report → CI index
+mw main --top 200 --no-github</code></pre>
     <p>
-      Then run <code>mw serve --host 127.0.0.1 --port 8000</code> for the
-      read-only API, or <code>mw alerts --min-score 40</code> for a first triage list.
+      Minimal/offline run:
+      <code>mw main --top 50 --no-github --no-enrich --no-export</code>.
+      Then open <code>data/report.html</code>, or start the read-only API with
+      <code>mw serve --host 127.0.0.1 --port 8000</code>.
+    </p>
+    <p class="note">
+      No calibration is needed for installation: the published model is already
+      calibrated. Calibration is a maintainer release activity.
     </p>
     <aside class="disclaimer" role="note" aria-label="Important interpretation note">
       <strong>Scores are risk indicators, not verdicts.</strong>
@@ -219,8 +225,11 @@ mw report --out data/report.html</code></pre>
       <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/README.md">README</a>
       <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/INSTALL.md">Install</a>
       <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/api.md">API</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/pr-ci.md">PR/CI</a>
       <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/methodology.md">Methodology</a>
       <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/gdpr.md">Privacy</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/SECURITY.md">Security</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/CONTRIBUTING.md">Contributing</a>
       <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/AGENTS.md">For AI agents</a>
     </div>
   </section>

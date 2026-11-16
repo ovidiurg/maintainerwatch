@@ -54,11 +54,23 @@ python -c "from mw.config import load_config; print(bool(load_config().github_to
 
 ## Quick start
 
+After installation, one command runs the complete local pipeline:
+
 ```bash
-mw init
+mw main --top 200 --no-github
 ```
 
-Small smoke test (no GitHub calls):
+It initialises the schema, ingests npm/PyPI metadata, enriches, scores, exports,
+builds `data/report.html` and writes the compact CI index. No calibration step
+is needed; the published model is already calibrated.
+
+For a minimal/offline run:
+
+```bash
+mw main --top 50 --no-github --no-enrich --no-export
+```
+
+Manual smoke test (no GitHub calls):
 
 ```bash
 mw ingest --system npm --top 20 --no-github

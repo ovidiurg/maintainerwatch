@@ -55,31 +55,61 @@ worker.
 - Identity resolution (minimal, passive): Keybase proofs, GitHub commit
   emails, GPG keyservers and PyPI PEP 740 provenance. No social-media scraping.
 
-## Install
+## Quick start
 
-See [INSTALL.md](INSTALL.md) for the full setup, GitHub authentication and
-troubleshooting. Short version:
+### 1. Install from the repository
+
+The package is installed from the checkout (it is not yet published on PyPI):
 
 ```bash
-python -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"
+git clone https://github.com/ovidiurg/maintainerwatch.git
+cd maintainerwatch
+python -m venv .venv
+. .venv/bin/activate
+pip install .
 ```
 
-## Usage
+For development use `pip install -e ".[dev]"`; see [INSTALL.md](INSTALL.md) for
+GitHub authentication and troubleshooting.
+
+### 2. Run the complete pipeline
+
+```bash
+mw main --top 200 --no-github
+```
+
+That single command initialises the database, ingests npm/PyPI metadata,
+enriches it, computes signals and scores, exports all formats, builds
+`data/report.html`, and writes the compact PR/CI index.
+
+For a minimal/offline run:
+
+```bash
+mw main --top 50 --no-github --no-enrich --no-export
+```
+
+No calibration step is needed: `mw main` uses the published, already-calibrated
+model. Calibration is a maintainer release activity, not an installation step.
+
+### 3. Open the results
+
+```bash
+xdg-open data/report.html
+# or:
+python3 -m http.server 8080 --directory data
+
+mw scan express --system npm
+mw serve --host 127.0.0.1 --port 8000
+```
+
+Outputs live under `data/`; the current dataset snapshot and validation
+numbers are in the Results section below.
 
 Every command accepts `--config PATH` (default: `config/default.yaml`).
 `mw --help` and `mw COMMAND --help` show the authoritative option list.
 `mw init` creates an empty database; ingest/score/maintenance commands also
 initialise the schema on first use. Read-only commands such as `scan` need an
 ingested database.
-
-```bash
-# Smoke test: a small npm sample.
-mw init
-mw ingest --system npm --top 200
-mw score-all
-mw scan express --system npm
-```
 
 ### Ingest and enrich
 
@@ -266,11 +296,12 @@ make check            # tests, build and twine check
 make docker           # container image
 docker compose up -d --build      # serve on :8000 with ./data mounted
 make docker-report    # write ./data/report.html from the container
-make docker-smoke     # full image/CLI/report/API smoke test
+make main            # full pipeline: ingest, enrich, score, export, report
 make calibration      # compare candidate weights with the baseline
 make calibration-search # explicit search; not part of the daily loop
 make calibration-loop   # baseline history + drift, without retuning
 make ci-index           # build compact PR/CI risk index
+make ci-publish-index   # publish versioned + latest index to GitHub Releases
 make calibration-drift # render append-only calibration history
 make label-intake      # collect candidate OSV MAL labels for review
 ```
@@ -303,6 +334,10 @@ timer, Docker, backup and monitoring examples.
 The calibration metadata lives in [`validation/v1/`](validation/README.md).
 Rebuild with `python scripts/build_validation_dataset.py` and validate with
 `python scripts/check_validation_dataset.py` (or `make dataset-check`).
+Calibration is performed by maintainers once per model release, against the
+temporal holdout. End users do not need validation databases or a calibration
+step; `mw main` uses the published, already-calibrated model.
+
 A preliminary case-control evaluation on the validation database gives AUC
 0.875, PR-AUC 0.855, Brier 0.1164, precision@25 1.0, and at threshold 40
 precision 0.973 / recall 0.632 / FPR 0.008. See [docs/validation/evaluation.md](docs/validation/evaluation.md).
@@ -319,7 +354,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.22 · model 0.5.3)
+## Results (MVP, 15 November 2026 · app 0.4.23 · model 0.5.3)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
@@ -463,6 +498,13 @@ mw delete-package --system SYSTEM --name PACKAGE --yes
 ```
 
 See [docs/gdpr.md](docs/gdpr.md) for the full removal process.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development, testing, model
+calibration and privacy rules, and [SECURITY.md](SECURITY.md) for private
+vulnerability reporting. Public-release preparation is tracked in
+[docs/public-release.md](docs/public-release.md).
 
 ## License
 

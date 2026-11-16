@@ -66,6 +66,31 @@ def score_all(config: Optional[str] = typer.Option(None, help="Config file path.
 
 
 @app.command()
+def main(
+    top: Optional[int] = typer.Option(None, help="Top packages per ecosystem."),
+    github: bool = typer.Option(False, help="Fetch GitHub repo stats/commits."),
+    enrich: bool = typer.Option(True, help="Run impact/findings/Scorecard/OSV enrichments."),
+    export: bool = typer.Option(True, help="Export datasets and build the report."),
+    index: bool = typer.Option(True, help="Build the compact PR/CI index."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Run the complete pipeline from ingest to report and CI index."""
+    cfg = load_config(config)
+    result = pipeline.run_all(
+        cfg, top_n=top, with_github=github, enrich=enrich,
+        export=export, build_index=index,
+    )
+    typer.echo(json.dumps({
+        "ok": result["ok"],
+        "duration_s": result["duration_s"],
+        "errors": result["errors"],
+        "outputs": result["outputs"],
+    }, indent=2))
+    if not result["ok"]:
+        raise typer.Exit(code=1)
+
+
+@app.command()
 def maintain(
     with_commits: bool = typer.Option(True, help="Refresh GitHub/GitLab commits."),
     limit: Optional[int] = typer.Option(None, help="Limit packages per backfill."),

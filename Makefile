@@ -2,7 +2,7 @@ PYTHON ?= python3
 CANDIDATE ?= config/calibration-candidate.yaml
 LABELS_INPUT ?= data/feedback/packages.jsonl
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search ci-index label-intake calibration-drift maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search ci-index ci-publish-index label-intake calibration-drift main maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -49,11 +49,17 @@ calibration-loop:
 ci-index:
 	$(PYTHON) scripts/build_ci_index.py --out dist/maintainerwatch-index.json
 
+ci-publish-index:
+	PYTHON=$(PYTHON) bash scripts/publish_ci_index.sh
+
 calibration-drift:
 	$(PYTHON) scripts/calibration_drift.py
 
 label-intake:
 	$(PYTHON) scripts/intake_osv_labels.py --input $(LABELS_INPUT)
+
+main:
+	$(PYTHON) -m mw.cli main
 
 maintain:
 	mw maintain

@@ -20,7 +20,18 @@ JSON and its `.sha256` as an immutable release asset.
 
 The index is built from the local database, so it is not generated in a
 GitHub-hosted CI job without the database. Generate/publish it from the trusted
-maintainer environment.
+maintainer environment:
+
+```bash
+make ci-index
+DRY_RUN=1 make ci-publish-index   # inspect the planned release
+make ci-publish-index
+```
+
+`ci-publish-index` creates a versioned `ci-index-YYYYMMDD` release, uploads a
+versioned JSON + checksum and the fixed `maintainerwatch-index.json` latest
+asset. It requires authenticated `gh` and a public repository for external
+consumers.
 
 ## Local use
 
@@ -39,9 +50,11 @@ local validation.
 
 ## GitHub Action
 
-The composite action downloads the index, verifies its optional SHA-256, runs
-`mw scan-diff`, uploads SARIF and can optionally maintain **one** sticky PR
-comment.
+The composite action installs the action checkout by default (the package is
+not yet published on PyPI), downloads the index, verifies its optional SHA-256,
+runs `mw scan-diff`, uploads SARIF and can optionally maintain **one** sticky PR
+comment. `package-spec` can override the install source with a published wheel
+or public Git URL.
 
 ```yaml
 - uses: ovidiurg/maintainerwatch@main

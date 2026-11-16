@@ -24,12 +24,12 @@ Key facts:
 - `src/mw/data/default.yaml` is tracked package data and must stay identical to
   `config/default.yaml`. The repository ignores only root `/data/`, not package
   data under `src/mw/data/`. `tests/test_versions.py` enforces this.
-- Current checks: **185 tests**, coverage **75.86%**, CI green on Python 3.11–3.13; Docker smoke
+- Current checks: **187 tests**, coverage **76.20%**, CI green on Python 3.11–3.13; Docker smoke
   runs on relevant pull requests and on explicit manual dispatch only.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
 - Current local baseline (15 Nov 2026): 13,646 packages (5,130 npm, 5,800 PyPI,
-  2,350 crates, 301 Maven, 65 GitHub), app 0.4.22, model 0.5.3.
+  2,350 crates, 301 Maven, 65 GitHub), app 0.4.23, model 0.5.3.
 
 ## Install
 
@@ -99,6 +99,7 @@ git.
 | Goal | Command |
 |---|---|
 | Registry ingest | `mw ingest --system npm|pypi|crates|maven|github [--top N|--seed-file F] [--no-github]` |
+| Full pipeline | `mw main [--top N] [--no-github] [--no-enrich]` |
 | Recurring pipeline | `mw maintain [--limit N] [--no-export]` |
 | Identity resolution | `mw resolve [--limit N]` |
 | Priority seed generation | `python scripts/prepare_npm_priority.py`; `python scripts/prepare_pypi_priority.py`; `python scripts/prepare_crates_priority.py`; `python scripts/prepare_maven_priority.py`; `python scripts/prepare_github_priority.py` |
