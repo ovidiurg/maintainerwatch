@@ -201,6 +201,7 @@ mw export [--format parquet|csv|json|spdx|cyclonedx|osv] [--config PATH]
 mw report [--out report.html] [--config PATH]
 mw calibrate --candidate config/calibration-candidate.yaml [--fail-on-regression]
 mw calibrate --search [--search-max 80] [--bootstrap 1000]
+mw scan-diff --base origin/main --index dist/maintainerwatch-index.json --format sarif
 ```
 
 `mw export` writes under the configured `data_dir`; `mw report` builds a static
@@ -269,6 +270,7 @@ make docker-smoke     # full image/CLI/report/API smoke test
 make calibration      # compare candidate weights with the baseline
 make calibration-search # explicit search; not part of the daily loop
 make calibration-loop   # baseline history + drift, without retuning
+make ci-index           # build compact PR/CI risk index
 make calibration-drift # render append-only calibration history
 make label-intake      # collect candidate OSV MAL labels for review
 ```
@@ -317,7 +319,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.21 · model 0.5.3)
+## Results (MVP, 15 November 2026 · app 0.4.22 · model 0.5.3)
 
 - 13,646 packages scored: 5,130 npm, 5,800 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
@@ -365,7 +367,8 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
   (`mw export --format json|spdx|cyclonedx|osv`).
 
-See [docs/incident-validation.md](docs/incident-validation.md).
+See [docs/incident-validation.md](docs/incident-validation.md) and
+[docs/pr-ci.md](docs/pr-ci.md) for the dependency-diff/SARIF integration.
 
 ## Scoring
 

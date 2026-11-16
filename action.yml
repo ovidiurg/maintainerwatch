@@ -1,0 +1,81 @@
+name: MaintainerWatch dependency risk
+description: Scan dependency changes in a pull request against a compact MaintainerWatch risk index
+branding:
+  icon: shield
+  color: blue
+inputs:
+  index-url:
+    description: URL of the compact maintainerwatch-index.json artifact
+    required: true
+  index-sha256:
+    description: Optional SHA-256 of the index file
+    required: false
+  package-spec:
+    description: Python package spec used to install MaintainerWatch
+    default: maintainerwatch
+  base-ref:
+    description: Git base revision for the PR diff
+    default: origin/main
+  fail-on:
+    description: none, medium or high
+    default: none
+  comment:
+    description: Post one sticky PR summary comment (default false)
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - name: Install MaintainerWatch
+      shell: bash
+      run: python -m pip install "${{ inputs.package-spec }}"
+    - name: Download risk index
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -fsSL "${{ inputs.index-url }}" -o "$RUNNER_TEMP/maintainerwatch-index.json"
+        if [ -n "${{ inputs.index-sha256 }}" ]; then
+          echo "${{ inputs.index-sha256 }}  $RUNNER_TEMP/maintainerwatch-index.json" | sha256sum -c -
+        fi
+    - name: Scan changed manifests
+      shell: bash
+      run: |
+        set -euo pipefail
+        mw scan-diff \
+          --base "${{ inputs.base-ref }}" \
+          --head HEAD \
+          --index "$RUNNER_TEMP/maintainerwatch-index.json" \
+          --format sarif \
+          --out "$RUNNER_TEMP/maintainerwatch.sarif" \
+          --fail-on "${{ inputs.fail-on }}"
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ runner.temp }}/maintainerwatch.sarif
+    - name: Sticky PR summary
+      if: ${{ inputs.comment == 'true' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const marker = '<!-- maintainerwatch:pr-summary -->';
+          const doc = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/maintainerwatch.sarif`, 'utf8'));
+          const results = (doc.runs && doc.runs[0] && doc.runs[0].results) || [];
+          const relevant = results.filter(r => ['error', 'warning'].includes(r.level));
+          if (!relevant.length) return;
+          const lines = relevant.slice(0, 20).map(r => `- **${r.properties.confidence || 'unknown'}** ${r.message.text}`);
+          const body = `${marker}\n### MaintainerWatch\n\n${relevant.length} risky changed package(s):\n\n${lines.join('\n')}`;
+          const comments = await github.paginate(github.rest.issues.listComments, {
+            owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
+          });
+          const existing = comments.find(c => c.body && c.body.includes(marker));
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              comment_id: existing.id, body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, body,
+            });
+          }

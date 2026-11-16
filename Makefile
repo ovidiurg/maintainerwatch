@@ -2,7 +2,7 @@ PYTHON ?= python3
 CANDIDATE ?= config/calibration-candidate.yaml
 LABELS_INPUT ?= data/feedback/packages.jsonl
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search label-intake calibration-drift maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search ci-index label-intake calibration-drift maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -20,7 +20,7 @@ build:
 	$(PYTHON) -m build
 
 check: test build dataset-check
-	$(PYTHON) -m twine check dist/*
+	$(PYTHON) -m twine check dist/*.whl dist/*.tar.gz
 
 docker:
 	docker build -t maintainerwatch:latest .
@@ -45,6 +45,9 @@ calibration-search:
 
 calibration-loop:
 	bash scripts/calibration_loop.sh
+
+ci-index:
+	$(PYTHON) scripts/build_ci_index.py --out dist/maintainerwatch-index.json
 
 calibration-drift:
 	$(PYTHON) scripts/calibration_drift.py

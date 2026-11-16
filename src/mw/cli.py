@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 import yaml
 
-from . import calibration, db, pipeline, validation
+from . import calibration, db, pipeline, scan_diff, validation
 from .config import load_config
 from .export import export_dataset
 from .report import build_report
@@ -218,6 +218,47 @@ def calibrate(
         "history": history,
     }, indent=2))
     if fail_on_regression and not result["passed"]:
+        raise typer.Exit(code=1)
+
+
+@app.command("scan-diff")
+def scan_diff_cmd(
+    base: str = typer.Option("HEAD~1", help="Git base revision."),
+    head: str = typer.Option("HEAD", help="Git head revision."),
+    index: str = typer.Option(
+        "dist/maintainerwatch-index.json", help="Compact risk index JSON."
+    ),
+    format: str = typer.Option("json", help="json or sarif."),
+    out: Optional[str] = typer.Option(None, help="Write output to this path."),
+    fail_on: str = typer.Option(
+        "none", help="Exit 1 on none|medium|high findings."
+    ),
+    root: str = typer.Option(".", help="Repository root."),
+) -> None:
+    """Scan dependency changes between two git revisions."""
+    if format not in {"json", "sarif"}:
+        raise typer.BadParameter("format must be json or sarif")
+    if fail_on not in {"none", "medium", "high"}:
+        raise typer.BadParameter("fail-on must be none, medium or high")
+    changes = scan_diff.diff_manifests(base, head, root)
+    payload_index = scan_diff.load_index(index)
+    findings = scan_diff.findings_for(changes, payload_index)
+    if format == "sarif":
+        payload = scan_diff.sarif(findings, payload_index.get("model_version"))
+    else:
+        payload = scan_diff.summary(findings, len(changes))
+    text = json.dumps(payload, indent=2)
+    if out:
+        path = Path(out)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        typer.echo(json.dumps({"path": out, "findings": len(findings)}))
+    else:
+        typer.echo(text)
+    rank = {"low": 1, "medium": 2, "high": 3}
+    if fail_on != "none" and any(
+        rank.get(item.get("band"), 0) >= rank[fail_on] for item in findings
+    ):
         raise typer.Exit(code=1)
 
 
