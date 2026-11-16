@@ -96,6 +96,16 @@ commits); the rest had no valid repository or pre-cutoff commits. It is a
 diagnostic replay holdout, not a current-state holdout and not yet wired into
 `mw calibrate`. See `docs/validation/evaluation-v4.md`.
 
+## Fresh current-state cohort — v5
+
+`validation/v5/` contains **108 npm positives** whose latest version is
+explicitly affected by a fresh OSV MAL advisory, plus the v1 controls. Current
+model metrics are AUC **0.931**, AP **0.629**, threshold-40 precision **0.744**
+and recall **0.269**. The `osv_risk` ablation has zero delta, but
+`signing_gap` is strongly negative; this cohort is a diagnostic, not a tuning
+set. It is not yet wired into `mw calibrate`. See
+`docs/validation/evaluation-v5.md`.
+
 ## Pre-incident replay
 
 `python scripts/validation_replay.py` rebuilds each package using only versions

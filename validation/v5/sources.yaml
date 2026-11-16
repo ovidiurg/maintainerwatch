@@ -1,0 +1,42 @@
+datadog:
+  access: public metadata; encrypted samples
+  license: Apache-2.0
+  name: Datadog Malicious Software Packages Dataset
+  url: https://github.com/DataDog/malicious-software-packages-dataset
+  usage: positive snapshot
+dependencywatch:
+  access: public
+  license: free reuse with attribution
+  name: DependencyWatch.io
+  url: https://dependencywatch.io
+  usage: positive + incident context
+maloss:
+  access: public metadata
+  license: MIT (code/lists); samples restricted
+  name: MalOSS
+  url: https://github.com/osssanitizer/maloss
+  usage: positive historical
+manual:
+  access: public
+  license: public reports
+  name: MaintainerWatch curated dossiers
+  url: docs/incident-validation.md
+  usage: curated takeover/sabotage
+ossf-malicious-packages:
+  access: public
+  license: Apache-2.0
+  name: OpenSSF Malicious Packages
+  url: https://github.com/ossf/malicious-packages
+  usage: positive
+osv:
+  access: public
+  license: public data
+  name: OSV.dev
+  url: https://osv.dev
+  usage: positive
+tstromberg:
+  access: public
+  license: Apache-2.0
+  name: upstream-supplychain-attacks
+  url: https://github.com/tstromberg/upstream-supplychain-attacks
+  usage: incident context

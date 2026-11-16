@@ -1,0 +1,17 @@
+{
+  "dataset_version": "v5",
+  "schema_version": "1.0",
+  "builder": "fresh OSV MAL current-state cohort (2026-11-16)",
+  "selection": "latest version in affected_versions",
+  "counts": {
+    "incidents": 108,
+    "incident_packages": 108,
+    "controls": 1148
+  },
+  "files": {
+    "incidents.jsonl": "cc8b76c5bd9891763459f687c23930d1df1044fe28ada2247a592ec5d1b89f8d",
+    "incident_packages.jsonl": "5327e8f6173426921a8fa143cad77bbad26cf8667c0abb1f06d74b0ac6b88851",
+    "controls.jsonl": "ef9cd68e70debde5eac3dcf118309afa986c53c3e906a61291dccec88d4b11a0",
+    "sources.yaml": "f68b7044d75edf64b4c861f153ba5bd6953966c0843b6a44582af580bfd4b622"
+  }
+}
