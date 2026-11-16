@@ -73,6 +73,19 @@ not a fully historical control population. Running
 `validation/v2/evaluation.json` and `docs/validation/evaluation-v2.md` without
 overwriting the v1 report. See `docs/validation/evaluation-v2.md`.
 
+## Fresh OSV MAL cohort — v3
+
+`validation/v3/` is a fresh-label diagnostic cohort built from OSV `MAL-*`
+advisories published from 2026-01-01 onward. It contains **381 npm incidents**
+and the v1 controls. All labels are absent from the local OSV table and from the
+v1/v2 positive/control/historical cohorts.
+
+It is **not a model holdout**. In pre-incident replay, 326 of 381 positives have
+no applicable pre-cutoff signal; AUC is 0.209. The result reflects selection
+bias toward new/spam packages and older controls. See
+`docs/validation/evaluation-v3.md`. Do not tune on v3; the next step is to
+expand the mature-package universe (A2).
+
 ## Pre-incident replay
 
 `python scripts/validation_replay.py` rebuilds each package using only versions

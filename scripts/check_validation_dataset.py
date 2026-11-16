@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "validation" / "v1"
 
 REQUIRED_INCIDENT = [
     "incident_id", "title", "ecosystem", "attack_type", "summary",
@@ -36,6 +36,10 @@ def load(name: str) -> list[dict]:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", default="validation/v1")
+    global DATA
+    DATA = ROOT / parser.parse_args().dataset
     incidents = load("incidents.jsonl")
     packages = load("incident_packages.jsonl")
     controls = load("controls.jsonl")
