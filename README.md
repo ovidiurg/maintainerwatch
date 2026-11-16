@@ -18,6 +18,15 @@ publishes a versioned open dataset plus a CLI/report.
 
 **Website:** <https://ovidiurg.github.io/maintainerwatch/>
 
+## Support
+
+MaintainerWatch is independent and currently unfunded. If the project is useful
+to you, sponsorship supports registry ingestion, validation work, CI index
+maintenance and documentation. See [SPONSORSHIP.md](SPONSORSHIP.md) for the
+funding boundaries and tiers:
+
+<https://github.com/sponsors/ovidiurg>
+
 ## For AI agents
 
 See [AGENTS.md](AGENTS.md) for a machine-oriented quick guide: safe install,
