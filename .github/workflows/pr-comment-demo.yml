@@ -20,4 +20,4 @@ jobs:
           base-ref: origin/${{ github.base_ref }}
           comment: "true"
           upload-sarif: "false"
-          fail-on: none
+          fail-on: "high"
