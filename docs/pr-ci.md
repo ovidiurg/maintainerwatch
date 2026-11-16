@@ -33,6 +33,50 @@ versioned JSON + checksum and the fixed `maintainerwatch-index.json` latest
 asset. It requires authenticated `gh` and a public repository for external
 consumers.
 
+## How it works in a real PR
+
+1. The repository owner adds one workflow once (see the action example below).
+2. A contributor opens or updates a PR that changes a dependency manifest.
+3. GitHub starts the workflow on `pull_request`.
+4. The action downloads the compact index and runs `mw scan-diff` against the
+   PR base.
+5. Only added or version-changed packages are looked up; package code is never
+   downloaded or executed.
+6. Results are written to SARIF and the check summary.
+7. If `comment: true`, one sticky PR comment is created or updated.
+
+The action does nothing to the PR when no manifest changed or when no changed
+package reaches the configured threshold.
+
+### Comment lifecycle
+
+With the default `comment: false`, no PR comments are created. SARIF and the
+check summary remain the primary output.
+
+With `comment: true`:
+
+- one marker comment is used:
+  `<!-- maintainerwatch:pr-summary -->`;
+- further pushes update that comment instead of creating another one;
+- only medium/high findings are included;
+- deleting the comment manually is safe; a later run creates a fresh one;
+- a run with no relevant findings does not add a new comment.
+
+Example:
+
+```text
+### MaintainerWatch
+
+1 risky changed package(s):
+
+- **high** npm/test-pkg version 1.0.1: Maintainer takeover
+  (score 80.0, band high, confidence high)
+```
+
+Do not use `pull_request_target` for untrusted pull requests. On forked PRs the
+default token is read-only; skip the comment step or use a trusted follow-up
+workflow rather than exposing secrets.
+
 ## Local use
 
 ```bash

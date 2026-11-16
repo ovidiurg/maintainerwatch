@@ -31,10 +31,13 @@
 
 - [ ] Compact index builds and checksum verifies.
 - [ ] SARIF is generated on a local git fixture.
-- [ ] GitHub Action is tested on a real PR after the repository becomes public.
+- [x] GitHub Action tested on a real private PR with a local index; SARIF
+      upload was disabled.
+- [ ] GitHub Action tested with the public Release index after visibility change.
 - [ ] Release asset `maintainerwatch-index.json` is published and checksummed
       (`DRY_RUN=1 make ci-publish-index`, then `make ci-publish-index`).
-- [ ] Comment remains **disabled by default**.
+- [x] Comment is **disabled by default**; one sticky comment was manually
+      verified with `comment: true`.
 
 ## Site and contact
 
