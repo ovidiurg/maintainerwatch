@@ -370,13 +370,13 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 
 ## Results (MVP, 15 November 2026 · app 0.4.23 · model 0.5.3)
 
-- 15,902 packages scored: 6,804 npm, 6,382 PyPI, 2,350 crates.io, 301 Maven
+- 16,281 packages scored: 7,015 npm, 6,550 PyPI, 2,350 crates.io, 301 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 1,682,714 versions, 243,608 commits, 28,603 maintainers, 1,375 repositories,
-  10,334 OSV records, 55,559 runtime dependency edges (PyPI extras excluded).
+- 1,705,441 versions, 243,608 commits, 30,180 maintainers, 1,375 repositories,
+  10,460 OSV records, 56,693 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 10 high, 3,578 medium, 12,314 low. OIDC/bot publishers are ignored.
+- Risk bands: 11 high, 3,616 medium, 12,654 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -399,10 +399,11 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   benign package above 40; the 19-incident sample is still too small to treat
   this as a stable production threshold.
 - External cross-check of the current high band (OSV plus deps.dev) confirms
-  **7 of 10** high-band packages as malicious. The other three
-  (`@cloudbase/wx-cloud-client-sdk`, `png-js`, `jws`) are high-download
-  packages currently driven by publisher/continuity evidence without an
-  advisory; they need review and are a precision warning, not malware labels.
+  **7 of 11** high-band packages as malicious. The other four
+  (`@cloudbase/wx-cloud-client-sdk`, `png-js`, `jws`, `caniuse-api`) are
+  high-download packages currently driven by publisher/continuity evidence
+  without an advisory; they need review and are a precision warning, not
+  malware labels.
   A same-author release burst had incorrectly promoted `crates/num_threads` to
   high; the high-confidence gate now requires new-author evidence, so it is
   medium at 51.4 (evidence-only). The seven malicious npm packages do not have

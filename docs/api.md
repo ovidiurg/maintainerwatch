@@ -51,7 +51,7 @@ medium/high scores and are empty for low scores. Run `mw score-all` and
 returned in headers:
 
 ```
-X-Total-Count: 15902
+X-Total-Count: 16281
 X-Limit: 50
 X-Offset: 0
 X-Next-Offset: 50
