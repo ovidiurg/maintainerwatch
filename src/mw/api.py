@@ -219,7 +219,7 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         return items
 
     @app.get(
-        "/packages/{system}/{name}",
+        "/packages/{system}/{name:path}",
         tags=["packages"],
         summary="Package score and evidence",
     )

@@ -16,7 +16,7 @@ mw serve --host 127.0.0.1 --port 8000
 | GET | `/health` | Status, app version and model version. |
 | GET | `/systems` | Package counts per ecosystem. |
 | GET | `/packages` | Paginated scored packages (`system`, `band`, `min_score`, `min_dependents`, `limit`, `offset`). |
-| GET | `/packages/{system}/{name}` | Score, signal evidence, context and dependencies for one package. |
+| GET | `/packages/{system}/{name:path}` | Score, signal evidence, context and dependencies for one package. Scoped npm names may contain `/`. |
 | GET | `/top` | First page of the highest-risk packages (`system`, `limit`, `offset`). |
 | GET | `/impact` | Impact-ranked packages (`system`, `min_dependents`, `limit`, `offset`). |
 | GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). If `signal` is omitted, `min_signal` matches any applicable current-model signal. |
@@ -29,7 +29,7 @@ mw serve --host 127.0.0.1 --port 8000
 `dependencies_count`, `dependent_count`, `impact_score`, `impact_tier`,
 `repo_url` and `license`.
 
-`/packages/{system}/{name}` returns the score, `inputs_hash`, `computed_at`,
+`/packages/{system}/{name:path}` returns the score, `inputs_hash`, `computed_at`,
 `evidence_coverage`, `risk_type`, `risk_note`, `next_step`, `impact_score`,
 `impact_tier`, the `context` block (which includes `dependent_count` when
 deps.dev enrichment ran, repository `repo_archived`/owner/stars/forks/open-issues
@@ -166,6 +166,22 @@ Do not expose the raw SQLite database or turn the API into a public “target
 list”. Share aggregate findings only, with identities minimised. A high score
 is a request for review, not proof of compromise.
 
+## Feature coverage
+
+Implemented and covered by API tests:
+
+- health, per-ecosystem counts, scored package list, package detail;
+- pagination and `X-Total-Count`/`X-Next-Offset` headers;
+- system/band/min-score/min-dependents filters;
+- impact ranking and impact context;
+- ad-hoc alerts and dry-run alert rules;
+- API-key auth, rate limiting and scoped package paths.
+
+Intentionally not exposed over the API: write/delete operations, export/report
+generation, calibration, replay and `scan-diff`. Those remain CLI/operations
+tasks so the service stays read-only and the database is never mutated by an
+HTTP request.
+
 ## Notes
 
 - The API reads the same SQLite database as the CLI; run `mw score-all` first.
@@ -173,7 +189,7 @@ is a request for review, not proof of compromise.
 - It is read-only: there are no write endpoints. Package removal is CLI-only:
   `mw delete-package --system SYSTEM --name PACKAGE --yes`.
 - `/alerts` returns the alert fields only (`system`, `name`, `score`, `band`,
-  downloads, OSV, repo URL); use `/packages/{system}/{name}` for risk summaries
+  downloads, OSV, repo URL); use `/packages/{system}/{name:path}` for risk summaries
   and impact context.
 - `install_script`, `evidence_coverage`, risk summaries and impact fields are
   returned automatically; no separate endpoint is needed.
