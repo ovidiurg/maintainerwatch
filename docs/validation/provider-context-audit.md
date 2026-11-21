@@ -4,26 +4,25 @@ Model: `0.5.3`
 
 | Package | Model score | OSV | OSV risk | deps.dev | deps.dev risk | Scorecard | Scorecard score | Scorecard risk | Coverage | Status |
 |---|---:|---|---:|---|---:|---|---:|---:|---:|---|
-| `b5ffer-xor` | 65.2 | affected | 1.0 | unavailable | - | available | 2.2 | 0.6857 | 67% | confirmed |
-| `47cliens_server` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `b4lesised` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `b64-svn` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `ba-graphics` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `p-http` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `p-oauth2` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `@cloudbase/wx-cloud-client-sdk` | 56.9 | none | 0.0 | unavailable | - | unavailable | - | - | 33% | unconfirmed |
-| `png-js` | 56.6 | none | 0.0 | unavailable | - | unavailable | - | - | 33% | unconfirmed |
-| `beautifulsoup4` | 53.5 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `gunicorn` | 53.5 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `seaborn` | 53.5 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
-| `@railgun-community/wallet` | 50.6 | none | 0.0 | unavailable | - | unknown | - | - | 33% | unconfirmed |
-| `caniuse-api` | 50.0 | none | 0.0 | unavailable | - | unknown | - | - | 33% | unconfirmed |
+| `47cliens_server` | 71.0 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `b4lesised` | 71.0 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `b64-svn` | 71.0 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `ba-graphics` | 71.0 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `p-http` | 71.0 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `p-oauth2` | 71.0 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `b5ffer-xor` | 69.8 | affected | 1.0 | findings | 1.0 | available | 2.2 | 0.6857 | 100% | confirmed |
+| `beautifulsoup4` | 60.6 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `gunicorn` | 60.6 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `seaborn` | 60.6 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
+| `@cloudbase/wx-cloud-client-sdk` | 56.9 | none | 0.0 | none | 0.0 | unavailable | - | - | 67% | unconfirmed |
+| `png-js` | 52.7 | none | 0.0 | findings | 0.2 | unavailable | - | - | 67% | unconfirmed |
+| `caniuse-api` | 50.0 | none | 0.0 | none | 0.0 | unknown | - | - | 67% | unconfirmed |
 
 ## Counts
 
 - confirmed: **10**
 - conflict: **0**
 - unknown: **0**
-- unconfirmed: **4**
+- unconfirmed: **3**
 
 This is a read-only triage report. It does not change scores or bands.
