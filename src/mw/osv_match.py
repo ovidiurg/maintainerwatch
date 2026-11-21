@@ -28,8 +28,8 @@ def _cmp(left: str, right: str) -> int:
         return (lv > rv) - (lv < rv)
     def key(value: str):
         return tuple(
-            int(part) if part.isdigit() else part
-            for part in str(value).replace("-", ".").split(".")
+            (0, int(part)) if part.isdigit() else (1, part)
+            for part in str(value).strip().lower().replace("-", ".").split(".")
         )
     lk, rk = key(left), key(right)
     return (lk > rk) - (lk < rk)

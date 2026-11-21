@@ -13,15 +13,17 @@ Model: `0.5.3`
 | `p-oauth2` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
 | `@cloudbase/wx-cloud-client-sdk` | 56.9 | none | 0.0 | unavailable | - | unavailable | - | - | 33% | unconfirmed |
 | `png-js` | 56.6 | none | 0.0 | unavailable | - | unavailable | - | - | 33% | unconfirmed |
-| `jws` | 51.6 | unknown | - | unavailable | - | unavailable | - | - | 0% | unknown |
+| `beautifulsoup4` | 53.5 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
+| `gunicorn` | 53.5 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
+| `seaborn` | 53.5 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
 | `@railgun-community/wallet` | 50.6 | none | 0.0 | unavailable | - | unknown | - | - | 33% | unconfirmed |
 | `caniuse-api` | 50.0 | none | 0.0 | unavailable | - | unknown | - | - | 33% | unconfirmed |
 
 ## Counts
 
-- confirmed: **7**
+- confirmed: **10**
 - conflict: **0**
-- unknown: **1**
+- unknown: **0**
 - unconfirmed: **4**
 
 This is a read-only triage report. It does not change scores or bands.

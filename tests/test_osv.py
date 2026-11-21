@@ -43,6 +43,12 @@ def test_osv_range_fixed_boundary():
     assert affected(data, "npm", "pkg", "4.17.21") is False
 
 
+def test_osv_range_mixed_version_tokens():
+    data = _affected([{"introduced": "0"}, {"fixed": "4.17.21"}])
+    assert affected(data, "npm", "pkg", "1.0.0") is True
+    assert affected(data, "npm", "pkg", "4.17.21") is False
+
+
 def test_osv_range_last_affected():
     data = _affected([{"introduced": "1.0.0"}, {"last_affected": "1.2.0"}])
     assert affected(data, "npm", "pkg", "1.1.0") is True
