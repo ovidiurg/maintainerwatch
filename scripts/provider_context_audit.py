@@ -70,8 +70,8 @@ def main() -> None:
         "",
         f"Model: `{cfg.model_version}`",
         "",
-        "| Package | Model score | OSV | OSV risk | deps.dev | deps.dev risk | Scorecard | Scorecard risk | Coverage | Status |",
-        "|---|---:|---|---:|---|---:|---:|---:|---:|---|",
+        "| Package | Model score | OSV | OSV risk | deps.dev | deps.dev risk | Scorecard | Scorecard score | Scorecard risk | Coverage | Status |",
+        "|---|---:|---|---:|---|---:|---|---:|---:|---:|---|",
     ]
     for item in records:
         lines.append(
