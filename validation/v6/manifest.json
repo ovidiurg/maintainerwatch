@@ -1,0 +1,11 @@
+{
+  "dataset_version": "v6",
+  "status": "awaiting_labels",
+  "snapshot_at": "2026-11-21",
+  "snapshot_db": "data/validation-v6/maintainerwatch.sqlite",
+  "snapshot_sha256": "1f46813286ed94abc3fdf823e61d64dec1413edf44ccd645a8a035865ebfd614",
+  "source_db": "data/maintainerwatch.sqlite",
+  "excluded_sets": ["v1", "v2", "v3", "v4", "v5", "historical"],
+  "frozen": true,
+  "note": "Snapshot is frozen. No labels have been promoted yet because no unseen current-state positives were found in the 2026-11-16 OSV archive."
+}
