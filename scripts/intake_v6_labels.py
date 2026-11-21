@@ -61,7 +61,7 @@ def latest_versions(db: Path) -> dict[tuple[str, str], str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--snapshot", default="validation/v6/snapshot.json")
+    parser.add_argument("--snapshot", default="validation/v6/manifest.json")
     parser.add_argument("--db", default=None)
     parser.add_argument("--out", default="data/validation-v6/new-osv-labels.jsonl")
     parser.add_argument("--cache-dir", default="data/validation-v6/osv-cache")

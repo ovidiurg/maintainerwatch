@@ -5,7 +5,7 @@ frozen; labels are pending.
 
 - Snapshot: `data/validation-v6/maintainerwatch.sqlite`
 - Source: current main DB at 2026-11-21
-- SHA-256: `snapshot.json`
+- SHA-256: `manifest.json`
 - Excluded from labels/controls: v1, v2, v3, v4, v5 and historical cohorts
 - Controls: to be sampled from the frozen snapshot, matched by ecosystem and
   download band
