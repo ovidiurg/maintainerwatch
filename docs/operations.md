@@ -178,6 +178,23 @@ python scripts/backfill_gitlab.py --commits
 The script only selects `gitlab.com` URLs; self-hosted GitLab URLs need a
 separate API host and are not covered by the public API path.
 
+## Provider cohort backfill
+
+Backfill deps.dev findings/impact for the current high and medium cohorts:
+
+```bash
+.venv/bin/python scripts/backfill_provider_cohorts.py --limit 1000
+```
+
+Backfill repository/Scorecard data for those cohorts:
+
+```bash
+.venv/bin/python scripts/backfill_provider_cohorts.py --providers github --limit 500
+```
+
+Some packages have no supported repository or no provider record; those remain
+`unavailable`/`unknown` and should not be treated as clean negatives.
+
 ## Provider context audit
 
 Check provider agreement for the current high-band packages:
