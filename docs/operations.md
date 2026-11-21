@@ -166,6 +166,18 @@ python scripts/backfill_gitlab.py --commits
 The script only selects `gitlab.com` URLs; self-hosted GitLab URLs need a
 separate API host and are not covered by the public API path.
 
+## Provider context audit
+
+Check provider agreement for the current high-band packages:
+
+```bash
+.venv/bin/python scripts/provider_context_audit.py
+```
+
+It writes `data/validation/provider-context-audit.json` and
+`docs/validation/provider-context-audit.md`. It is read-only and does not change
+scores.
+
 ## Backups
 
 SQLite is a single file plus `-wal`/`-shm` while connections are open. Use the

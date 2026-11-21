@@ -266,9 +266,12 @@ mw calibrate --search [--search-max 80] [--bootstrap 1000]
 mw scan-diff --base origin/main --index dist/maintainerwatch-index.json --format sarif
 ```
 
-`mw export` writes under the configured `data_dir`; `mw report` builds a static
-HTML report. `mw calibrate` compares candidate weights against the baseline on
-the temporal validation samples; see [`docs/calibration.md`](docs/calibration.md).
+`mw export` writes under the configured `data_dir`; the JSON dataset includes
+the normalized `provider_context` block (OSV/deps.dev/Scorecard/consensus),
+while Parquet, CSV and SBOM formats keep their existing schemas. `mw report`
+builds a static HTML report. `mw calibrate` compares candidate weights against
+the baseline on the temporal validation samples; see
+[`docs/calibration.md`](docs/calibration.md).
 
 Rows with medium/high scores include a short risk type, description
 and next investigation step; impact is shown separately as deps.dev dependent
@@ -434,8 +437,8 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   Install-script scanning flags only high-risk npm install scripts.
 - Bulk package ingestion used `--no-github`; SQLite is 1.1 GB and the request
   cache is 7.2 GB.
-- Standard outputs: JSON, SPDX 2.3, CycloneDX 1.5 and OSV-compatible
-  (`mw export --format json|spdx|cyclonedx|osv`).
+- Standard outputs: JSON (with `provider_context`), SPDX 2.3, CycloneDX 1.5 and
+  OSV-compatible (`mw export --format json|spdx|cyclonedx|osv`).
 
 See [docs/incident-validation.md](docs/incident-validation.md) and
 [docs/pr-ci.md](docs/pr-ci.md) for the dependency-diff/SARIF integration.

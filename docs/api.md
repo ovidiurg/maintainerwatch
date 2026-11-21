@@ -27,10 +27,10 @@ mw serve --host 127.0.0.1 --port 8000
 
 Package detail responses include a normalized `provider_context` block:
 
-- `osv`: `none`, `not_affected`, `affected` or `unknown`, with current-version
-  advisories;
-- `depsdev`: findings/types/risks or `unavailable`;
-- `scorecard`: score/failed checks or `unknown`;
+- `osv`: `none`, `not_affected`, `affected` or `unknown`, with a normalized
+  `score` and current-version advisories;
+- `depsdev`: findings/types/risks and a normalized `score`, or `unavailable`;
+- `scorecard`: raw score, normalized `risk_score`, failed checks, or `unknown`;
 - `ecosyste_ms`: reserved/not configured;
 - `consensus`: `confirmed`, `conflict`, `unknown` or `none`, plus provider
   coverage and conflicts.

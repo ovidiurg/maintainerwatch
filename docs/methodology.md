@@ -105,10 +105,12 @@ capped at 0.5. Snapshots can also be imported with `--source`
 
 ## Standard outputs
 
-`mw export --format` writes `json` (full dataset with signals and context),
-`spdx` (SPDX 2.3 JSON with purl external references), `cyclonedx` (CycloneDX
-1.5 JSON BOM with risk properties) and `osv` (an OSV-compatible `results` array
-of packages and vulnerability IDs), in addition to `parquet` and `csv`.
+`mw export --format` writes `json` (full dataset with signals, provider context
+and package context), `spdx` (SPDX 2.3 JSON with purl external references),
+`cyclonedx` (CycloneDX 1.5 JSON BOM with risk properties) and `osv` (an
+OSV-compatible `results` array of packages and vulnerability IDs), in addition
+to `parquet` and `csv`. `provider_context` is included in JSON only; the tabular
+and SBOM formats keep their existing schemas.
 
 ## Context
 

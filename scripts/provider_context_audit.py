@@ -47,8 +47,12 @@ def main() -> None:
             "advisory": consensus["advisory"],
             "coverage": consensus["coverage"],
             "osv": context["osv"]["status"],
+            "osv_score": context["osv"].get("score"),
             "depsdev": context["depsdev"]["status"],
+            "depsdev_score": context["depsdev"].get("score"),
             "scorecard": context["scorecard"]["status"],
+            "scorecard_score": context["scorecard"].get("score"),
+            "scorecard_risk": context["scorecard"].get("risk_score"),
             "conflicts": consensus["conflicts"],
         })
     conn.close()
@@ -66,14 +70,17 @@ def main() -> None:
         "",
         f"Model: `{cfg.model_version}`",
         "",
-        "| Package | Score | Downloads/wk | Status | OSV | deps.dev | Scorecard | Coverage |",
-        "|---|---:|---:|---|---|---|---|---:|",
+        "| Package | Model score | OSV | OSV risk | deps.dev | deps.dev risk | Scorecard | Scorecard risk | Coverage | Status |",
+        "|---|---:|---|---:|---|---:|---:|---:|---:|---|",
     ]
     for item in records:
         lines.append(
-            f"| `{item['name']}` | {item['score']} | {item['downloads_weekly'] or 0} | "
-            f"{item['status']} | {item['osv']} | {item['depsdev']} | "
-            f"{item['scorecard']} | {item['coverage']:.0%} |"
+            f"| `{item['name']}` | {item['score']} | {item['osv']} | "
+            f"{item['osv_score'] if item['osv_score'] is not None else '-'} | "
+            f"{item['depsdev']} | {item['depsdev_score'] if item['depsdev_score'] is not None else '-'} | "
+            f"{item['scorecard']} | {item['scorecard_score'] if item['scorecard_score'] is not None else '-'} | "
+            f"{item['scorecard_risk'] if item['scorecard_risk'] is not None else '-'} | "
+            f"{item['coverage']:.0%} | {item['status']} |"
         )
     lines.extend([
         "",

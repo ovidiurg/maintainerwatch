@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
-from . import __version__, db
+from . import __version__, db, providers
 from .config import Config
 
 PRIORITY = [
@@ -30,7 +30,7 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _records(cfg: Config) -> list[dict]:
+def _records(cfg: Config, *, include_provider_context: bool = False) -> list[dict]:
     conn = db.connect(cfg.db_path)
     db.init_db(conn)
     rows = conn.execute(
@@ -53,7 +53,6 @@ def _records(cfg: Config) -> list[dict]:
         "SELECT system, name, signal_type, value FROM signals WHERE model_version=?",
         (cfg.model_version,),
     ).fetchall()
-    conn.close()
 
     signal_map: dict[tuple[str, str], dict[str, float]] = {}
     for r in signal_rows:
@@ -64,7 +63,12 @@ def _records(cfg: Config) -> list[dict]:
         rec = {k: r[k] for k in r.keys()}
         for sig_name, value in signal_map.get((r["system"], r["name"]), {}).items():
             rec[f"sig_{sig_name}"] = value
+        if include_provider_context:
+            rec["provider_context"] = providers.build_context(
+                conn, r["system"], r["name"]
+            )
         records.append(rec)
+    conn.close()
     return records
 
 
@@ -267,7 +271,7 @@ def export_dataset(cfg: Config, fmt: str = "parquet") -> tuple[Path, int]:
         path.write_text(json.dumps(document, indent=2), encoding="utf-8")
         return path, len(document["results"])
 
-    records = _records(cfg)
+    records = _records(cfg, include_provider_context=(fmt == "json"))
 
     if fmt == "parquet":
         import polars as pl
@@ -312,4 +316,6 @@ def export_dataset(cfg: Config, fmt: str = "parquet") -> tuple[Path, int]:
 
 
 def export_json(cfg: Config) -> str:
-    return json.dumps(_records(cfg), indent=2, default=str)
+    return json.dumps(
+        _records(cfg, include_provider_context=True), indent=2, default=str
+    )

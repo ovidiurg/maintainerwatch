@@ -30,8 +30,12 @@ def test_provider_context_confirms_advisory_and_findings(tmp_path):
     assert result is not None
     assert result["current_version"] == "1.0.0"
     assert result["osv"]["status"] == "affected"
+    assert result["osv"]["score"] == 1.0
     assert result["depsdev"]["status"] == "findings"
+    assert result["depsdev"]["score"] == 1.0
     assert result["scorecard"]["status"] == "available"
+    assert result["scorecard"]["score"] == 3.0
+    assert result["scorecard"]["risk_score"] == 0.5714
     assert result["consensus"]["advisory"] == "confirmed"
     assert result["consensus"]["providers_available"] == 3
     conn.close()
