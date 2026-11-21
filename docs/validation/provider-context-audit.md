@@ -15,12 +15,13 @@ Model: `0.5.3`
 | `gunicorn` | 60.6 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
 | `seaborn` | 60.6 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
 | `@cloudbase/wx-cloud-client-sdk` | 56.9 | none | 0.0 | none | 0.0 | unavailable | - | - | 67% | unconfirmed |
-| `png-js` | 52.7 | none | 0.0 | findings | 0.2 | unavailable | - | - | 67% | unconfirmed |
+| `p-traffic` | 56.5 | affected | 1.0 | findings | 1.0 | available | 2.2 | 0.6857 | 100% | confirmed |
+| `libbz2-rs-sys` | 55.2 | none | 0.0 | findings | 0.2 | unknown | - | - | 67% | unconfirmed |
 | `caniuse-api` | 50.0 | none | 0.0 | none | 0.0 | unknown | - | - | 67% | unconfirmed |
 
 ## Counts
 
-- confirmed: **10**
+- confirmed: **11**
 - conflict: **0**
 - unknown: **0**
 - unconfirmed: **3**
