@@ -402,10 +402,11 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   this as a stable production threshold.
 - External cross-check of the current high band (OSV plus deps.dev) confirms
   **7 of 12** high-band packages as malicious. The other five
-  (`@cloudbase/wx-cloud-client-sdk`, `png-js`, `jws`, `@railgun-community/wallet`,
-  `caniuse-api`) are high-download packages currently driven by
-  publisher/continuity evidence without an advisory; they need review and are
-  a precision warning, not malware labels.
+  (`@cloudbase/wx-cloud-client-sdk`, `png-js`, `jws`,
+  `@railgun-community/wallet`, `caniuse-api`) are high-download packages driven
+  by publisher/continuity evidence without an advisory; see
+  [docs/validation/high-band-review.md](docs/validation/high-band-review.md).
+  They need review and are a precision warning, not malware labels.
   A same-author release burst had incorrectly promoted `crates/num_threads` to
   high; the high-confidence gate now requires new-author evidence, so it is
   medium at 51.4 (evidence-only). The seven malicious npm packages do not have
