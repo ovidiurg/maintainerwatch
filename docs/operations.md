@@ -154,6 +154,18 @@ sqlite3 data/maintainerwatch.sqlite "VACUUM;"
 `VACUUM` needs free disk space roughly equal to the database size and should
 run while the API is stopped. Do not run it from cron on every ingest.
 
+## OSV archive backfill
+
+If a local npm/PyPI OSV archive is available, fill stored advisory affected
+ranges without thousands of per-advisory API calls:
+
+```bash
+.venv/bin/python scripts/backfill_osv_archive.py \
+  --npm-zip /path/npm-all.zip --pypi-zip /path/pypi-all.zip
+```
+
+Then rerun `mw score-all` so `osv_risk` sees the new ranges.
+
 ## GitLab forge backfill
 
 GitLab repository support uses the GitLab API, which rate-limits unauthenticated
