@@ -6,8 +6,8 @@ infrastructure needed to keep the public dataset and CI index current.
 
 **GitHub Sponsors:** <https://github.com/sponsors/ovidiurg>
 
-The GitHub Sponsors application has been submitted. The profile and Sponsor
-button become available after GitHub approves it.
+The GitHub Sponsors profile is live. The Sponsor button is configured through
+`.github/FUNDING.yml`.
 
 ## Suggested tiers
 

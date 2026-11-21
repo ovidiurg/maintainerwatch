@@ -18,6 +18,8 @@ publishes a versioned open dataset plus a CLI/report.
 
 **Website:** <https://ovidiurg.github.io/maintainerwatch/>
 
+**Sponsor:** <https://github.com/sponsors/ovidiurg>
+
 ## Support
 
 MaintainerWatch is independent and currently unfunded. If the project is useful
