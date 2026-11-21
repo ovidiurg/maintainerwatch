@@ -119,6 +119,7 @@ def test_package_detail_includes_risk_and_impact(tmp_path):
     assert body["impact_tier"] == "critical"
     assert body["impact_score"] > 0
     assert body["context"]["dependent_count"] == 1500
+    assert "provider_context" in body
 
 
 def test_top_includes_impact_fields(tmp_path):

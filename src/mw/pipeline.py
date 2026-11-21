@@ -15,7 +15,7 @@ from urllib.parse import quote
 
 import httpx
 
-from . import __version__, db, dynamic, snapshots
+from . import __version__, db, dynamic, providers, snapshots
 from .config import Config
 from .impact import impact_score, impact_tier
 from .export import export_dataset
@@ -1331,6 +1331,7 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     guarddog = db.get_guarddog_scan(conn, system, name)
     dynamic_row = db.get_dynamic_scan(conn, system, name)
     deps = db.get_dependencies(conn, system, name)
+    provider_context = providers.build_context(conn, system, name)
     conn.close()
 
     signal_map = {
@@ -1401,5 +1402,6 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "indirect_dependent_count": int(impact["indirect_dependent_count"] or 0) if impact else None,
             "dependencies": sorted({d["dep_name"] for d in deps}),
         },
+        "provider_context": provider_context,
         "signals": signal_map,
     }

@@ -49,6 +49,13 @@ worker.
 - **Not** an automated blocking system, malware verdict engine or target list.
   A high score is a review request; a low score is not proof of safety.
 
+## Provider context
+
+Package detail responses now include normalized OSV, deps.dev and Scorecard
+context plus a consensus status. The high-band audit is in
+[docs/validation/provider-context-audit.md](docs/validation/provider-context-audit.md);
+it is triage context and does not change scores.
+
 ## Maintainer history
 
 `mw history PACKAGE --system SYSTEM` and

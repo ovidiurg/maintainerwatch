@@ -23,6 +23,21 @@ mw serve --host 127.0.0.1 --port 8000
 | GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). If `signal` is omitted, `min_signal` matches any applicable current-model signal. |
 | GET | `/alert-rules` | Runs the alert rules from `config/default.yaml` without delivering them. |
 
+## Provider context
+
+Package detail responses include a normalized `provider_context` block:
+
+- `osv`: `none`, `not_affected`, `affected` or `unknown`, with current-version
+  advisories;
+- `depsdev`: findings/types/risks or `unavailable`;
+- `scorecard`: score/failed checks or `unknown`;
+- `ecosyste_ms`: reserved/not configured;
+- `consensus`: `confirmed`, `conflict`, `unknown` or `none`, plus provider
+  coverage and conflicts.
+
+This is triage context only. It does not change the score or band. Run
+`scripts/provider_context_audit.py` for the current high-band audit.
+
 ## Package history
 
 `/packages/{system}/{name:path}/history` returns a read-only timeline from
@@ -44,6 +59,7 @@ verdict.
 `repo_url` and `license`.
 
 `/packages/{system}/{name:path}` returns the score, `inputs_hash`, `computed_at`,
+`provider_context` (normalized OSV, deps.dev, Scorecard and consensus status),
 `evidence_coverage`, `risk_type`, `risk_note`, `next_step`, `impact_score`,
 `impact_tier`, the `context` block (which includes `dependent_count` when
 deps.dev enrichment ran, repository `repo_archived`/owner/stars/forks/open-issues
