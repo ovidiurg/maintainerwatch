@@ -109,6 +109,9 @@ def test_records_and_export_formats(tmp_path):
         path, count = export_dataset(cfg, fmt)
         assert path.exists()
         assert count >= 1
+        if fmt == "json":
+            records = json.loads(path.read_text(encoding="utf-8"))
+            assert "provider_context" in records[0]
 
 
 def test_export_unsupported_format(tmp_path):
