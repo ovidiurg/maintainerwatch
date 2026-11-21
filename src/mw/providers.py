@@ -1,0 +1,142 @@
+from __future__ import annotations
+
+import json
+import sqlite3
+from typing import Any
+
+from . import db
+from .osv_match import affected
+
+
+def _latest_version(conn: sqlite3.Connection, system: str, name: str) -> str | None:
+    row = conn.execute(
+        """SELECT version FROM versions
+           WHERE system=? AND name=? AND COALESCE(is_yanked, 0)=0
+           ORDER BY COALESCE(published_at, '') DESC, version DESC LIMIT 1""",
+        (system, name),
+    ).fetchone()
+    return row["version"] if row else None
+
+
+def _osv_context(conn: sqlite3.Connection, system: str, name: str, version: str | None) -> dict[str, Any]:
+    rows = db.get_osv(conn, system, name)
+    if not rows:
+        return {"status": "none", "advisories": [], "reason": "no OSV records"}
+    if not version:
+        return {"status": "unknown", "advisories": [], "reason": "no current version"}
+
+    advisories = []
+    has_unknown = False
+    for row in rows:
+        if row["affected_json"] is None:
+            has_unknown = True
+            matched = False
+        else:
+            matched = affected(row["affected_json"], system, name, version)
+        if matched:
+            advisories.append({
+                "id": row["vuln_id"],
+                "severity": row["severity"],
+                "published_at": row["published_at"],
+                "malicious": row["vuln_id"].startswith("MAL-"),
+            })
+    if advisories:
+        return {"status": "affected", "current_version": version, "advisories": advisories}
+    if has_unknown:
+        return {"status": "unknown", "current_version": version, "advisories": [], "reason": "affected ranges missing"}
+    return {"status": "not_affected", "current_version": version, "advisories": []}
+
+
+def _depsdev_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str, Any]:
+    row = db.get_findings(conn, system, name)
+    if row is None:
+        return {"status": "unavailable", "findings": [], "reason": "no deps.dev findings record"}
+    try:
+        doc = json.loads(row["findings_json"] or "{}")
+    except (TypeError, ValueError):
+        return {"status": "unknown", "findings": [], "reason": "invalid findings payload"}
+    findings = []
+    for key in ("packageFindings",):
+        findings.extend(doc.get(key) or [])
+    for key in ("requestedVersion", "defaultVersion"):
+        findings.extend((doc.get(key) or {}).get("findings") or [])
+    findings = [item for item in findings if isinstance(item, dict)]
+    types = sorted({str(item.get("type")) for item in findings if item.get("type")})
+    risks = sorted({str(item.get("risk")) for item in findings if item.get("risk")})
+    return {
+        "status": "findings" if findings else "none",
+        "version": row["version"],
+        "finding_types": types,
+        "risks": risks,
+        "findings": findings[:20],
+    }
+
+
+def _scorecard_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str, Any]:
+    repo = db.get_repo_stats(conn, system, name)
+    if repo is None:
+        return {"status": "unavailable", "reason": "no repository stats"}
+    score = repo["scorecard_score"]
+    if score is None:
+        return {"status": "unknown", "reason": "no Scorecard score"}
+    try:
+        checks = json.loads(repo["scorecard_checks_json"] or "[]")
+    except (TypeError, ValueError):
+        checks = []
+    failed = [
+        item.get("name") for item in checks
+        if isinstance(item, dict) and int(item.get("score") or 0) == 0
+    ]
+    return {
+        "status": "available",
+        "score": round(float(score), 2),
+        "failed_checks": failed[:20],
+    }
+
+
+def build_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str, Any] | None:
+    package = db.get_package(conn, system, name)
+    if package is None:
+        return None
+    version = _latest_version(conn, system, name)
+    osv = _osv_context(conn, system, name, version)
+    depsdev = _depsdev_context(conn, system, name)
+    scorecard = _scorecard_context(conn, system, name)
+
+    malicious = "MALICIOUS" in depsdev.get("finding_types", [])
+    osv_affected = osv["status"] == "affected"
+    if osv_affected or malicious:
+        advisory = "confirmed"
+    elif osv["status"] == "not_affected" and depsdev["status"] == "findings":
+        advisory = "conflict"
+    elif osv["status"] in {"unknown"} or depsdev["status"] == "unknown":
+        advisory = "unknown"
+    else:
+        advisory = "none"
+
+    available = sum(
+        1 for item in (osv, depsdev, scorecard)
+        if item["status"] not in {"unavailable", "unknown"}
+    )
+    conflicts = []
+    if osv_affected and depsdev["status"] == "none":
+        conflicts.append("OSV affected; deps.dev reports no findings")
+    if not osv_affected and malicious:
+        conflicts.append("deps.dev malicious; OSV does not confirm current version")
+
+    return {
+        "system": system,
+        "name": name,
+        "current_version": version,
+        "osv": osv,
+        "depsdev": depsdev,
+        "scorecard": scorecard,
+        "ecosyste_ms": {"status": "not_configured"},
+        "consensus": {
+            "advisory": advisory,
+            "providers_available": available,
+            "providers_expected": 3,
+            "coverage": round(available / 3, 3),
+            "conflicts": conflicts,
+        },
+    }
