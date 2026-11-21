@@ -7,7 +7,7 @@ from collections import defaultdict, deque
 from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 
-from . import __version__, db, pipeline
+from . import __version__, db, history, pipeline
 from .impact import impact_score, impact_tier
 from .config import Config, load_config
 
@@ -217,6 +217,21 @@ def create_app(cfg: Config | None = None) -> FastAPI:
             str(next_offset) if next_offset < total else ""
         )
         return items
+
+    @app.get(
+        "/packages/{system}/{name:path}/history",
+        tags=["packages"],
+        summary="Publisher and maintainer history",
+    )
+    def package_history(system: str, name: str) -> dict:
+        conn = open_db()
+        try:
+            result = history.build_history(conn, system, name)
+        finally:
+            conn.close()
+        if result is None:
+            raise HTTPException(status_code=404, detail="package not found")
+        return result
 
     @app.get(
         "/packages/{system}/{name:path}",

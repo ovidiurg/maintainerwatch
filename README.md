@@ -49,6 +49,13 @@ worker.
 - **Not** an automated blocking system, malware verdict engine or target list.
   A high score is a review request; a low score is not proof of safety.
 
+## Maintainer history
+
+`mw history PACKAGE --system SYSTEM` and
+`/packages/{system}/{name}/history` expose a read-only timeline of publisher
+changes, maintainer snapshots and recent versions. This is context for
+reviewing handovers, not a verdict; see `docs/api.md`.
+
 ## Scope
 
 - Ecosystems: **npm**, **PyPI**, **crates.io** and **Maven Central** (top or

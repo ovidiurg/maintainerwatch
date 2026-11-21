@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 import yaml
 
-from . import calibration, db, pipeline, scan_diff, validation
+from . import calibration, db, history, pipeline, scan_diff, validation
 from .config import load_config
 from .export import export_dataset
 from .report import build_report
@@ -248,6 +248,23 @@ def calibrate(
     }, indent=2))
     if fail_on_regression and not result["passed"]:
         raise typer.Exit(code=1)
+
+
+@app.command("history")
+def history_cmd(
+    name: str = typer.Argument(..., help="Package name."),
+    system: str = typer.Option("npm", help="npm, pypi, crates, maven or github."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Print publisher and maintainer history for one package."""
+    cfg = load_config(config)
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    result = history.build_history(conn, system, name)
+    conn.close()
+    if result is None:
+        raise typer.Exit(code=1)
+    typer.echo(json.dumps(result, indent=2, ensure_ascii=False))
 
 
 @app.command("scan-diff")
