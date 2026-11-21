@@ -17,10 +17,24 @@ mw serve --host 127.0.0.1 --port 8000
 | GET | `/systems` | Package counts per ecosystem. |
 | GET | `/packages` | Paginated scored packages (`system`, `band`, `min_score`, `min_dependents`, `limit`, `offset`). |
 | GET | `/packages/{system}/{name:path}` | Score, signal evidence, context and dependencies for one package. Scoped npm names may contain `/`. |
+| GET | `/packages/{system}/{name:path}/history` | Publisher changes, maintainer snapshots, current maintainers and recent versions for one package. |
 | GET | `/top` | First page of the highest-risk packages (`system`, `limit`, `offset`). |
 | GET | `/impact` | Impact-ranked packages (`system`, `min_dependents`, `limit`, `offset`). |
 | GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). If `signal` is omitted, `min_signal` matches any applicable current-model signal. |
 | GET | `/alert-rules` | Runs the alert rules from `config/default.yaml` without delivering them. |
+
+## Package history
+
+`/packages/{system}/{name:path}/history` returns a read-only timeline from
+stored versions, publisher fields and maintainer snapshots:
+
+```bash
+curl 'http://127.0.0.1:8000/packages/npm/@atorresg/weather-mcp/history'
+```
+
+It includes `summary`, `publisher_changes`, `snapshots`, `maintainers` and
+`recent_versions`. This is context for reviewing a handover, not a risk
+verdict.
 
 ## Response shapes
 
