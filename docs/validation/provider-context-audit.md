@@ -2,8 +2,8 @@
 
 Model: `0.5.3`
 
-| Package | Model score | OSV | OSV risk | deps.dev | deps.dev risk | Scorecard | Scorecard risk | Coverage | Status |
-|---|---:|---|---:|---|---:|---:|---:|---:|---|
+| Package | Model score | OSV | OSV risk | deps.dev | deps.dev risk | Scorecard | Scorecard score | Scorecard risk | Coverage | Status |
+|---|---:|---|---:|---|---:|---|---:|---:|---:|---|
 | `b5ffer-xor` | 65.2 | affected | 1.0 | unavailable | - | available | 2.2 | 0.6857 | 67% | confirmed |
 | `47cliens_server` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
 | `b4lesised` | 63.8 | affected | 1.0 | unavailable | - | unavailable | - | - | 33% | confirmed |
