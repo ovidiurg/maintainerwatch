@@ -1,18 +1,25 @@
 # Dataset releases
 
-JSON dataset artifacts are published as GitHub Release assets, not committed to
-git:
+Dataset artifacts are published as GitHub Release assets, not committed to git.
 
-- `dataset-20261122`: 16,526 scored packages, model `0.5.3`, with normalized
-  `provider_context` (OSV, deps.dev, Scorecard and consensus);
-- checksum: `maintainerwatch-20261122.json.sha256`.
+Current snapshot:
 
-Generate and publish a later snapshot with:
+- `snapshot-20261122`
+- 18,652 scored packages
+- model `0.5.3`
+- JSON with normalized `provider_context`
+- Parquet, CSV, SPDX, CycloneDX, OSV, HTML report
+- compact CI index and checksums
+
+Generate a later snapshot with:
 
 ```bash
 .venv/bin/mw export --format json
-STAMP=20261122 bash scripts/publish_dataset.sh
+.venv/bin/mw export --format parquet
+.venv/bin/mw report --out data/report.html
+make ci-index
 ```
 
-The JSON is large and may contain public maintainer/package metadata; keep raw
-exports out of git and review the dual-use/privacy guidance before publishing.
+Then publish the snapshot assets manually or adapt `scripts/publish_dataset.sh`.
+Raw exports and databases stay out of git; review the dual-use/privacy guidance
+before publishing.
