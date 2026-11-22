@@ -20,6 +20,7 @@ def main() -> None:
     parser.add_argument("--bands", default="high,medium")
     parser.add_argument("--providers", default="depsdev")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--max-downloads", type=int, default=None)
     args = parser.parse_args()
     bands = [item.strip() for item in args.bands.split(",") if item.strip()]
     providers = {item.strip() for item in args.providers.split(",") if item.strip()}
@@ -40,11 +41,12 @@ def main() -> None:
                   ON r.system=s.system AND r.name=s.name
                 WHERE s.model_version=? AND s.band IN ({placeholders})
                   AND p.repo_url IS NOT NULL AND p.repo_url != ''
+                  AND (? IS NULL OR p.downloads_weekly < ?)
                   AND (r.name IS NULL OR r.scorecard_checks_json IS NULL)
                 ORDER BY CASE s.band WHEN 'high' THEN 0 ELSE 1 END,
                          p.downloads_weekly DESC, p.name
                 LIMIT ?""",
-            [cfg.model_version, *bands, args.limit or -1],
+            [cfg.model_version, *bands, args.max_downloads, args.max_downloads, args.limit or -1],
         ).fetchall()
     else:
         rows = conn.execute(
@@ -61,11 +63,12 @@ def main() -> None:
                 LEFT JOIN package_impact i
                   ON i.system=s.system AND i.name=s.name
                 WHERE s.model_version=? AND s.band IN ({placeholders})
+                  AND (? IS NULL OR p.downloads_weekly < ?)
                   AND (f.name IS NULL OR i.name IS NULL)
                 ORDER BY CASE s.band WHEN 'high' THEN 0 ELSE 1 END,
                          p.downloads_weekly DESC, p.name
                 LIMIT ?""",
-            [cfg.model_version, *bands, args.limit or -1],
+            [cfg.model_version, *bands, args.max_downloads, args.max_downloads, args.limit or -1],
         ).fetchall()
     count = 0
     with make_client(cfg) as client:

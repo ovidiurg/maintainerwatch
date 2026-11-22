@@ -190,6 +190,8 @@ Backfill repository/Scorecard data for those cohorts:
 
 ```bash
 .venv/bin/python scripts/backfill_provider_cohorts.py --providers github --limit 500
+# Tail only (<1,000 downloads/week):
+.venv/bin/python scripts/backfill_provider_cohorts.py --providers github --bands low --max-downloads 999 --limit 500
 ```
 
 Some packages have no supported repository or no provider record; those remain
