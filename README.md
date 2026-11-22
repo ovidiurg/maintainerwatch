@@ -395,7 +395,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 1,722,431 versions, 243,608 commits, 31,020 maintainers, 1,375 repositories,
   10,545 OSV records, 57,901 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 13 high, 3,434 medium, 13,079 low. OIDC/bot publishers are ignored.
+- Risk bands: 13 high, 3,495 medium, 13,018 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
