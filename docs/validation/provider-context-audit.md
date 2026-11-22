@@ -16,13 +16,15 @@ Model: `0.5.3`
 | `seaborn` | 60.6 | affected | 1.0 | findings | 1.0 | unavailable | - | - | 67% | confirmed |
 | `@cloudbase/wx-cloud-client-sdk` | 56.9 | none | 0.0 | none | 0.0 | unavailable | - | - | 67% | unconfirmed |
 | `p-traffic` | 56.5 | affected | 1.0 | findings | 1.0 | available | 2.2 | 0.6857 | 100% | confirmed |
-| `caniuse-api` | 50.0 | none | 0.0 | none | 0.0 | unknown | - | - | 67% | unconfirmed |
+| `pgpass` | 52.7 | none | 0.0 | none | 0.0 | available | 2.5 | 0.6429 | 100% | unconfirmed |
+| `caniuse-api` | 50.3 | none | 0.0 | none | 0.0 | unknown | - | - | 67% | unconfirmed |
+| `@apideck/better-ajv-errors` | 50.2 | none | 0.0 | none | 0.0 | available | 2.8 | 0.6 | 100% | unconfirmed |
 
 ## Counts
 
 - confirmed: **11**
 - conflict: **0**
 - unknown: **0**
-- unconfirmed: **2**
+- unconfirmed: **4**
 
 This is a read-only triage report. It does not change scores or bands.

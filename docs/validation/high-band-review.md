@@ -1,6 +1,6 @@
 # High-band review — 21 Nov 2026
 
-Model: `0.5.3`. This is a manual review of the **2 high-band packages with
+Model: `0.5.3`. This is a manual review of the **4 high-band packages with
 substantial downloads that are not confirmed by an advisory**. The other 11
 high-band packages are OSV-confirmed malicious packages.
 
@@ -9,12 +9,14 @@ The purpose is calibration review, not an accusation against the maintainers.
 | Package | Score | Downloads/wk | OSV | Main high-band driver | Review status |
 |---|---:|---:|---|---|---|
 | `@cloudbase/wx-cloud-client-sdk` | 56.9 | 35,669 | none | repeated publisher changes; no repository URL | unverified |
-| `caniuse-api` | 50.0 | 20,465,944 | none | publisher/email change, long release dormancy, signing gap | likely legitimate transfer; unverified |
+| `pgpass` | 52.7 | 96,781,575 | none | publisher change; Scorecard available | unverified |
+| `caniuse-api` | 50.3 | 20,465,944 | none | publisher/email change, long release dormancy, signing gap | likely legitimate transfer; unverified |
+| `@apideck/better-ajv-errors` | 50.2 | 11,755,284 | none | publisher change; Scorecard available | unverified |
 
 ## What the evidence says
 
-- None of the two has a current-version advisory.
-- Both enter the high band through publisher/continuity-style evidence,
+- None of the four has a current-version advisory.
+- All four enter the high band through publisher/continuity-style evidence,
   with `signing_gap` as corroboration.
 - `@cloudbase` has no repository URL, so repository/commit context is absent.
 - `caniuse-api` shows a long-lived package with a recent publisher change;
@@ -25,7 +27,7 @@ The purpose is calibration review, not an accusation against the maintainers.
 
 ## Decision
 
-No model change was made. These two must remain in a review queue, not be
+No model change was made. These four must remain in a review queue, not be
 used as malware labels. A future high-band precision change should require,
 for high-download packages, an advisory or an independent behavioural/content
 signal in addition to publisher change. That change must be evaluated on the
