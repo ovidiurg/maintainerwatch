@@ -277,7 +277,7 @@ def export_dataset(cfg: Config, fmt: str = "parquet") -> tuple[Path, int]:
         import polars as pl
 
         path = cfg.data_dir / f"maintainerwatch-{stamp}.parquet"
-        pl.DataFrame(records).write_parquet(path)
+        pl.DataFrame(records, infer_schema_length=None).write_parquet(path)
         return path, len(records)
 
     if fmt == "csv":
