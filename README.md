@@ -389,7 +389,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 
 ## Results (MVP, 15 November 2026 · app 0.4.23 · model 0.5.3)
 
-- 16,521 packages scored: 7,016 npm, 6,550 PyPI, 2,350 crates.io, 501 Maven
+- 16,526 packages scored: 7,016 npm, 6,550 PyPI, 2,350 crates.io, 501 Maven
   and 65 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
 - 1,722,431 versions, 243,608 commits, 31,020 maintainers, 1,375 repositories,
