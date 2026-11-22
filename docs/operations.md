@@ -178,6 +178,17 @@ python scripts/backfill_gitlab.py --commits
 The script only selects `gitlab.com` URLs; self-hosted GitLab URLs need a
 separate API host and are not covered by the public API path.
 
+## Dataset release
+
+Publish the JSON dataset as a GitHub Release asset:
+
+```bash
+.venv/bin/mw export --format json
+STAMP=20261122 bash scripts/publish_dataset.sh
+```
+
+See `docs/dataset-releases.md`. Do not commit the raw JSON or database.
+
 ## Provider cohort backfill
 
 Backfill deps.dev findings/impact for the current high and medium cohorts:
