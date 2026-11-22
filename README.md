@@ -387,15 +387,15 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 15 November 2026 · app 0.4.23 · model 0.5.3)
+## Results (MVP, 22 November 2026 · app 0.4.23 · model 0.5.3)
 
-- 16,526 packages scored: 7,016 npm, 6,550 PyPI, 2,350 crates.io, 501 Maven
-  and 65 GitHub repositories. The expansion mixes high-usage packages,
+- 18,652 packages scored: 8,648 npm, 7,049 PyPI, 2,350 crates.io, 501 Maven
+  and 104 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 1,722,431 versions, 243,608 commits, 31,020 maintainers, 1,375 repositories,
-  10,545 OSV records, 57,901 runtime dependency edges (PyPI extras excluded).
+- 2,193,648 versions, 317,955 commits, 36,855 maintainers, 1,375 repositories,
+  10,948 OSV records, 65,688 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 13 high, 3,495 medium, 13,018 low. OIDC/bot publishers are ignored.
+- Risk bands: 15 high, 3,893 medium, 14,744 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -418,8 +418,9 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   benign package above 40; the 19-incident sample is still too small to treat
   this as a stable production threshold.
 - External cross-check of the current high band (OSV plus deps.dev) confirms
-  **11 of 13** high-band packages as malicious. The other two
-  (`@cloudbase/wx-cloud-client-sdk`, `caniuse-api`) are
+  **11 of 15** high-band packages as malicious. The other four
+  (`@cloudbase/wx-cloud-client-sdk`, `pgpass`, `caniuse-api`,
+  `@apideck/better-ajv-errors`) are
   high-download packages driven
   by publisher/continuity evidence without an advisory; see
   [docs/validation/high-band-review.md](docs/validation/high-band-review.md).
