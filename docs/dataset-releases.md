@@ -5,7 +5,7 @@ Dataset artifacts are published as GitHub Release assets, not committed to git.
 Current snapshot (see [changelog](changelog.md)):
 
 - `snapshot-20261123`
-- 18,665 scored packages
+- 20,593 scored packages
 - model `0.5.3`
 - JSON with normalized `provider_context`
 - Parquet, CSV, SPDX, CycloneDX, OSV, HTML report
