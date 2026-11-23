@@ -1,0 +1,8 @@
+# Copy to .maintainerwatch/waivers.yml and keep expiries short.
+waivers:
+  - system: npm
+    name: example-package
+    reason: "Maintainer handover reviewed; migration tracked in SEC-123"
+    expires_at: 2026-12-31
+    owner: security-team
+    ticket: SEC-123

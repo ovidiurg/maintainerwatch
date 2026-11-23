@@ -245,7 +245,9 @@ mw serve [--host 127.0.0.1] [--port 8000] [--config PATH]
 
 `mw alerts --rules` uses the `alerts.rules` block in `config/default.yaml`.
 `--dry-run` matches rules without delivering; `--out` writes JSON. See
-[docs/alerts.md](docs/alerts.md) for Slack/email examples.
+[docs/alerts.md](docs/alerts.md) for Slack/email examples. CI exceptions are
+documented in [docs/waivers.md](docs/waivers.md); weekly comparisons use
+[docs/weekly-digest.md](docs/weekly-digest.md).
 See [docs/api.md](docs/api.md) for endpoints, pagination, impact ranking,
 `MAINTAINERWATCH_API_KEY` and rate limiting. `GET /impact` orders packages by
 deps.dev dependents, downloads and transitive fan-in; run `mw enrich-impact`

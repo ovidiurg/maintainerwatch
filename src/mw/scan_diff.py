@@ -5,8 +5,11 @@ import re
 import subprocess
 import tomllib
 from dataclasses import dataclass
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
+
+import yaml
 
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
@@ -196,13 +199,102 @@ def findings_for(changes: Iterable[PackageChange], index: dict) -> list[dict]:
     return sorted(out, key=lambda item: (-rank.get(item.get("band"), 0), -float(item.get("score") or 0), item["name"]))
 
 
+def load_waivers(path: str | Path) -> list[dict]:
+    source = Path(path)
+    if not source.exists():
+        return []
+    try:
+        doc = yaml.safe_load(source.read_text(encoding="utf-8")) or []
+    except (OSError, yaml.YAMLError) as exc:
+        raise ValueError(f"invalid waiver file: {source}") from exc
+    if isinstance(doc, dict):
+        doc = doc.get("waivers") or []
+    if not isinstance(doc, list):
+        raise ValueError(f"waivers must be a list: {source}")
+    out = []
+    for item in doc:
+        if not isinstance(item, dict):
+            raise ValueError(f"invalid waiver entry: {item!r}")
+        if not item.get("system") or not item.get("name"):
+            raise ValueError("waiver requires system and name")
+        if not item.get("reason"):
+            raise ValueError("waiver requires a reason")
+        if not item.get("expires_at"):
+            raise ValueError("waiver requires expires_at")
+        out.append(item)
+    return out
+
+
+def _waiver_date(value: str) -> date:
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+    except ValueError:
+        return date.fromisoformat(str(value))
+
+
+def _waiver_matches(item: dict, waiver: dict) -> bool:
+    system = str(item.get("system", "")).lower()
+    name = str(item.get("name", "")).lower()
+    if system != str(waiver.get("system", "")).lower():
+        return False
+    if system == "pypi":
+        if canonicalize_name(name) != canonicalize_name(str(waiver.get("name", ""))):
+            return False
+    elif name != str(waiver.get("name", "")).lower():
+        return False
+    if waiver.get("band") and item.get("band") != waiver["band"]:
+        return False
+    if waiver.get("signal"):
+        signals = {
+            str(signal.get("name"))
+            for signal in (item.get("top_signals") or [])
+            if isinstance(signal, dict)
+        }
+        if waiver["signal"] not in signals:
+            return False
+    return True
+
+
+def apply_waivers(
+    findings: list[dict], waivers: list[dict], today: date | None = None
+) -> list[dict]:
+    today = today or datetime.now(timezone.utc).date()
+    out = []
+    for finding in findings:
+        item = dict(finding)
+        for waiver in waivers:
+            try:
+                expires = _waiver_date(waiver["expires_at"])
+            except (TypeError, ValueError):
+                continue
+            if expires < today or not _waiver_matches(item, waiver):
+                continue
+            item["waived"] = True
+            item["waiver"] = {
+                "reason": waiver.get("reason"),
+                "expires_at": expiry_text(waiver["expires_at"]),
+            }
+            break
+        out.append(item)
+    return out
+
+
+def expiry_text(value: str) -> str:
+    try:
+        return _waiver_date(value).isoformat()
+    except (TypeError, ValueError):
+        return str(value)
+
+
 def summary(findings: list[dict], changes: int) -> dict:
+    active = [item for item in findings if not item.get("waived")]
     bands: dict[str, int] = {}
-    for item in findings:
+    for item in active:
         bands[item.get("band", "unknown")] = bands.get(item.get("band", "unknown"), 0) + 1
     return {
         "changed_packages": changes,
-        "matched_packages": len(findings),
+        "matched_packages": len(active),
+        "waived": len(findings) - len(active),
         "bands": bands,
         "findings": findings,
     }
@@ -218,14 +310,16 @@ def sarif(findings: list[dict], model_version: str | None = None) -> dict:
     results = []
     for item in findings:
         band = item.get("band", "low")
+        waived = bool(item.get("waived"))
         message = (
             f"{item.get('system')}/{item.get('name')} version {item.get('version') or '?'}: "
             f"{item.get('risk_type') or 'risk indicator'} (score {item.get('score')}, "
-            f"band {band}, confidence {item.get('confidence') or 'unknown'})"
+            f"band {band}, confidence {item.get('confidence') or 'unknown'}"
+            f"{', waived until ' + str(item.get('waiver', {}).get('expires_at')) if waived else ''})"
         )
         results.append({
             "ruleId": f"maintainerwatch-{band}",
-            "level": level.get(band, "note"),
+            "level": "note" if waived else level.get(band, "note"),
             "message": {"text": message},
             "locations": [{
                 "physicalLocation": {
@@ -240,6 +334,9 @@ def sarif(findings: list[dict], model_version: str | None = None) -> dict:
                 "score": item.get("score"),
                 "band": band,
                 "confidence": item.get("confidence"),
+                "waived": waived,
+                "waiver_reason": item.get("waiver", {}).get("reason") if waived else None,
+                "waiver_expires_at": item.get("waiver", {}).get("expires_at") if waived else None,
             },
         })
     return {

@@ -106,3 +106,103 @@ def format_text(result: dict[str, Any]) -> str:
         f"model: {result.get('model_version')}  index: {result.get('generated_at')}",
         "static snapshot, not a live verdict or malware label",
     ])
+
+
+def _diff_item(pkg: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "system": pkg.get("system"),
+        "name": pkg.get("name"),
+        "score": pkg.get("score"),
+        "band": pkg.get("band"),
+        "confidence": pkg.get("confidence"),
+        "risk_type": pkg.get("risk_type"),
+    }
+
+
+def diff_indexes(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+    before = old.get("packages") or {}
+    after = new.get("packages") or {}
+    added = []
+    removed = []
+    changed = []
+    for key, pkg in after.items():
+        previous = before.get(key)
+        if previous is None:
+            if pkg.get("band") in {"high", "medium"}:
+                added.append(_diff_item(pkg))
+            continue
+        old_view = {
+            "score": previous.get("score"),
+            "band": previous.get("band"),
+            "confidence": previous.get("confidence"),
+            "coverage": previous.get("coverage"),
+            "risk_type": previous.get("risk_type"),
+            "top_signals": previous.get("top_signals"),
+        }
+        new_view = {
+            "score": pkg.get("score"),
+            "band": pkg.get("band"),
+            "confidence": pkg.get("confidence"),
+            "coverage": pkg.get("coverage"),
+            "risk_type": pkg.get("risk_type"),
+            "top_signals": pkg.get("top_signals"),
+        }
+        if old_view != new_view:
+            old_band = previous.get("band")
+            new_band = pkg.get("band")
+            old_score = float(previous.get("score") or 0)
+            new_score = float(pkg.get("score") or 0)
+            if (
+                old_band in {"high", "medium"}
+                or new_band in {"high", "medium"}
+                or abs(new_score - old_score) >= 5
+            ):
+                changed.append({"old": _diff_item(previous), "new": _diff_item(pkg)})
+    for key, pkg in before.items():
+        if key not in after and pkg.get("band") in {"high", "medium"}:
+            removed.append(_diff_item(pkg))
+    return {
+        "old_generated_at": old.get("generated_at"),
+        "new_generated_at": new.get("generated_at"),
+        "old_model_version": old.get("model_version"),
+        "new_model_version": new.get("model_version"),
+        "added_high_medium": sorted(added, key=lambda item: (-float(item.get("score") or 0), str(item.get("name")))),
+        "resolved_high_medium": sorted(removed, key=lambda item: str(item.get("name"))),
+        "changed": sorted(changed, key=lambda item: str(item["new"].get("name"))),
+    }
+
+
+def format_diff_markdown(diff: dict[str, Any]) -> str:
+    lines = [
+        "# MaintainerWatch index diff",
+        "",
+        f"Old: {diff.get('old_generated_at') or 'unknown'} · {diff.get('old_model_version') or '?'}",
+        f"New: {diff.get('new_generated_at') or 'unknown'} · {diff.get('new_model_version') or '?'}",
+        "",
+        f"New high/medium: {len(diff.get('added_high_medium') or [])}",
+        f"Resolved high/medium: {len(diff.get('resolved_high_medium') or [])}",
+        f"Changed packages: {len(diff.get('changed') or [])}",
+    ]
+    for title, key in (
+        ("New high/medium", "added_high_medium"),
+        ("Resolved high/medium", "resolved_high_medium"),
+    ):
+        items = diff.get(key) or []
+        if items:
+            lines.extend(["", f"## {title}"])
+            for item in items[:25]:
+                lines.append(
+                    f"- {item.get('system')}/{item.get('name')}: "
+                    f"{item.get('band')} ({item.get('score')})"
+                )
+    changed = diff.get("changed") or []
+    if changed:
+        lines.extend(["", "## Changed"])
+        for item in changed[:25]:
+            old = item["old"]
+            new = item["new"]
+            lines.append(
+                f"- {new.get('system')}/{new.get('name')}: "
+                f"{old.get('band')} {old.get('score')} -> {new.get('band')} {new.get('score')}"
+            )
+    return "\n".join(lines) + "\n"

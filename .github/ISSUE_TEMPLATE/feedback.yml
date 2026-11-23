@@ -1,13 +1,15 @@
 name: Onboarding or false-positive feedback
 description: Tell us what happened in your first 10 minutes or report a noisy result
 title: "[feedback] "
+labels: ["feedback", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for trying MaintainerWatch. This form is opt-in feedback; the
         project does not add default telemetry. Do not include tokens, private
-        package names, or personal contact data.
+        package names, or personal contact data. The triage flow is documented
+        in `docs/feedback.md`.
   - type: dropdown
     id: path
     attributes:

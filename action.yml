@@ -22,6 +22,9 @@ inputs:
   fail-on:
     description: none, medium or high
     default: none
+  waivers-file:
+    description: Optional YAML waiver file with expiry and reason
+    default: .maintainerwatch/waivers.yml
   comment:
     description: Post one sticky PR summary comment (default false)
     default: "false"
@@ -57,13 +60,18 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        mw scan-diff \
-          --base "${{ inputs.base-ref }}" \
-          --head HEAD \
-          --index "$RUNNER_TEMP/maintainerwatch-index.json" \
-          --format sarif \
-          --out "$RUNNER_TEMP/maintainerwatch.sarif" \
+        args=(
+          --base "${{ inputs.base-ref }}"
+          --head HEAD
+          --index "$RUNNER_TEMP/maintainerwatch-index.json"
+          --format sarif
+          --out "$RUNNER_TEMP/maintainerwatch.sarif"
           --fail-on "${{ inputs.fail-on }}"
+        )
+        if [ -n "${{ inputs.waivers-file }}" ] && [ -f "${{ inputs.waivers-file }}" ]; then
+          args+=(--waivers "${{ inputs.waivers-file }}")
+        fi
+        mw scan-diff "${args[@]}"
     - name: Upload SARIF
       if: ${{ inputs.upload-sarif == 'true' }}
       uses: github/codeql-action/upload-sarif@v3
@@ -78,10 +86,14 @@ runs:
           const marker = '<!-- maintainerwatch:pr-summary -->';
           const doc = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/maintainerwatch.sarif`, 'utf8'));
           const results = (doc.runs && doc.runs[0] && doc.runs[0].results) || [];
-          const relevant = results.filter(r => ['error', 'warning'].includes(r.level));
-          if (!relevant.length) return;
+          const relevant = results.filter(r => ['error', 'warning'].includes(r.level) && !(r.properties && r.properties.waived));
+          const waived = results.filter(r => r.properties && r.properties.waived === true);
+          if (!relevant.length && !waived.length) return;
           const lines = relevant.slice(0, 20).map(r => `- **${r.properties.confidence || 'unknown'}** ${r.message.text}`);
-          const body = `${marker}\n### MaintainerWatch\n\n${relevant.length} risky changed package(s):\n\n${lines.join('\n')}`;
+          const waivedLine = waived.length
+            ? `\n\n${waived.length} finding(s) waived by \`.maintainerwatch/waivers.yml\`.`
+            : '';
+          const body = `${marker}\n### MaintainerWatch\n\n${relevant.length} risky changed package(s):\n\n${lines.join('\n')}${waivedLine}`;
           const comments = await github.paginate(github.rest.issues.listComments, {
             owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
           });
