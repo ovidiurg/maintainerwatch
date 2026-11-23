@@ -123,6 +123,7 @@ def build_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str,
     osv = _osv_context(conn, system, name, version)
     depsdev = _depsdev_context(conn, system, name)
     scorecard = _scorecard_context(conn, system, name)
+    scorecard["trend"] = db.scorecard_trend(conn, system, name)
 
     malicious = "MALICIOUS" in depsdev.get("finding_types", [])
     osv_affected = osv["status"] == "affected"

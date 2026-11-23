@@ -60,8 +60,10 @@ it is triage context and does not change scores.
 
 `mw history PACKAGE --system SYSTEM` and
 `/packages/{system}/{name}/history` expose a read-only timeline of publisher
-changes, maintainer snapshots and recent versions. This is context for
-reviewing handovers, not a verdict; see `docs/api.md`.
+changes, maintainer snapshots and recent versions.
+
+`mw scan` also reports `signal_context`: DTM/ETM signal robustness, typosquat
+benignity rules and maintainer exposure.
 
 ## Scope
 
