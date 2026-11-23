@@ -122,3 +122,29 @@ def test_export_unsupported_format(tmp_path):
         assert "unsupported" in str(exc)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_parquet_handles_schema_after_inference_window(tmp_path):
+    cfg = load_config()
+    cfg.db_path = tmp_path / "parquet.sqlite"
+    cfg.data_dir = tmp_path
+    conn = db.connect(cfg.db_path)
+    db.init_db(conn)
+    for index in range(150):
+        license_value = None if index < 120 else "Apache Software License"
+        db.upsert_packages(conn, [
+            Package(system="npm", name=f"pkg-{index}", license=license_value)
+        ])
+        db.record_score(
+            conn, "npm", f"pkg-{index}", 10.0 + index, "low",
+            cfg.model_version, f"hash-{index}", "2026-01-01",
+        )
+    conn.commit()
+    conn.close()
+
+    path, count = export_dataset(cfg, "parquet")
+    assert count == 150
+    import polars as pl
+    frame = pl.read_parquet(path)
+    assert frame.height == 150
+    assert "Apache Software License" in frame["license"].to_list()

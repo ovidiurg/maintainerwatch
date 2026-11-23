@@ -41,6 +41,20 @@ def test_provider_context_confirms_advisory_and_findings(tmp_path):
     conn.close()
 
 
+def test_bulk_context_matches_single(tmp_path):
+    conn = db.connect(tmp_path / "bulk.sqlite")
+    db.init_db(conn)
+    db.upsert_packages(conn, [Package(system="npm", name="pkg")])
+    db.upsert_versions(conn, [
+        Version(system="npm", name="pkg", version="1.0.0", published_at="2026-01-01"),
+    ])
+    conn.commit()
+    single = providers.build_context(conn, "npm", "pkg")
+    bulk = providers.bulk_context(conn, [("npm", "pkg")])[("npm", "pkg")]
+    assert single == bulk
+    conn.close()
+
+
 def test_provider_context_without_data_is_none(tmp_path):
     conn = db.connect(tmp_path / "providers-empty.sqlite")
     db.init_db(conn)

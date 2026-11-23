@@ -18,8 +18,15 @@ def _latest_version(conn: sqlite3.Connection, system: str, name: str) -> str | N
     return row["version"] if row else None
 
 
-def _osv_context(conn: sqlite3.Connection, system: str, name: str, version: str | None) -> dict[str, Any]:
-    rows = db.get_osv(conn, system, name)
+def _osv_context(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    version: str | None,
+    rows: list[sqlite3.Row] | None = None,
+) -> dict[str, Any]:
+    if rows is None:
+        rows = db.get_osv(conn, system, name)
     if not rows:
         return {"status": "none", "score": 0.0, "advisories": [], "reason": "no OSV records"}
     if not version:
@@ -53,8 +60,14 @@ def _osv_context(conn: sqlite3.Connection, system: str, name: str, version: str 
     return {"status": "not_affected", "score": 0.0, "current_version": version, "advisories": []}
 
 
-def _depsdev_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str, Any]:
-    row = db.get_findings(conn, system, name)
+def _depsdev_context(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    row: sqlite3.Row | None = None,
+) -> dict[str, Any]:
+    if row is None:
+        row = db.get_findings(conn, system, name)
     if row is None:
         return {"status": "unavailable", "score": None, "findings": [], "reason": "no deps.dev findings record"}
     try:
@@ -92,13 +105,22 @@ def _depsdev_context(conn: sqlite3.Connection, system: str, name: str) -> dict[s
     }
 
 
-def _scorecard_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str, Any]:
-    repo = db.get_repo_stats(conn, system, name)
+def _scorecard_context(
+    conn: sqlite3.Connection,
+    system: str,
+    name: str,
+    repo: sqlite3.Row | None = None,
+    trend: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if repo is None:
-        return {"status": "unavailable", "score": None, "reason": "no repository stats"}
+        repo = db.get_repo_stats(conn, system, name)
+    if trend is None:
+        trend = db.scorecard_trend(conn, system, name)
+    if repo is None:
+        return {"status": "unavailable", "score": None, "reason": "no repository stats", "trend": trend}
     score = repo["scorecard_score"]
     if score is None:
-        return {"status": "unknown", "score": None, "reason": "no Scorecard score"}
+        return {"status": "unknown", "score": None, "reason": "no Scorecard score", "trend": trend}
     try:
         checks = json.loads(repo["scorecard_checks_json"] or "[]")
     except (TypeError, ValueError):
@@ -107,11 +129,14 @@ def _scorecard_context(conn: sqlite3.Connection, system: str, name: str) -> dict
         item.get("name") for item in checks
         if isinstance(item, dict) and int(item.get("score") or 0) == 0
     ]
+    if trend is None:
+        trend = db.scorecard_trend(conn, system, name)
     return {
         "status": "available",
         "score": round(float(score), 2),
         "risk_score": round(max(0.0, min(1.0, (7.0 - float(score)) / 7.0)), 4),
         "failed_checks": failed[:20],
+        "trend": trend,
     }
 
 
@@ -125,6 +150,17 @@ def build_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str,
     scorecard = _scorecard_context(conn, system, name)
     scorecard["trend"] = db.scorecard_trend(conn, system, name)
 
+    return _assemble_context(system, name, version, osv, depsdev, scorecard)
+
+
+def _assemble_context(
+    system: str,
+    name: str,
+    version: str | None,
+    osv: dict[str, Any],
+    depsdev: dict[str, Any],
+    scorecard: dict[str, Any],
+) -> dict[str, Any]:
     malicious = "MALICIOUS" in depsdev.get("finding_types", [])
     osv_affected = osv["status"] == "affected"
     if osv_affected or malicious:
@@ -162,3 +198,60 @@ def build_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str,
             "conflicts": conflicts,
         },
     }
+
+
+def bulk_context(
+    conn: sqlite3.Connection,
+    keys: list[tuple[str, str]],
+    current_versions: dict[tuple[str, str], str | None] | None = None,
+) -> dict[tuple[str, str], dict[str, Any]]:
+    """Build provider contexts in bulk for export/report paths."""
+    unique = list(dict.fromkeys(keys))
+    if not unique:
+        return {}
+
+    osv_map: dict[tuple[str, str], list[sqlite3.Row]] = {}
+    for row in conn.execute("SELECT * FROM osv"):
+        osv_map.setdefault((row["system"], row["name"]), []).append(row)
+    findings_map: dict[tuple[str, str], sqlite3.Row] = {}
+    for row in conn.execute("SELECT * FROM package_findings"):
+        findings_map[(row["system"], row["name"])] = row
+    repo_map: dict[tuple[str, str], sqlite3.Row] = {}
+    for row in conn.execute("SELECT * FROM repo_stats"):
+        repo_map[(row["system"], row["name"])] = row
+    history_map: dict[tuple[str, str], list[sqlite3.Row]] = {}
+    for row in conn.execute(
+        "SELECT * FROM scorecard_history WHERE score IS NOT NULL ORDER BY observed_at"
+    ):
+        history_map.setdefault((row["system"], row["name"]), []).append(row[-2:])
+
+    out: dict[tuple[str, str], dict[str, Any]] = {}
+    for key in unique:
+        system, name = key
+        version = (
+            current_versions.get(key)
+            if current_versions is not None
+            else _latest_version(conn, system, name)
+        )
+        osv = _osv_context(conn, system, name, version, osv_map.get(key, []))
+        depsdev = _depsdev_context(conn, system, name, findings_map.get(key))
+        repo = repo_map.get(key)
+        trend_rows = history_map.get(key, [])
+        trend = (
+            {
+                "status": "available",
+                "observations": len(trend_rows),
+                "latest": round(float(trend_rows[-1][0]), 2),
+                "previous": round(float(trend_rows[-2][0]), 2) if len(trend_rows) > 1 else None,
+                "delta": (
+                    round(float(trend_rows[-1][0]) - float(trend_rows[-2][0]), 2)
+                    if len(trend_rows) > 1 else None
+                ),
+                "latest_at": trend_rows[-1][1],
+            }
+            if trend_rows
+            else {"status": "unknown", "observations": 0}
+        )
+        scorecard = _scorecard_context(conn, system, name, repo, trend)
+        out[key] = _assemble_context(system, name, version, osv, depsdev, scorecard)
+    return out
