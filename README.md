@@ -389,13 +389,13 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 
 ## Results (MVP, 22 November 2026 · app 0.4.23 · model 0.5.3)
 
-- 18,652 packages scored: 8,648 npm, 7,049 PyPI, 2,350 crates.io, 501 Maven
+- 18,665 packages scored: 8,660 npm, 7,050 PyPI, 2,350 crates.io, 501 Maven
   and 104 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 2,193,648 versions, 317,955 commits, 36,855 maintainers, 1,375 repositories,
-  10,948 OSV records, 65,688 runtime dependency edges (PyPI extras excluded).
+- 2,193,716 versions, 317,955 commits, 36,868 maintainers, 1,375 repositories,
+  10,967 OSV records, 65,741 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 15 high, 3,893 medium, 14,744 low. OIDC/bot publishers are ignored.
+- Risk bands: 15 high, 3,901 medium, 14,749 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
