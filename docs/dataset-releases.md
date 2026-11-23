@@ -2,7 +2,7 @@
 
 Dataset artifacts are published as GitHub Release assets, not committed to git.
 
-Current snapshot:
+Current snapshot (see [changelog](changelog.md)):
 
 - `snapshot-20261123`
 - 18,665 scored packages
