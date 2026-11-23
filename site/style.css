@@ -30,8 +30,11 @@ nav {
   gap: 1rem;
 }
 .brand { font-weight: 750; color: var(--ink); letter-spacing: -0.02em; }
-.nav-links { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: .94rem; }
-.nav-links a { color: var(--muted); }
+.nav-links { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .94rem; }
+.nav-links a { color: var(--muted); white-space: nowrap; }
+@media (min-width: 761px) {
+  .nav-links { flex-wrap: nowrap; }
+}
 .hero {
   background:
     radial-gradient(circle at 80% 10%, rgba(11, 107, 203, .16), transparent 32rem),
