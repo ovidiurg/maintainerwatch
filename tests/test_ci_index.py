@@ -26,6 +26,9 @@ def test_build_compact_index(tmp_path):
     assert index["counts"]["packages"] == 1
     assert index["packages"]["npm:pkg"]["band"] == "high"
     assert index["packages"]["npm:pkg"]["confidence"] == "high"
+    assert index["packages"]["npm:pkg"]["top_signals"] == [
+        {"name": "publisher_change", "value": 1.0}
+    ]
     path, count = write_index(conn, cfg, tmp_path / "index.json")
     assert count == 1
     assert json.loads(path.read_text())["packages"]["npm:pkg"]["score"] == 62.0
