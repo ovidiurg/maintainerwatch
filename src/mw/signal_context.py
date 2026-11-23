@@ -122,14 +122,11 @@ def maintainer_exposure(
         return {"status": "unknown"}
     placeholders = ",".join("?" for _ in identities)
     rows = conn.execute(
-        f"""SELECT system, name, downloads_weekly, fan_in_transitive
-            FROM packages
-            WHERE EXISTS (
-              SELECT 1 FROM maintainers m
-              WHERE m.system=packages.system AND m.name=packages.name
-                AND LOWER(m.identity) IN ({placeholders})
-            )
-            AND NOT (system=? AND name=?)""",
+        f"""SELECT DISTINCT p.system, p.name, p.downloads_weekly, p.fan_in_transitive
+            FROM maintainers m
+            JOIN packages p ON p.system=m.system AND p.name=m.name
+            WHERE LOWER(m.identity) IN ({placeholders})
+              AND NOT (p.system=? AND p.name=?)""",
         (*identities, system, name),
     ).fetchall()
     packages = sorted(

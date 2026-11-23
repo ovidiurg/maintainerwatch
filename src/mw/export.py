@@ -63,11 +63,17 @@ def _records(cfg: Config, *, include_provider_context: bool = False) -> list[dic
         rec = {k: r[k] for k in r.keys()}
         for sig_name, value in signal_map.get((r["system"], r["name"]), {}).items():
             rec[f"sig_{sig_name}"] = value
-        if include_provider_context:
-            rec["provider_context"] = providers.build_context(
-                conn, r["system"], r["name"]
-            )
         records.append(rec)
+
+    if include_provider_context:
+        keys = [(r["system"], r["name"]) for r in records]
+        versions = {
+            (r["system"], r["name"]): r.get("version") for r in records
+        }
+        contexts = providers.bulk_context(conn, keys, versions)
+        for rec in records:
+            rec["provider_context"] = contexts.get((rec["system"], rec["name"]))
+
     conn.close()
     return records
 

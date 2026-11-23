@@ -178,6 +178,19 @@ python scripts/backfill_gitlab.py --commits
 The script only selects `gitlab.com` URLs; self-hosted GitLab URLs need a
 separate API host and are not covered by the public API path.
 
+## DB performance notes
+
+The database uses WAL, a 32 MB page cache, a busy timeout and expression
+indexes for case-insensitive dependency/maintainer lookups. Scorecard
+observations are stored in `scorecard_history` with a package index so trends
+do not require a table scan.
+
+The JSON export builds provider context in bulk (`providers.bulk_context`)
+instead of re-querying OSV/deps.dev/Scorecard once per package. Maintainer
+exposure queries start from `maintainers` so `idx_maintainers_identity_lower`
+is used. Keep long operations in local batch scripts; the HTTP API stays
+read-only and uses single-package queries.
+
 ## Dataset release
 
 Publish the JSON dataset as a GitHub Release asset:
