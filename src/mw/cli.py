@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 import yaml
 
-from . import calibration, db, history, pipeline, scan_diff, validation
+from . import calibration, db, history, lookup as lookup_mod, pipeline, scan_diff, validation
 from .config import load_config
 from .export import export_dataset
 from .report import build_report
@@ -558,6 +558,34 @@ def scan(
         typer.echo(f"no score for {system}/{name}", err=True)
         raise typer.Exit(code=1)
     typer.echo(json.dumps(result, indent=2))
+
+
+@app.command()
+def lookup(
+    name: str = typer.Argument(..., help="Package name."),
+    system: str = typer.Option(
+        "npm", "--system", "-s", help="npm, pypi, crates, maven or github."
+    ),
+    index: Optional[str] = typer.Option(
+        None, "--index", help="Local index path or URL (default: latest public index)."
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Print the raw result as JSON."),
+    refresh: bool = typer.Option(False, help="Bypass the local cache when fetching a URL."),
+    config: Optional[str] = typer.Option(None, help="Config file path."),
+) -> None:
+    """Look up one package in the compact public index without ingesting data."""
+    cfg = load_config(config)
+    try:
+        result = lookup_mod.lookup(cfg, system, name, index, refresh=refresh)
+    except lookup_mod.LookupError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=2)
+    if json_output:
+        typer.echo(json.dumps(result, indent=2))
+    else:
+        typer.echo(lookup_mod.format_text(result))
+    if not result.get("found"):
+        raise typer.Exit(code=1)
 
 
 @app.command("export")

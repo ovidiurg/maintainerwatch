@@ -98,7 +98,15 @@ and search for one npm, PyPI, crates.io, Maven or GitHub package. It returns the
 latest score, band, confidence, coverage and, when present, strongest signals
 from the compact public index. No account, API key or local ingest is required.
 The full **[first-10-minutes path](https://ovidiurg.github.io/maintainerwatch/start.html)**
-also covers the GitHub Action and the optional local setup.
+also covers the GitHub Action and the optional local setup. After installation,
+the same lookup works from the CLI:
+
+```bash
+mw lookup lodash --system npm
+```
+
+See [how to read a result](docs/interpretation.md) for bands, confidence,
+coverage and high-band caveats.
 
 ### 1. Install from the repository
 
@@ -236,7 +244,8 @@ mw serve [--host 127.0.0.1] [--port 8000] [--config PATH]
 ```
 
 `mw alerts --rules` uses the `alerts.rules` block in `config/default.yaml`.
-`--dry-run` matches rules without delivering; `--out` writes JSON.
+`--dry-run` matches rules without delivering; `--out` writes JSON. See
+[docs/alerts.md](docs/alerts.md) for Slack/email examples.
 See [docs/api.md](docs/api.md) for endpoints, pagination, impact ranking,
 `MAINTAINERWATCH_API_KEY` and rate limiting. `GET /impact` orders packages by
 deps.dev dependents, downloads and transitive fan-in; run `mw enrich-impact`

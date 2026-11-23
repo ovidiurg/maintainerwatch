@@ -11,7 +11,7 @@ Start here: <https://ovidiurg.github.io/maintainerwatch/start.html>
 |---|---:|---|
 | Lookup | 0–2 min | Score, band, confidence, coverage, top signals |
 | GitHub Action | 3–6 min | PR comment and SARIF for changed manifests |
-| Local CLI / Docker | 6–10 min | Full evidence, history and API |
+| Local CLI / Docker | 6–10 min | Full evidence, history and API; `mw lookup` works from the public index |
 
 The full local pipeline remains an advanced setup path. Do not make it the
 first step for a new user.
@@ -29,6 +29,8 @@ We do not add default analytics. Feedback is opt-in through the repository issue
 form:
 
 <https://github.com/ovidiurg/maintainerwatch/issues/new?template=feedback.yml>
+
+How to interpret results: [`interpretation.md`](interpretation.md).
 
 Useful aggregate signals are:
 
