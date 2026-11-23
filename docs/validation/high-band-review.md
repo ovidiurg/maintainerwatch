@@ -12,8 +12,8 @@ The purpose is calibration review, not an accusation against the maintainers.
 | `pgpass` | 52.7 | 96,781,575 | none | publisher change; Scorecard available | unverified |
 | `caniuse-api` | 50.3 | 20,465,944 | none | publisher/email change, long release dormancy, signing gap | likely legitimate transfer; unverified |
 | `@apideck/better-ajv-errors` | 50.2 | 11,755,284 | none | publisher change; Scorecard available | unverified |
-| `p-shells` | 53.7 | 13 | none | signing gap, commit anomaly, continuity | unverified; low download volume |
-| `libbz2-rs-sys` | 51.4 | 22,770,231 | none | dependency risk, continuity, commit anomaly | unverified |
+| `p-shells` | 53.7 | 13 | none | signing gap, commit anomaly, continuity | likely low-impact false-positive candidate; no advisory |
+| `libbz2-rs-sys` | 51.4 | 22,770,231 | none | dependency risk, continuity, commit anomaly | likely legitimate crate; active foundation repo, no advisory |
 
 ## What the evidence says
 
@@ -23,10 +23,11 @@ The purpose is calibration review, not an accusation against the maintainers.
 - `@cloudbase` has no repository URL, so repository/commit context is absent.
 - `caniuse-api` shows a long-lived package with a recent publisher change;
   that is a takeover *suspicion*, not proof.
-- `p-shells` has very low download volume; its high band should not be read as
-  a high-impact finding.
-- `libbz2-rs-sys` has a large dependency footprint; verify repository and
-  release history before treating the dependency signal as a package risk.
+- `p-shells` has very low download volume and a small repository; its high band
+  should not be read as a high-impact finding.
+- `libbz2-rs-sys` has a large dependency footprint but an active foundation
+  repository and recent commits; verify the dependency signal before treating
+  it as package risk.
 - The current high-confidence rules discount some handovers, but not transfers
   where the old publisher is no longer present and the new publisher has not
   published this package before.

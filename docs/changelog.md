@@ -12,31 +12,33 @@ preview, not a live malware verdict feed.
 - Model **0.5.3**; app **0.4.23**
 - 2,540,499 versions, 428,548 commits, 42,129 maintainers, 11,277 OSV records,
   73,712 dependency edges
-- Risk bands: **17 high, 4,242 medium, 16,334 low**
+- Risk bands: **17 high, 4,639 medium, 15,937 low**
 - 11 high-band packages are advisory/behaviour-confirmed; six remain review
   cases
-- deps.dev impact rows: 16,858; deps.dev findings: 18,678; Scorecard scores:
-  3,262
+- deps.dev impact rows: 18,289; deps.dev findings: 20,409; Scorecard scores:
+  4,384
 
 ### Index and CI
 
 - Compact index updated with the top three signals per package.
 - Public index: `maintainerwatch-index.json` (5.2 MB, 20,593 records).
 - Current index checksum:
-  `eeb90c981f366b4ae9eb28cdbb4e56a313556a96e67bff58aa6b375dee08a8df`.
+  `a3f17aa07e69aea524a1683656f7468e88f9f5d7fafa25089337b78553016047`.
 - Added the public package lookup and first-10-minutes page on Pages.
 - Added `mw lookup PACKAGE --system SYSTEM` for the public index without ingest.
 - Added expiring waivers for `scan-diff` and the GitHub Action.
 - Added `mw diff-index` for weekly high/medium changes.
 - Added opt-in feedback intake through the issue form.
+- Enriched all new medium/high packages and the remaining new low packages
+  with GitHub, deps.dev impact/findings and recent commit context where available.
 
 ### Database and operations
 
-- `scorecard_history` seeded with 3,262 baseline observations from current
+- `scorecard_history` seeded with 4,384 baseline observations from current
   Scorecard scores.
 - Added score band/system indexes and removed unused/redundant indexes.
 - Version reads now use `idx_versions_pkg` ordering.
-- Local DB reduced to ~1.2 GB after cleanup and `VACUUM`.
+- Local DB is ~1.5 GB after the 20k expansion and context backfills.
 - Tests: **212 passed**, coverage **77.37%**.
 
 ## 2026-11-22
