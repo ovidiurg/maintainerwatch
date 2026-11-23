@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="MaintainerWatch first 10 minutes — check a package, add the GitHub Action, and decide whether to go deeper.">
+  <title>First 10 minutes — MaintainerWatch</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="hero">
+  <nav>
+    <a class="brand" href="./">MaintainerWatch</a>
+    <div class="nav-links">
+      <a href="index.html#lookup">Check a package</a>
+      <a href="index.html#ci">Add to CI</a>
+      <a href="https://github.com/ovidiurg/maintainerwatch">GitHub</a>
+      <a href="https://github.com/sponsors/ovidiurg">Sponsor</a>
+    </div>
+  </nav>
+  <div class="hero-copy">
+    <p class="eyebrow">Research preview · no install required</p>
+    <h1>Your first 10 minutes</h1>
+    <p class="lede">
+      Get one useful answer about a package, put the check in a pull request,
+      then decide whether the full local pipeline is worth your time.
+    </p>
+    <div class="cta">
+      <a class="button primary" href="index.html#lookup">Check a package</a>
+      <a class="button" href="index.html#ci">Add to CI</a>
+      <a class="button" href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/onboarding.md">Onboarding notes</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>Choose one path</h2>
+    <p class="section-lede">
+      You do not need to clone the repository or ingest the full dataset to get
+      value. Start with the path that matches your job.
+    </p>
+    <div class="grid three">
+      <article class="card">
+        <p class="lookup-kicker">0–2 minutes</p>
+        <h3>Check one package</h3>
+        <p>
+          Search the public snapshot for score, band, confidence, coverage and
+          the strongest signals. No account, API key or local ingest.
+        </p>
+        <p><a href="index.html#lookup">Open the package lookup</a></p>
+      </article>
+      <article class="card">
+        <p class="lookup-kicker">3–6 minutes</p>
+        <h3>Add it to a pull request</h3>
+        <p>
+          Copy one workflow, open a PR and get a sticky comment plus SARIF for
+          changed dependency manifests. Package code is never executed.
+        </p>
+        <p><a href="index.html#ci">Copy the GitHub Action</a></p>
+      </article>
+      <article class="card">
+        <p class="lookup-kicker">6–10 minutes</p>
+        <h3>Go deeper locally</h3>
+        <p>
+          Use the CLI, Docker or the read-only API when you need full evidence,
+          history or an isolated deployment.
+        </p>
+        <p><a href="https://github.com/ovidiurg/maintainerwatch/blob/main/README.md#quick-start">Open the quick start</a></p>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>What success looks like</h2>
+    <div class="grid two">
+      <article class="card">
+        <h3>For a maintainer</h3>
+        <ul class="signal-list">
+          <li>You found your package and understand the band.</li>
+          <li>You can see which signals drove the result.</li>
+          <li>You know this is a triage aid, not a malware verdict.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>For a security team</h3>
+        <ul class="signal-list">
+          <li>The action runs on a pull request without a local install.</li>
+          <li>The result appears as a focused comment or SARIF.</li>
+          <li>You can start advisory with <code>fail-on: none</code>.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Start advisory</h2>
+    <p class="section-lede">
+      The default CI example does not block merges. Raise the threshold only
+      after reviewing the output for your repositories.
+    </p>
+    <pre><code>- uses: ovidiurg/maintainerwatch@main
+  with:
+    index-url: https://github.com/ovidiurg/maintainerwatch/releases/latest/download/maintainerwatch-index.json
+    base-ref: origin/${{ github.base_ref }}
+    fail-on: none
+    comment: "true"
+    upload-sarif: "true"
+</code></pre>
+    <p class="note">
+      Pin the action to a commit or release tag for production. Do not use
+      <code>pull_request_target</code> for untrusted pull requests.
+    </p>
+  </section>
+
+  <section>
+    <h2>Tell us what happened</h2>
+    <p class="section-lede">
+      Onboarding feedback is opt-in. We do not add default telemetry. Use the
+      issue form to report where you got stuck, a false positive, or the time to
+      your first useful result.
+    </p>
+    <p>
+      <a class="button" href="https://github.com/ovidiurg/maintainerwatch/issues/new?template=feedback.yml">Send onboarding feedback</a>
+    </p>
+  </section>
+</main>
+
+<footer>
+  <p>MaintainerWatch · AGPL-3.0-or-later · <a href="index.html">Back to the project page</a></p>
+</footer>
+</body>
+</html>

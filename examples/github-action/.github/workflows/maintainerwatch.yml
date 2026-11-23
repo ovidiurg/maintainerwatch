@@ -1,0 +1,19 @@
+name: MaintainerWatch
+on: pull_request
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ovidiurg/maintainerwatch@main
+        with:
+          index-url: https://github.com/ovidiurg/maintainerwatch/releases/latest/download/maintainerwatch-index.json
+          base-ref: origin/${{ github.base_ref }}
+          fail-on: none
+          comment: "true"
+          upload-sarif: "true"

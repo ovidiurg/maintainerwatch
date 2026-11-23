@@ -103,6 +103,9 @@ need GitHub Pro for branch protection.
 
 ## GitHub Action
 
+A copy-paste workflow and a small template layout live in
+`examples/github-action/`.
+
 The composite action installs the action checkout by default (the package is
 not yet published on PyPI), downloads the index, verifies its optional SHA-256,
 runs `mw scan-diff`, uploads SARIF and can optionally maintain **one** sticky PR
