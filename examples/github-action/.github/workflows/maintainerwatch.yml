@@ -15,5 +15,6 @@ jobs:
           index-url: https://github.com/ovidiurg/maintainerwatch/releases/latest/download/maintainerwatch-index.json
           base-ref: origin/${{ github.base_ref }}
           fail-on: none
+          waivers-file: .maintainerwatch/waivers.yml
           comment: "true"
           upload-sarif: "true"

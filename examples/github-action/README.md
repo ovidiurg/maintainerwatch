@@ -9,6 +9,7 @@ The workflow:
 - checks changed dependency manifests against the latest compact index;
 - never downloads or executes package code;
 - starts advisory with `fail-on: none`;
+- reads optional expiring waivers from `.maintainerwatch/waivers.yml`;
 - posts one sticky PR comment and uploads SARIF.
 
 ## Before enabling blocking

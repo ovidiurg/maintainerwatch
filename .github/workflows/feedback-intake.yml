@@ -1,0 +1,69 @@
+name: Feedback intake
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    if: startsWith(github.event.issue.title, '[feedback]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+            const labels = new Set(['feedback', 'needs-triage']);
+
+            if (/false[- ]?positive|noisy|noise/i.test(body)) {
+              labels.add('false-positive');
+            }
+            if (/GitHub Action|pull request|scan-diff/i.test(body)) {
+              labels.add('ci');
+            }
+            if (/lookup|onboarding|first 10 minutes|documentation/i.test(body)) {
+              labels.add('onboarding');
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: [...labels],
+            });
+
+            const marker = '<!-- maintainerwatch:feedback-ack -->';
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              per_page: 100,
+            });
+            if (comments.some((comment) => (comment.body || '').includes(marker))) {
+              return;
+            }
+
+            const text = [
+              marker,
+              'Thanks for the feedback. I will triage it with the documented flow:',
+              '',
+              '- classify the report as onboarding, docs, CI, or false positive;',
+              '- reproduce it against the public index or the latest snapshot;',
+              '- decide whether it needs a waiver, a regression test, or a docs fix;',
+              '- reply with the outcome and any follow-up issue.',
+              '',
+              'The public dataset is a triage aid, not a malware verdict. Please do not add secrets, tokens, private package names, or personal contact data.',
+              '',
+              'Process: https://github.com/ovidiurg/maintainerwatch/blob/main/docs/feedback.md',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: text,
+            });

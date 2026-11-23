@@ -279,6 +279,9 @@ def scan_diff_cmd(
     fail_on: str = typer.Option(
         "none", help="Exit 1 on none|medium|high findings."
     ),
+    waivers: Optional[str] = typer.Option(
+        None, "--waivers", help="YAML waiver file with expiry and reason."
+    ),
     root: str = typer.Option(".", help="Repository root."),
 ) -> None:
     """Scan dependency changes between two git revisions."""
@@ -289,6 +292,8 @@ def scan_diff_cmd(
     changes = scan_diff.diff_manifests(base, head, root)
     payload_index = scan_diff.load_index(index)
     findings = scan_diff.findings_for(changes, payload_index)
+    if waivers:
+        findings = scan_diff.apply_waivers(findings, scan_diff.load_waivers(waivers))
     if format == "sarif":
         payload = scan_diff.sarif(findings, payload_index.get("model_version"))
     else:
@@ -303,7 +308,9 @@ def scan_diff_cmd(
         typer.echo(text)
     rank = {"low": 1, "medium": 2, "high": 3}
     if fail_on != "none" and any(
-        rank.get(item.get("band"), 0) >= rank[fail_on] for item in findings
+        rank.get(item.get("band"), 0) >= rank[fail_on]
+        for item in findings
+        if not item.get("waived")
     ):
         raise typer.Exit(code=1)
 
@@ -586,6 +593,29 @@ def lookup(
         typer.echo(lookup_mod.format_text(result))
     if not result.get("found"):
         raise typer.Exit(code=1)
+
+
+@app.command("diff-index")
+def diff_index_cmd(
+    old: str = typer.Option(..., "--old", help="Older compact index JSON."),
+    new: str = typer.Option(..., "--new", help="Newer compact index JSON."),
+    format: str = typer.Option("markdown", help="markdown or json."),
+    out: Optional[str] = typer.Option(None, help="Write output to this path."),
+) -> None:
+    """Compare two compact indexes for a weekly digest."""
+    if format not in {"markdown", "json"}:
+        raise typer.BadParameter("format must be markdown or json")
+    old_doc = lookup_mod.load_index(load_config(), old)
+    new_doc = lookup_mod.load_index(load_config(), new)
+    diff = lookup_mod.diff_indexes(old_doc, new_doc)
+    text = json.dumps(diff, indent=2) if format == "json" else lookup_mod.format_diff_markdown(diff)
+    if out:
+        path = Path(out)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        typer.echo(json.dumps({"path": out}))
+    else:
+        typer.echo(text)
 
 
 @app.command("export")
