@@ -412,18 +412,18 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 
 ## Results (MVP, 23 November 2026 · app 0.4.23 · model 0.5.3)
 
-- 18,665 packages scored: 8,660 npm, 7,050 PyPI, 2,350 crates.io, 501 Maven
-  and 104 GitHub repositories. The expansion mixes high-usage packages,
+- 20,593 packages scored: 9,555 npm, 7,649 PyPI, 2,650 crates.io, 601 Maven
+  and 138 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 2,193,716 versions, 317,955 commits, 36,868 maintainers, 1,375 repositories,
-  10,967 OSV records, 65,741 runtime dependency edges (PyPI extras excluded).
+- 2,540,499 versions, 428,548 commits, 42,129 maintainers, 4,356 repositories,
+  11,277 OSV records, 73,712 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 15 high, 3,901 medium, 14,749 low. OIDC/bot publishers are ignored.
+- Risk bands: 17 high, 4,242 medium, 16,334 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
   packages; PyPI `publisher_change` uses a capped snapshot value.
-- deps.dev impact enrichment covers 16,728 packages. Top impact: tslib 1.62M
+- deps.dev impact enrichment covers 16,858 packages. Top impact: tslib 1.62M
   dependents, inherits 1.33M, function-bind 1.30M, es-errors 1.26M, hasown 1.24M.
 - Highest numerical scores include obscure low-adoption packages (`b.js`, `4a`,
   `b4`, `b5`, `b7` at 68.0 and `p-resolver`/`p01` at 88.0); they are capped to
@@ -441,11 +441,11 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   benign package above 40; the 19-incident sample is still too small to treat
   this as a stable production threshold.
 - External cross-check of the current high band (OSV plus deps.dev) confirms
-  **11 of 15** high-band packages as malicious. The other four
+  **11 of 17** high-band packages as malicious. The other six
   (`@cloudbase/wx-cloud-client-sdk`, `pgpass`, `caniuse-api`,
-  `@apideck/better-ajv-errors`) are
-  high-download packages driven
-  by publisher/continuity evidence without an advisory; see
+  `@apideck/better-ajv-errors`, `p-shells`, `libbz2-rs-sys`) are
+  high-band review cases driven by publisher/continuity or repository evidence
+  without a current-version advisory; see
   [docs/validation/high-band-review.md](docs/validation/high-band-review.md).
   They need review and are a precision warning, not malware labels.
   A same-author release burst had incorrectly promoted `crates/num_threads` to

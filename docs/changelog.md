@@ -7,23 +7,23 @@ preview, not a live malware verdict feed.
 
 ### Dataset and model
 
-- Published `snapshot-20261123`: **18,665 scored packages**
-  - 8,660 npm, 7,050 PyPI, 2,350 crates, 501 Maven, 104 GitHub
+- Expanded and republished `snapshot-20261123`: **20,593 scored packages**
+  - 9,555 npm, 7,649 PyPI, 2,650 crates, 601 Maven, 138 GitHub
 - Model **0.5.3**; app **0.4.23**
-- 2,193,716 versions, 317,955 commits, 36,868 maintainers, 10,967 OSV records,
-  65,741 dependency edges
-- Risk bands: **15 high, 3,901 medium, 14,749 low**
-- 11 high-band packages are advisory/behaviour-confirmed; four remain review
+- 2,540,499 versions, 428,548 commits, 42,129 maintainers, 11,277 OSV records,
+  73,712 dependency edges
+- Risk bands: **17 high, 4,242 medium, 16,334 low**
+- 11 high-band packages are advisory/behaviour-confirmed; six remain review
   cases
-- deps.dev impact rows: 16,728; deps.dev findings: 18,533; Scorecard scores:
-  2,621
+- deps.dev impact rows: 16,858; deps.dev findings: 18,678; Scorecard scores:
+  3,262
 
 ### Index and CI
 
 - Compact index updated with the top three signals per package.
-- Public index: `maintainerwatch-index.json` (4.7 MB, 18,665 records).
+- Public index: `maintainerwatch-index.json` (5.2 MB, 20,593 records).
 - Current index checksum:
-  `facc736898bd8f790d7b56bba2808b9519d90a00e0086f1cf2ceb6da1c442258`.
+  `eeb90c981f366b4ae9eb28cdbb4e56a313556a96e67bff58aa6b375dee08a8df`.
 - Added the public package lookup and first-10-minutes page on Pages.
 - Added `mw lookup PACKAGE --system SYSTEM` for the public index without ingest.
 - Added expiring waivers for `scan-diff` and the GitHub Action.
@@ -32,7 +32,7 @@ preview, not a live malware verdict feed.
 
 ### Database and operations
 
-- `scorecard_history` seeded with 2,621 baseline observations from current
+- `scorecard_history` seeded with 3,262 baseline observations from current
   Scorecard scores.
 - Added score band/system indexes and removed unused/redundant indexes.
 - Version reads now use `idx_versions_pkg` ordering.
@@ -61,7 +61,7 @@ Public assets:
 ## Known limitations
 
 - The sample is not the full npm/PyPI/crates/Maven/GitHub universe.
-- Four high-band packages are review cases, not malware labels; see
+- Six high-band packages are review cases, not malware labels; see
   [high-band review](validation/high-band-review.md).
 - v6 is a frozen current-state holdout with no unseen labels yet. Do not compute
   v6 metrics until labels exist.

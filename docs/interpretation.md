@@ -32,13 +32,16 @@ The compact lookup shows up to three weighted signals. The full dataset and
 
 ## High-band review
 
-At the current snapshot, 11 of 15 high-band packages are corroborated by OSV or
-deps.dev. Four remain review cases driven by publisher/continuity evidence:
+At the current snapshot, 11 of 17 high-band packages are corroborated by OSV or
+deps.dev. Six remain review cases driven by publisher/continuity or repository
+evidence:
 
 - `@cloudbase/wx-cloud-client-sdk`
 - `pgpass`
 - `caniuse-api`
 - `@apideck/better-ajv-errors`
+- `p-shells`
+- `libbz2-rs-sys`
 
 They are precision warnings, not malware labels. See
 [high-band review](validation/high-band-review.md).
