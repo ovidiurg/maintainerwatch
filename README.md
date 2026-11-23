@@ -97,6 +97,8 @@ Open **[the public package lookup](https://ovidiurg.github.io/maintainerwatch/#l
 and search for one npm, PyPI, crates.io, Maven or GitHub package. It returns the
 latest score, band, confidence, coverage and, when present, strongest signals
 from the compact public index. No account, API key or local ingest is required.
+The full **[first-10-minutes path](https://ovidiurg.github.io/maintainerwatch/start.html)**
+also covers the GitHub Action and the optional local setup.
 
 ### 1. Install from the repository
 

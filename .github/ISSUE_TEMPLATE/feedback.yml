@@ -1,0 +1,53 @@
+name: Onboarding or false-positive feedback
+description: Tell us what happened in your first 10 minutes or report a noisy result
+title: "[feedback] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying MaintainerWatch. This form is opt-in feedback; the
+        project does not add default telemetry. Do not include tokens, private
+        package names, or personal contact data.
+  - type: dropdown
+    id: path
+    attributes:
+      label: What did you try?
+      options:
+        - Public package lookup
+        - GitHub Action / pull request
+        - CLI or Docker locally
+        - API
+        - Research dataset
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: What happened?
+      options:
+        - Worked and was useful
+        - Worked but the result was noisy/false positive
+        - Got stuck before the first result
+        - Documentation was unclear
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: time_to_result
+    attributes:
+      label: Approximate time to first useful result
+      placeholder: e.g. 4 minutes
+  - type: textarea
+    id: details
+    attributes:
+      label: What should we improve?
+      description: Share only public package names and non-sensitive details.
+    validations:
+      required: true
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have not included secrets, tokens, or private data.
+          required: true

@@ -17,3 +17,9 @@ def test_public_package_lookup_assets_are_wired():
     assert 'ovidiurg/maintainerwatch@main' in html
     assert "maintainerwatch-index.json" in script
     assert "maintainerwatch-index.json" in pages
+    start = (ROOT / "site/start.html").read_text(encoding="utf-8")
+    assert "Your first 10 minutes" in start
+    assert "index.html#lookup" in start
+    assert "index.html#ci" in start
+    assert (ROOT / "examples/github-action/.github/workflows/maintainerwatch.yml").exists()
+    assert (ROOT / ".github/ISSUE_TEMPLATE/feedback.yml").exists()
