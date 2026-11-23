@@ -58,3 +58,23 @@ def test_scorecard_history_and_trend(tmp_path):
     assert trend["latest"] == 6.0
     assert trend["delta"] == 1.0
     conn.close()
+
+
+def test_maintainer_exposure_query_uses_identity_index(tmp_path):
+    cfg, conn = _setup(tmp_path)
+    sql = """
+        SELECT DISTINCT p.system, p.name, p.downloads_weekly, p.fan_in_transitive
+        FROM maintainers m
+        JOIN packages p ON p.system=m.system AND p.name=m.name
+        WHERE LOWER(m.identity) IN (?)
+          AND NOT (p.system=? AND p.name=?)
+    """
+    plan = [
+        row[3]
+        for row in conn.execute(
+            "EXPLAIN QUERY PLAN " + sql,
+            ("dev@example.com", "npm", "pkg"),
+        )
+    ]
+    assert any("idx_maintainers_identity_lower" in item for item in plan)
+    conn.close()

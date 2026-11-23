@@ -38,3 +38,22 @@ def test_bulk_upsert_commit_flag_can_be_deferred():
     conn.rollback()
     assert conn.execute("SELECT COUNT(*) FROM packages").fetchone()[0] == 0
     conn.close()
+
+
+def test_scorecard_history_table_and_index(tmp_path):
+    conn = db.connect(tmp_path / "scorecard-history.sqlite")
+    db.init_db(conn)
+    names = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='index'")}
+    assert "idx_scorecard_history_pkg" in names
+    conn.execute(
+        "INSERT INTO repo_stats (system,name,repo_url) VALUES (?,?,?)",
+        ("npm", "pkg", None),
+    )
+    conn.commit()
+    db.update_repo_scorecard(conn, "npm", "pkg", 5.0, "[]")
+    rows = conn.execute(
+        "SELECT score FROM scorecard_history WHERE system=? AND name=?",
+        ("npm", "pkg"),
+    ).fetchall()
+    assert [row[0] for row in rows] == [5.0]
+    conn.close()
