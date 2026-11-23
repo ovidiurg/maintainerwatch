@@ -43,6 +43,31 @@ Useful aggregate signals are:
 Do not collect personal contact data or private package names in the public
 issue tracker.
 
+### Opt-in metrics command
+
+```bash
+make onboarding-metrics
+# or:
+PYTHONPATH=. .venv/bin/python scripts/onboarding_metrics.py --format json
+```
+
+It reports feedback issue counts, open/closed state, label distribution and
+median time to close. It reads public GitHub issues only; it does not measure
+unique visitors, lookup completions, workflow copies or repeat use. Those
+funnel metrics would require an explicitly opted-in endpoint and are not
+enabled by default.
+
+## Validation log
+
+Checked on 23 November 2026:
+
+- clean venv: `pip install /home/ovidiu/code/research`, `mw --help`, and
+  `mw lookup lodash --system npm` from the public index;
+- Playwright Chromium: live lookup returned the lodash result, desktop nav
+  stayed on one line, and the mobile start page had no horizontal overflow;
+- local git fixture: `scan-diff` fails on an unwaived high finding and passes
+  when a valid waiver is present.
+
 ## Definition of done for onboarding changes
 
 - The lookup and CI paths are exercised from a clean browser/checkout.

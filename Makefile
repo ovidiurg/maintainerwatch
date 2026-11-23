@@ -2,7 +2,7 @@ PYTHON ?= python3
 CANDIDATE ?= config/calibration-candidate.yaml
 LABELS_INPUT ?= data/feedback/packages.jsonl
 
-.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search replay-v4 ci-index ci-publish-index label-intake calibration-drift main maintain snapshot validate clean
+.PHONY: install install-release test lint build check dataset-check validation-sample validation-eval docker docker-run docker-report docker-smoke calibration calibration-loop calibration-search replay-v4 ci-index ci-publish-index label-intake onboarding-metrics calibration-drift main maintain snapshot validate clean
 
 install:
 	$(PYTHON) -m pip install -e ".[dev]"
@@ -55,6 +55,9 @@ ci-index:
 
 ci-publish-index:
 	PYTHON=$(PYTHON) bash scripts/publish_ci_index.sh
+
+onboarding-metrics:
+	$(PYTHON) scripts/onboarding_metrics.py
 
 calibration-drift:
 	$(PYTHON) scripts/calibration_drift.py
