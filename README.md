@@ -154,7 +154,8 @@ mw serve --host 127.0.0.1 --port 8000
 ```
 
 Outputs live under `data/`; the current dataset snapshot and validation
-numbers are in the Results section below.
+numbers are in the Results section below. Data/model/index changes are recorded
+in [docs/changelog.md](docs/changelog.md).
 
 Every command accepts `--config PATH` (default: `config/default.yaml`).
 `mw --help` and `mw COMMAND --help` show the authoritative option list.
