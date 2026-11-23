@@ -976,3 +976,8 @@ def test_release_anomaly_clustered_timestamps_not_applicable(conn):
     ev = release_anomaly.compute(Context(conn=conn, system="npm", name="pkg"))
     assert ev.applicable is False
     assert "clustered" in ev.evidence["reason"]
+
+
+def test_bounded_levenshtein_preserves_transposition_and_caps():
+    assert typosquat.levenshtein("reqeusts", "requests", 2) == 1
+    assert typosquat.levenshtein("abcdef", "xyz", 2) == 3

@@ -63,8 +63,8 @@ def normalize_homoglyphs(name: str) -> str:
     return name.translate(HOMOGLYPHS)
 
 
-def levenshtein(a: str, b: str) -> int:
-    """Damerau-Levenshtein (optimal string alignment), so transpositions count once."""
+def levenshtein(a: str, b: str, max_distance: int | None = None) -> int:
+    """Bounded Damerau-Levenshtein (optimal string alignment)."""
     if a == b:
         return 0
     la, lb = len(a), len(b)
@@ -72,18 +72,20 @@ def levenshtein(a: str, b: str) -> int:
         return lb
     if lb == 0:
         return la
-    d = [[0] * (lb + 1) for _ in range(la + 1)]
-    for i in range(la + 1):
-        d[i][0] = i
-    for j in range(lb + 1):
-        d[0][j] = j
+    if max_distance is not None and abs(la - lb) > max_distance:
+        return max_distance + 1
+    limit = max_distance if max_distance is not None else max(la, lb)
+    rows = [list(range(lb + 1))]
     for i in range(1, la + 1):
+        previous = rows[-1]
+        current = [i] + [0] * lb
+        row_min = current[0]
         for j in range(1, lb + 1):
             cost = 0 if a[i - 1] == b[j - 1] else 1
-            d[i][j] = min(
-                d[i - 1][j] + 1,
-                d[i][j - 1] + 1,
-                d[i - 1][j - 1] + cost,
+            value = min(
+                previous[j] + 1,
+                current[j - 1] + 1,
+                previous[j - 1] + cost,
             )
             if (
                 i > 1
@@ -91,8 +93,14 @@ def levenshtein(a: str, b: str) -> int:
                 and a[i - 1] == b[j - 2]
                 and a[i - 2] == b[j - 1]
             ):
-                d[i][j] = min(d[i][j], d[i - 2][j - 2] + cost)
-    return d[la][lb]
+                value = min(value, rows[i - 2][j - 2] + cost)
+            current[j] = value
+            if value < row_min:
+                row_min = value
+        if row_min > limit:
+            return limit + 1
+        rows.append(current)
+    return rows[-1][lb]
 
 
 def compute(ctx: Context) -> SignalEvidence:
@@ -105,7 +113,7 @@ def compute(ctx: Context) -> SignalEvidence:
 
     name = ctx.name.lower()
     normalized_name = normalize_homoglyphs(name)
-    best: tuple[int, str | None, bool, bool] = (999, None, False, False)
+    best: tuple[int, str | None, bool, bool] = (3, None, False, False)
     index = _length_index(ctx.top_names)
     for length in range(len(name) - 2, len(name) + 3):
         for candidate in index.get(length, []):
@@ -113,12 +121,14 @@ def compute(ctx: Context) -> SignalEvidence:
             if other == name:
                 continue
             normalized_other = normalize_homoglyphs(other)
-            distance = min(
-                levenshtein(name, other),
-                levenshtein(normalized_name, normalized_other),
-            )
+            distance = levenshtein(name, other, 2)
+            if distance > 1 and normalized_other != other:
+                distance = min(
+                    distance,
+                    levenshtein(normalized_name, normalized_other, 2),
+                )
             homoglyph = normalized_name == normalized_other and name != other
-            keyboard = keyboard_typo(name, other)
+            keyboard = keyboard_typo(name, other) if len(name) == len(other) else False
             if distance < best[0]:
                 best = (distance, other, homoglyph, keyboard)
                 if distance == 1:
