@@ -134,10 +134,13 @@ make replay-v4
 The schema is indexed for the read paths used by the API, report and scoring,
 including:
 `packages(system, downloads_weekly)`, `scores(model_version, score)`,
-`signals(model_version, system, name)`, `osv(vuln_id)`, and expression indexes
-for the case-insensitive dependency, maintainer and publisher lookups. Existing
-databases get the indexes on the next `mw init`/`mw ingest`/`mw serve` call;
-no manual migration is required.
+`scores(model_version, band, score)` and `scores(model_version, system, score)`
+for API filters, `signals(model_version, system, name)`, `osv(vuln_id)`, and
+expression indexes for the case-insensitive dependency, maintainer and
+publisher lookups. Version reads order by `published_at` so `idx_versions_pkg`
+supplies the order. Existing databases get the indexes and legacy-index cleanup
+on the next `mw init`/`mw ingest`/`mw serve` call; no manual migration is
+required.
 
 Connections use WAL, `synchronous=NORMAL`, a 32 MB page cache and a 5 s busy
 timeout. Ingestion defers commits while it processes a package batch, so large

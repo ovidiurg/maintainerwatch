@@ -41,7 +41,7 @@ def _records(cfg: Config, *, include_provider_context: bool = False) -> list[dic
                   p.fan_in_transitive, r.license AS license_repo,
                   (SELECT v.version FROM versions v
                    WHERE v.system = s.system AND v.name = s.name
-                   ORDER BY COALESCE(v.published_at, '') DESC LIMIT 1) AS version
+                   ORDER BY v.published_at DESC LIMIT 1) AS version
            FROM scores s
            LEFT JOIN packages p ON p.system = s.system AND p.name = s.name
            LEFT JOIN repo_stats r ON r.system = s.system AND r.name = s.name

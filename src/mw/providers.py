@@ -12,7 +12,7 @@ def _latest_version(conn: sqlite3.Connection, system: str, name: str) -> str | N
     row = conn.execute(
         """SELECT version FROM versions
            WHERE system=? AND name=? AND COALESCE(is_yanked, 0)=0
-           ORDER BY COALESCE(published_at, '') DESC, version DESC LIMIT 1""",
+           ORDER BY published_at DESC, version DESC LIMIT 1""",
         (system, name),
     ).fetchone()
     return row["version"] if row else None
