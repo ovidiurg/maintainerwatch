@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 from .models import Maintainer, Package, RepoStats, Version
 
@@ -40,6 +40,12 @@ CREATE TABLE IF NOT EXISTS repo_stats (
   stars INTEGER DEFAULT 0, forks INTEGER DEFAULT 0, open_issues INTEGER DEFAULT 0,
   scorecard_checks_json TEXT,
   PRIMARY KEY (system, name)
+);
+
+CREATE TABLE IF NOT EXISTS scorecard_history (
+  system TEXT NOT NULL, name TEXT NOT NULL, observed_at TEXT NOT NULL,
+  score REAL, checks_json TEXT,
+  PRIMARY KEY (system, name, observed_at)
 );
 
 CREATE TABLE IF NOT EXISTS osv (
@@ -139,6 +145,8 @@ CREATE INDEX IF NOT EXISTS idx_scores_model_score
   ON scores (model_version, score DESC, name);
 CREATE INDEX IF NOT EXISTS idx_signals_model
   ON signals (model_version, system, name);
+CREATE INDEX IF NOT EXISTS idx_scorecard_history_pkg
+  ON scorecard_history (system, name, observed_at);
 CREATE INDEX IF NOT EXISTS idx_osv_vuln ON osv (vuln_id);
 CREATE INDEX IF NOT EXISTS idx_osv_pending
   ON osv (vuln_id) WHERE affected_json IS NULL;
@@ -315,6 +323,7 @@ def update_repo_scorecard(
     score: float | None,
     checks_json: str | None,
 ) -> None:
+    from datetime import datetime, timezone
     conn.execute(
         """UPDATE repo_stats
            SET scorecard_score=COALESCE(?, scorecard_score),
@@ -322,7 +331,46 @@ def update_repo_scorecard(
            WHERE system=? AND name=?""",
         (score, checks_json, system, name),
     )
+    observed_at = datetime.now(timezone.utc).isoformat()
+    current = conn.execute(
+        "SELECT scorecard_score, scorecard_checks_json FROM repo_stats "
+        "WHERE system=? AND name=?",
+        (system, name),
+    ).fetchone()
+    if current is not None:
+        conn.execute(
+            """INSERT OR REPLACE INTO scorecard_history
+                 (system, name, observed_at, score, checks_json)
+               VALUES (?, ?, ?, ?, ?)""",
+            (
+                system, name, observed_at,
+                current["scorecard_score"], current["scorecard_checks_json"],
+            ),
+        )
     conn.commit()
+
+
+def scorecard_trend(
+    conn: sqlite3.Connection, system: str, name: str
+) -> dict[str, Any]:
+    rows = conn.execute(
+        """SELECT observed_at, score FROM scorecard_history
+           WHERE system=? AND name=? AND score IS NOT NULL
+           ORDER BY observed_at DESC LIMIT 2""",
+        (system, name),
+    ).fetchall()
+    if not rows:
+        return {"status": "unknown", "observations": 0}
+    latest = rows[0]["score"]
+    previous = rows[1]["score"] if len(rows) > 1 else None
+    return {
+        "status": "available",
+        "observations": len(rows),
+        "latest": round(float(latest), 2),
+        "previous": round(float(previous), 2) if previous is not None else None,
+        "delta": round(float(latest) - float(previous), 2) if previous is not None else None,
+        "latest_at": rows[0]["observed_at"],
+    }
 
 
 def upsert_osv(conn: sqlite3.Connection, rows: Iterable[tuple]) -> None:
@@ -661,7 +709,7 @@ def delete_package(conn: sqlite3.Connection, system: str, name: str) -> dict[str
     """Delete a package and all records keyed to it; returns affected counts."""
     counts: dict[str, int] = {}
     tables = (
-        "versions", "maintainers", "repo_stats", "osv", "signals", "scores",
+        "versions", "maintainers", "repo_stats", "scorecard_history", "osv", "signals", "scores",
         "snapshots", "identity_links", "dependencies", "commits", "package_impact",
         "package_findings", "content_scan", "guarddog_scan", "dynamic_scan",
         "packages",

@@ -15,7 +15,7 @@ from urllib.parse import quote
 
 import httpx
 
-from . import __version__, db, dynamic, providers, snapshots
+from . import __version__, db, dynamic, providers, signal_context, snapshots
 from .config import Config
 from .impact import impact_score, impact_tier
 from .export import export_dataset
@@ -1332,8 +1332,6 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
     dynamic_row = db.get_dynamic_scan(conn, system, name)
     deps = db.get_dependencies(conn, system, name)
     provider_context = providers.build_context(conn, system, name)
-    conn.close()
-
     signal_map = {
         row["signal_type"]: {
             "value": row["value"],
@@ -1341,6 +1339,9 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
         }
         for row in signal_rows
     }
+    signal_context_data = signal_context.build_context(conn, system, name, signal_map)
+    conn.close()
+
     risk_type = risk_note = next_step = ""
     if score_row["band"] in {"medium", "high"}:
         risk_type, risk_note, next_step = describe_risk(signal_map)
@@ -1403,5 +1404,6 @@ def scan(cfg: Config, system: str, name: str) -> dict | None:
             "dependencies": sorted({d["dep_name"] for d in deps}),
         },
         "provider_context": provider_context,
+        "signal_context": signal_context_data,
         "signals": signal_map,
     }

@@ -23,6 +23,19 @@ mw serve --host 127.0.0.1 --port 8000
 | GET | `/alerts` | Ad-hoc alert query (`min_score`, `signal`, `min_signal`, `limit`; limit ≤ 500). If `signal` is omitted, `min_signal` matches any applicable current-model signal. |
 | GET | `/alert-rules` | Runs the alert rules from `config/default.yaml` without delivering them. |
 
+## Signal context
+
+Package detail responses include a `signal_context` block:
+
+- `signal_robustness`: DTM/ETM classification of the scored signals;
+- `typosquat_benignity`: active-release, version-count, metadata and
+  maintainer-overlap checks;
+- `maintainer_exposure`: other packages and aggregate impact for current
+  maintainer identities.
+
+This block is read-only context. It does not alter `score`, `band` or model
+weights.
+
 ## Provider context
 
 Package detail responses include a normalized `provider_context` block:
@@ -60,6 +73,7 @@ verdict.
 
 `/packages/{system}/{name:path}` returns the score, `inputs_hash`, `computed_at`,
 `provider_context` (normalized OSV, deps.dev, Scorecard and consensus status),
+`signal_context` (signal robustness, typosquat benignity, maintainer exposure),
 `evidence_coverage`, `risk_type`, `risk_note`, `next_step`, `impact_score`,
 `impact_tier`, the `context` block (which includes `dependent_count` when
 deps.dev enrichment ran, repository `repo_archived`/owner/stars/forks/open-issues

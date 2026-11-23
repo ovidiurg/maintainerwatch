@@ -67,6 +67,33 @@ to the same canonical identity.
 | `depsdev_findings` | 10 | deps.dev version findings: `MALICIOUS` 1.0, `VULNERABLE` 0.5, `DEPRECATED` 0.4, `LOW_USAGE` 0.3, `COOLDOWN` 0.2. |
 | `package_age` | 10 | Replay-only signal: age of the first release before the cutoff; younger packages score higher. |
 
+## Signal robustness
+
+Following MeMPtec (arXiv `2402.07444`), signals are labelled as:
+
+- **DTM** (difficult to manipulate): history, third-party evidence or
+  restricted-control data — `publisher_change`, `maintainer_continuity`,
+  `account_age`, `signing_gap`, `commit_anomaly`, `osv_risk`,
+  `depsdev_findings`, `scorecard`, `dependency_risk`, `release_anomaly`;
+- **ETM** (easy to manipulate): metadata/content the publisher can rewrite —
+  `bus_factor`, `typosquat`, `license_inconsistency`, `install_script`.
+
+This classification is context only; it does not change weights.
+
+## Research-informed context
+
+`mw scan` and the package-detail API include a `signal_context` block:
+
+- `typosquat_benignity`: ConfuGuard-style checks for active releases, version
+  count, metadata completeness and maintainer overlap with the nearest package;
+- `maintainer_exposure`: other packages, summed downloads and summed transitive
+  fan-in for the identities maintaining this package;
+- `signal_robustness`: DTM/ETM classification.
+
+Scorecard observations are stored in `scorecard_history`; `provider_context`
+reports the latest score delta when at least two observations exist. These are
+triage aids, not model inputs. See `docs/arxiv-signal-research.md`.
+
 ## License sources
 
 For GitHub release timelines, `NOASSERTION` from the GitHub license detector is
