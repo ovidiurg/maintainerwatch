@@ -26,6 +26,11 @@ jobs:
       - uses: actions/configure-pages@v5
         with:
           enablement: true
+      - name: Fetch compact risk index
+        run: |
+          curl -fsSL --retry 3 --retry-delay 2 \
+            https://github.com/ovidiurg/maintainerwatch/releases/latest/download/maintainerwatch-index.json \
+            -o site/maintainerwatch-index.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

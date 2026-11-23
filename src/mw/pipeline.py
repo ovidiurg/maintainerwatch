@@ -608,7 +608,7 @@ def enrich_findings(
         f"""SELECT p.system, p.name,
                    (SELECT v.version FROM versions v
                     WHERE v.system = p.system AND v.name = p.name
-                    ORDER BY COALESCE(v.published_at, '') DESC LIMIT 1) AS version
+                    ORDER BY v.published_at DESC LIMIT 1) AS version
             FROM packages p
             LEFT JOIN package_findings f
               ON f.system = p.system AND f.name = p.name
@@ -653,7 +653,7 @@ def enrich_impact(
         f"""SELECT p.system, p.name, p.downloads_weekly,
                    (SELECT v.version FROM versions v
                     WHERE v.system = p.system AND v.name = p.name
-                    ORDER BY COALESCE(v.published_at, '') DESC LIMIT 1) AS version
+                    ORDER BY v.published_at DESC LIMIT 1) AS version
             FROM packages p
             LEFT JOIN package_impact i
               ON i.system = p.system AND i.name = p.name

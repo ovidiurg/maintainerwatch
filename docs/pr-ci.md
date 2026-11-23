@@ -14,9 +14,10 @@ make ci-index
 python scripts/build_ci_index.py --out dist/maintainerwatch-index.json
 ```
 
-The index contains only `system`, `name`, `score`, `band`, `confidence`,
-`coverage` and `risk_type`. It is versioned with `model_version`; publish the
-JSON and its `.sha256` as an immutable release asset.
+The index contains `system`, `name`, `score`, `band`, `confidence`,
+`coverage`, `risk_type` and up to three `top_signals`. It is versioned with
+`model_version`; publish the JSON and its `.sha256` as an immutable release
+asset. The public Pages lookup uses the same index.
 
 The index is built from the local database, so it is not generated in a
 GitHub-hosted CI job without the database. Generate/publish it from the trusted

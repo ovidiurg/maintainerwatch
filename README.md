@@ -91,6 +91,13 @@ benignity rules and maintainer exposure.
 
 ## Quick start
 
+### 0. Check one package without installing
+
+Open **[the public package lookup](https://ovidiurg.github.io/maintainerwatch/#lookup)**
+and search for one npm, PyPI, crates.io, Maven or GitHub package. It returns the
+latest score, band, confidence, coverage and, when present, strongest signals
+from the compact public index. No account, API key or local ingest is required.
+
 ### 1. Install from the repository
 
 The package is installed from the checkout (it is not yet published on PyPI):

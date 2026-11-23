@@ -11,6 +11,20 @@ from .risk import describe_risk, has_high_confidence
 from .signals import SIGNALS
 
 
+def _top_signals(signal_map: dict[str, dict], weights: dict[str, int], limit: int = 3) -> list[dict[str, Any]]:
+    ranked = []
+    for name, item in signal_map.items():
+        value = float(item.get("value") or 0.0)
+        if not item.get("applicable") or value <= 0:
+            continue
+        ranked.append((weights.get(name, 0) * value, value, name))
+    ranked.sort(reverse=True)
+    return [
+        {"name": name, "value": round(value, 2)}
+        for _, value, name in ranked[:limit]
+    ]
+
+
 def build_index(conn, cfg: Config) -> dict[str, Any]:
     signal_rows = conn.execute(
         "SELECT system, name, signal_type, value, band, evidence_json "
@@ -65,6 +79,7 @@ def build_index(conn, cfg: Config) -> dict[str, Any]:
             "confidence": confidence,
             "coverage": round(coverage, 4),
             "risk_type": risk_type,
+            "top_signals": _top_signals(signal_map, cfg.weights),
         }
         counts[row["system"]] = counts.get(row["system"], 0) + 1
 

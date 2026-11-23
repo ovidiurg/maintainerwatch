@@ -21,7 +21,7 @@ def build_history(conn: sqlite3.Connection, system: str, name: str) -> dict[str,
         """SELECT version, published_at, publisher_name, publisher_email,
                   has_sig, has_provenance, is_yanked
            FROM versions WHERE system=? AND name=?
-           ORDER BY COALESCE(published_at, ''), version""",
+           ORDER BY published_at, version""",
         (system, name),
     ).fetchall()
     snapshots = conn.execute(

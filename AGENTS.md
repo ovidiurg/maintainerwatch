@@ -26,7 +26,7 @@ Key facts:
 - `src/mw/data/default.yaml` is tracked package data and must stay identical to
   `config/default.yaml`. The repository ignores only root `/data/`, not package
   data under `src/mw/data/`. `tests/test_versions.py` enforces this.
-- Current checks: **202 tests**, coverage **77.15%**, CI green on Python 3.11–3.13; Docker smoke
+- Current checks: **206 tests**, coverage **77.20%**, CI green on Python 3.11–3.13; Docker smoke
   runs on relevant pull requests and on explicit manual dispatch only.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.

@@ -126,13 +126,8 @@ CREATE TABLE IF NOT EXISTS commits (
 );
 
 CREATE INDEX IF NOT EXISTS idx_versions_pkg ON versions (system, name, published_at);
-CREATE INDEX IF NOT EXISTS idx_signals_pkg ON signals (system, name);
-CREATE INDEX IF NOT EXISTS idx_scores_pkg ON scores (system, name);
 CREATE INDEX IF NOT EXISTS idx_deps_dep ON dependencies (dep_system, dep_name);
 CREATE INDEX IF NOT EXISTS idx_commits_pkg ON commits (system, name, committed_at);
-CREATE INDEX IF NOT EXISTS idx_maintainers_identity ON maintainers (identity);
-CREATE INDEX IF NOT EXISTS idx_versions_publisher_email ON versions (publisher_email);
-CREATE INDEX IF NOT EXISTS idx_versions_publisher_name ON versions (publisher_name);
 CREATE INDEX IF NOT EXISTS idx_versions_publisher_email_lower
   ON versions (LOWER(publisher_email));
 CREATE INDEX IF NOT EXISTS idx_versions_publisher_name_lower
@@ -143,6 +138,10 @@ CREATE INDEX IF NOT EXISTS idx_packages_name_lower
   ON packages (system, LOWER(name));
 CREATE INDEX IF NOT EXISTS idx_scores_model_score
   ON scores (model_version, score DESC, name);
+CREATE INDEX IF NOT EXISTS idx_scores_model_band_score
+  ON scores (model_version, band, score DESC, name);
+CREATE INDEX IF NOT EXISTS idx_scores_model_system_score
+  ON scores (model_version, system, score DESC, name);
 CREATE INDEX IF NOT EXISTS idx_signals_model
   ON signals (model_version, system, name);
 CREATE INDEX IF NOT EXISTS idx_scorecard_history_pkg
@@ -163,8 +162,19 @@ def _ensure_column(conn: sqlite3.Connection, table: str, column: str, ddl: str) 
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
 
 
+LEGACY_INDEXES = (
+    "idx_signals_pkg",
+    "idx_scores_pkg",
+    "idx_maintainers_identity",
+    "idx_versions_publisher_email",
+    "idx_versions_publisher_name",
+)
+
+
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    for index in LEGACY_INDEXES:
+        conn.execute(f"DROP INDEX IF EXISTS {index}")
     _ensure_column(conn, "packages", "dependencies_count", "INTEGER DEFAULT 0")
     _ensure_column(conn, "packages", "fan_in", "INTEGER DEFAULT 0")
     _ensure_column(conn, "packages", "fan_in_transitive", "INTEGER DEFAULT 0")
@@ -693,7 +703,7 @@ def list_packages(conn: sqlite3.Connection, system: str | None = None) -> list[s
 def get_versions(conn: sqlite3.Connection, system: str, name: str) -> list[sqlite3.Row]:
     return conn.execute(
         """SELECT * FROM versions WHERE system=? AND name=?
-           ORDER BY COALESCE(published_at, '') ASC""",
+           ORDER BY published_at ASC""",
         (system, name),
     ).fetchall()
 

@@ -12,6 +12,8 @@
   <nav>
     <a class="brand" href="./">MaintainerWatch</a>
     <div class="nav-links">
+      <a href="#lookup">Check a package</a>
+      <a href="#ci">Add to CI</a>
       <a href="#audience">Who it’s for</a>
       <a href="#signals">Signals</a>
       <a href="#quickstart">Quick start</a>
@@ -32,9 +34,9 @@
       and Maven Central. It never executes package code in the analyst process.
     </p>
     <div class="cta">
-      <a class="button primary" href="https://github.com/ovidiurg/maintainerwatch">View the repository</a>
+      <a class="button primary" href="#lookup">Check a package</a>
+      <a class="button" href="https://github.com/ovidiurg/maintainerwatch">View the repository</a>
       <a class="button" href="https://github.com/sponsors/ovidiurg">Sponsor</a>
-      <a class="button" href="#quickstart">Try the CLI</a>
     </div>
   </div>
 </header>
@@ -45,6 +47,96 @@
     <div><strong>14</strong><span>explainable signals</span></div>
     <div><strong>0.891</strong><span>validation ROC-AUC (v2)</span></div>
     <div><strong>16,728</strong><span>impact-enriched packages</span></div>
+  </section>
+
+  <section id="lookup">
+    <h2>Check a package before installing</h2>
+    <p class="section-lede">
+      Look up one package in the latest public snapshot. No install, account or
+      API key needed. The compact index exposes score, band, confidence and the
+      strongest signals when available; use the CLI or dataset release for full
+      evidence.
+    </p>
+    <form id="lookup-form" class="lookup-form" autocomplete="off">
+      <div class="lookup-field">
+        <label for="lookup-system">Ecosystem</label>
+        <select id="lookup-system" name="system">
+          <option value="npm">npm</option>
+          <option value="pypi">PyPI</option>
+          <option value="crates">crates.io</option>
+          <option value="maven">Maven Central</option>
+          <option value="github">GitHub</option>
+        </select>
+      </div>
+      <div class="lookup-field lookup-field-name">
+        <label for="lookup-name">Package name</label>
+        <input id="lookup-name" name="name" type="search" placeholder="e.g. lodash, requests, serde" spellcheck="false" required>
+      </div>
+      <button class="button primary" type="submit">Check package</button>
+    </form>
+    <p id="lookup-status" class="lookup-status" role="status" aria-live="polite">Loading public index…</p>
+    <article id="lookup-result" class="lookup-result" hidden aria-live="polite">
+      <div class="lookup-head">
+        <div>
+          <p class="lookup-kicker" id="lookup-kicker"></p>
+          <h3 id="lookup-package"></h3>
+        </div>
+        <span id="lookup-band" class="band-pill"></span>
+      </div>
+      <dl class="lookup-facts">
+        <div><dt>Score</dt><dd id="lookup-score"></dd></div>
+        <div><dt>Confidence</dt><dd id="lookup-confidence"></dd></div>
+        <div><dt>Evidence coverage</dt><dd id="lookup-coverage"></dd></div>
+        <div><dt>Risk type</dt><dd id="lookup-risk-type"></dd></div>
+      </dl>
+      <div id="lookup-signals-wrap" hidden>
+        <h4>Top signals</h4>
+        <ul id="lookup-signals" class="lookup-signals"></ul>
+      </div>
+      <p class="lookup-foot" id="lookup-foot"></p>
+    </article>
+    <p class="note">
+      This is a static snapshot, not a live verdict and not a malware label.
+      See <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/methodology.md">methodology</a>
+      and <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/validation/high-band-review.md">high-band review</a>.
+    </p>
+    <p class="lookup-next">
+      <a class="button primary" href="#ci">Add it to CI</a>
+    </p>
+  </section>
+
+  <section id="ci">
+    <h2>Add it to CI in five minutes</h2>
+    <p class="section-lede">
+      The action checks only dependency manifest changes against the latest
+      compact index. It never downloads or executes package code. Start
+      advisory, then raise the threshold after local validation.
+    </p>
+    <pre><code>name: MaintainerWatch
+on: pull_request
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ovidiurg/maintainerwatch@main
+        with:
+          index-url: https://github.com/ovidiurg/maintainerwatch/releases/latest/download/maintainerwatch-index.json
+          base-ref: origin/${{ github.base_ref }}
+          fail-on: none
+          comment: "true"
+          upload-sarif: "true"
+</code></pre>
+    <p class="note">
+      Pin the action to a commit or release tag for production. Do not use
+      <code>pull_request_target</code> for untrusted pull requests. Full setup,
+      SARIF and comment behaviour are in the
+      <a href="https://github.com/ovidiurg/maintainerwatch/blob/main/docs/pr-ci.md">PR/CI guide</a>.
+    </p>
   </section>
 
   <section id="why">
@@ -244,5 +336,6 @@ mw main --top 5000 --no-github</code></pre>
 <footer>
   <p>MaintainerWatch · AGPL-3.0-or-later · Built as an independent open-source project.</p>
 </footer>
+<script src="lookup.js" defer></script>
 </body>
 </html>
