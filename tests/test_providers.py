@@ -55,6 +55,34 @@ def test_bulk_context_matches_single(tmp_path):
     conn.close()
 
 
+def test_bulk_context_matches_single_with_scorecard_history(tmp_path):
+    conn = db.connect(tmp_path / "bulk-trend.sqlite")
+    db.init_db(conn)
+    db.upsert_packages(conn, [Package(system="npm", name="pkg")])
+    db.upsert_repo_stats(conn, [RepoStats(system="npm", name="pkg", scorecard_score=5.0)])
+    conn.executemany(
+        "INSERT INTO scorecard_history (system,name,observed_at,score,checks_json) "
+        "VALUES (?,?,?,?,?)",
+        [
+            ("npm", "pkg", "2026-01-01T00:00:00+00:00", 3.0, "[]"),
+            ("npm", "pkg", "2026-02-01T00:00:00+00:00", 4.0, "[]"),
+            ("npm", "pkg", "2026-03-01T00:00:00+00:00", 5.0, '[{"score": 0}]'),
+        ],
+    )
+    conn.commit()
+
+    single = providers.build_context(conn, "npm", "pkg")
+    bulk = providers.bulk_context(conn, [("npm", "pkg")])[("npm", "pkg")]
+    assert single == bulk
+    trend = single["scorecard"]["trend"]
+    assert trend["observations"] == 3
+    assert trend["latest"] == 5.0
+    assert trend["previous"] == 4.0
+    assert trend["delta"] == 1.0
+    assert trend["latest_at"] == "2026-03-01T00:00:00+00:00"
+    conn.close()
+
+
 def test_provider_context_without_data_is_none(tmp_path):
     conn = db.connect(tmp_path / "providers-empty.sqlite")
     db.init_db(conn)

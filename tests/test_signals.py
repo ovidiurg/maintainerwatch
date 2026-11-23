@@ -981,3 +981,5 @@ def test_release_anomaly_clustered_timestamps_not_applicable(conn):
 def test_bounded_levenshtein_preserves_transposition_and_caps():
     assert typosquat.levenshtein("reqeusts", "requests", 2) == 1
     assert typosquat.levenshtein("abcdef", "xyz", 2) == 3
+    assert typosquat.levenshtein("bbcc", "ccab", 2) == 3
+    assert typosquat.levenshtein("abcd", "wxyz", 1) == 2

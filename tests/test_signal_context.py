@@ -53,10 +53,14 @@ def test_scorecard_history_and_trend(tmp_path):
     conn.commit()
     db.update_repo_scorecard(conn, "npm", "pkg", 5.0, "[]")
     db.update_repo_scorecard(conn, "npm", "pkg", 6.0, "[]")
+    db.update_repo_scorecard(conn, "npm", "pkg", 7.0, "[]")
     trend = db.scorecard_trend(conn, "npm", "pkg")
     assert trend["status"] == "available"
-    assert trend["latest"] == 6.0
+    assert trend["observations"] == 3
+    assert trend["latest"] == 7.0
+    assert trend["previous"] == 6.0
     assert trend["delta"] == 1.0
+    assert trend["latest_at"]
     conn.close()
 
 
