@@ -26,11 +26,11 @@ Key facts:
 - `src/mw/data/default.yaml` is tracked package data and must stay identical to
   `config/default.yaml`. The repository ignores only root `/data/`, not package
   data under `src/mw/data/`. `tests/test_versions.py` enforces this.
-- Current checks: **187 tests**, coverage **76.20%**, CI green on Python 3.11–3.13; Docker smoke
+- Current checks: **202 tests**, coverage **77.15%**, CI green on Python 3.11–3.13; Docker smoke
   runs on relevant pull requests and on explicit manual dispatch only.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
-- Current local baseline (16 Nov 2026): 18,665 packages (8,660 npm, 7,050 PyPI,
+- Current local baseline (23 Nov 2026): 18,665 packages (8,660 npm, 7,050 PyPI,
   2,350 crates, 501 Maven, 104 GitHub), app 0.4.23, model 0.5.3.
 
 ## Install

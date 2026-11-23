@@ -64,7 +64,7 @@ def normalize_homoglyphs(name: str) -> str:
 
 
 def levenshtein(a: str, b: str, max_distance: int | None = None) -> int:
-    """Bounded Damerau-Levenshtein (optimal string alignment)."""
+    """Damerau-Levenshtein (OSA), capped at max_distance + 1 when requested."""
     if a == b:
         return 0
     la, lb = len(a), len(b)
@@ -100,7 +100,10 @@ def levenshtein(a: str, b: str, max_distance: int | None = None) -> int:
         if row_min > limit:
             return limit + 1
         rows.append(current)
-    return rows[-1][lb]
+    distance = rows[-1][lb]
+    if max_distance is not None:
+        return min(distance, max_distance + 1)
+    return distance
 
 
 def compute(ctx: Context) -> SignalEvidence:

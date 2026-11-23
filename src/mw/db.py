@@ -361,11 +361,16 @@ def scorecard_trend(
     ).fetchall()
     if not rows:
         return {"status": "unknown", "observations": 0}
+    observations = conn.execute(
+        """SELECT COUNT(*) FROM scorecard_history
+           WHERE system=? AND name=? AND score IS NOT NULL""",
+        (system, name),
+    ).fetchone()[0]
     latest = rows[0]["score"]
     previous = rows[1]["score"] if len(rows) > 1 else None
     return {
         "status": "available",
-        "observations": len(rows),
+        "observations": int(observations),
         "latest": round(float(latest), 2),
         "previous": round(float(previous), 2) if previous is not None else None,
         "delta": round(float(latest) - float(previous), 2) if previous is not None else None,

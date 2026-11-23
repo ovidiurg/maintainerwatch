@@ -129,8 +129,6 @@ def _scorecard_context(
         item.get("name") for item in checks
         if isinstance(item, dict) and int(item.get("score") or 0) == 0
     ]
-    if trend is None:
-        trend = db.scorecard_trend(conn, system, name)
     return {
         "status": "available",
         "score": round(float(score), 2),
@@ -148,7 +146,6 @@ def build_context(conn: sqlite3.Connection, system: str, name: str) -> dict[str,
     osv = _osv_context(conn, system, name, version)
     depsdev = _depsdev_context(conn, system, name)
     scorecard = _scorecard_context(conn, system, name)
-    scorecard["trend"] = db.scorecard_trend(conn, system, name)
 
     return _assemble_context(system, name, version, osv, depsdev, scorecard)
 
@@ -219,11 +216,14 @@ def bulk_context(
     repo_map: dict[tuple[str, str], sqlite3.Row] = {}
     for row in conn.execute("SELECT * FROM repo_stats"):
         repo_map[(row["system"], row["name"])] = row
-    history_map: dict[tuple[str, str], list[sqlite3.Row]] = {}
+    history_map: dict[tuple[str, str], list[tuple[float, str]]] = {}
     for row in conn.execute(
-        "SELECT * FROM scorecard_history WHERE score IS NOT NULL ORDER BY observed_at"
+        """SELECT system, name, observed_at, score FROM scorecard_history
+           WHERE score IS NOT NULL ORDER BY observed_at"""
     ):
-        history_map.setdefault((row["system"], row["name"]), []).append(row[-2:])
+        history_map.setdefault((row["system"], row["name"]), []).append(
+            (float(row["score"]), row["observed_at"])
+        )
 
     out: dict[tuple[str, str], dict[str, Any]] = {}
     for key in unique:

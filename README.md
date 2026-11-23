@@ -389,7 +389,7 @@ Authentication: set `GITHUB_TOKEN`, or simply `gh auth login` once — the tool
 falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 (optional; public projects work without it, subject to rate limits).
 
-## Results (MVP, 22 November 2026 · app 0.4.23 · model 0.5.3)
+## Results (MVP, 23 November 2026 · app 0.4.23 · model 0.5.3)
 
 - 18,665 packages scored: 8,660 npm, 7,050 PyPI, 2,350 crates.io, 501 Maven
   and 104 GitHub repositories. The expansion mixes high-usage packages,
@@ -402,7 +402,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
   packages; PyPI `publisher_change` uses a capped snapshot value.
-- deps.dev impact enrichment covers 869 packages. Top impact: tslib 1.62M
+- deps.dev impact enrichment covers 16,728 packages. Top impact: tslib 1.62M
   dependents, inherits 1.33M, function-bind 1.30M, es-errors 1.26M, hasown 1.24M.
 - Highest numerical scores include obscure low-adoption packages (`b.js`, `4a`,
   `b4`, `b5`, `b7` at 68.0 and `p-resolver`/`p01` at 88.0); they are capped to
