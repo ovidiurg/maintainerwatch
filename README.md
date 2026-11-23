@@ -415,15 +415,15 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 20,593 packages scored: 9,555 npm, 7,649 PyPI, 2,650 crates.io, 601 Maven
   and 138 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 2,540,499 versions, 428,548 commits, 42,129 maintainers, 4,356 repositories,
+- 2,540,499 versions, 568,405 commits, 42,129 maintainers, 5,909 repositories,
   11,277 OSV records, 73,712 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 17 high, 4,242 medium, 16,334 low. OIDC/bot publishers are ignored.
+- Risk bands: 17 high, 4,639 medium, 15,937 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
   packages; PyPI `publisher_change` uses a capped snapshot value.
-- deps.dev impact enrichment covers 16,858 packages. Top impact: tslib 1.62M
+- deps.dev impact enrichment covers 18,289 packages. Top impact: tslib 1.62M
   dependents, inherits 1.33M, function-bind 1.30M, es-errors 1.26M, hasown 1.24M.
 - Highest numerical scores include obscure low-adoption packages (`b.js`, `4a`,
   `b4`, `b5`, `b7` at 68.0 and `p-resolver`/`p01` at 88.0); they are capped to
