@@ -26,7 +26,7 @@ Key facts:
 - `src/mw/data/default.yaml` is tracked package data and must stay identical to
   `config/default.yaml`. The repository ignores only root `/data/`, not package
   data under `src/mw/data/`. `tests/test_versions.py` enforces this.
-- Current checks: **215 tests**, coverage **77.81%**, CI green on Python 3.11–3.13; Docker smoke
+- Current checks: **216 tests**, coverage **78.13%**, CI green on Python 3.11–3.13; Docker smoke
   runs on relevant pull requests and on explicit manual dispatch only.
 - The project is dual-use: do not publish ranked target lists or maintainer
   dossiers; see the security/privacy sections in `README.md` and `docs/gdpr.md`.
@@ -117,6 +117,7 @@ git.
 | Label intake | `python scripts/intake_osv_labels.py --input data/feedback/packages.jsonl` |
 | Onboarding feedback metrics | `make onboarding-metrics` |
 | High-band review packet | `make high-band-review` |
+| Demo SQLite | `make demo-db` |
 | Export/report/API | `mw export --format json|spdx|cyclonedx|osv`; `mw report`; `mw serve` |
 | Docker report | `make docker-report`; `docker compose run --rm api mw report --out /app/data/report.html` |
 | Privacy removal | `mw delete-package --system SYSTEM --name PACKAGE --yes` (dry-run without `--yes`) |

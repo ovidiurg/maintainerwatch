@@ -18,7 +18,7 @@ def main() -> None:
     completed = subprocess.run(
         [
             "gh", "issue", "list", "--state", "all", "--limit", str(args.limit),
-            "--json", "number,title,labels,createdAt,closedAt,state",
+            "--json", "number,title,labels,createdAt,closedAt,state,body",
         ],
         capture_output=True,
         text=True,

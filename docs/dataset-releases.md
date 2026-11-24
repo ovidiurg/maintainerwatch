@@ -10,6 +10,7 @@ Current snapshot (see [changelog](changelog.md)):
 - JSON with normalized `provider_context`
 - Parquet, CSV, SPDX, CycloneDX, OSV, HTML report
 - compact CI index and checksums
+- compressed demo SQLite (`maintainerwatch-demo.sqlite.zst`)
 
 Generate a later snapshot with:
 

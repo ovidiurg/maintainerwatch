@@ -51,11 +51,25 @@ make onboarding-metrics
 PYTHONPATH=. .venv/bin/python scripts/onboarding_metrics.py --format json
 ```
 
-It reports feedback issue counts, open/closed state, label distribution and
-median time to close. It reads public GitHub issues only; it does not measure
-unique visitors, lookup completions, workflow copies or repeat use. Those
-funnel metrics would require an explicitly opted-in endpoint and are not
-enabled by default.
+It reports feedback issue counts, open/closed state, label distribution,
+self-reported steps, and median time to close. The issue form asks which steps
+the reporter completed; this is opt-in self-report, not automatic analytics.
+It does not measure unique visitors or hidden behavior.
+
+## Demo database
+
+For full evidence without a full ingest, download the compressed demo SQLite:
+
+```bash
+mkdir -p data/demo
+curl -fsSL https://github.com/ovidiurg/maintainerwatch/releases/latest/download/maintainerwatch-demo.sqlite.zst \
+  -o data/demo/maintainerwatch-demo.sqlite.zst
+zstd -d -f data/demo/maintainerwatch-demo.sqlite.zst -o data/demo/maintainerwatch-demo.sqlite
+mw scan lodash --system npm --config config/demo.yaml
+```
+
+The demo contains a cross-ecosystem sample, all high-band packages and full
+signals/provider context for those packages.
 
 ## Validation log
 
