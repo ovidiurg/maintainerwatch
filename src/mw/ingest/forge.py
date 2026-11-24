@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from ..models import RepoStats
-from . import github, gitlab
+from . import gitea, github, gitlab
 from .http import CachedClient
 
 
 def detect_forge(repo_url: str | None) -> str | None:
     if github.parse_github_repo(repo_url):
         return "github"
+    if gitea.parse_gitea_repo(repo_url):
+        return "gitea"
     if gitlab.parse_gitlab_repo(repo_url):
         return "gitlab"
     return None
@@ -23,6 +25,8 @@ def fetch_repo_stats(
 ) -> RepoStats | None:
     if github.parse_github_repo(repo_url):
         return github.fetch_repo_stats(client, system, name, repo_url, github_token)
+    if gitea.parse_gitea_repo(repo_url):
+        return gitea.fetch_repo_stats(client, system, name, repo_url, None)
     if gitlab.parse_gitlab_repo(repo_url):
         return gitlab.fetch_repo_stats(client, system, name, repo_url, gitlab_token)
     return None
@@ -58,6 +62,8 @@ def fetch_commits(
         return github.fetch_commits(
             client, repo_url, github_token, until=until, pages=pages
         )
+    if gitea.parse_gitea_repo(repo_url):
+        return gitea.fetch_commits(client, repo_url, None, until=until, pages=pages)
     if gitlab.parse_gitlab_repo(repo_url):
         return gitlab.fetch_commits(
             client, repo_url, gitlab_token, until=until, pages=pages
@@ -76,6 +82,8 @@ def fetch_commit_emails(
         return github.fetch_commit_emails(
             client, repo_url, github_token, limit=limit
         )
+    if gitea.parse_gitea_repo(repo_url):
+        return gitea.fetch_commit_emails(client, repo_url, None, limit=limit)
     if gitlab.parse_gitlab_repo(repo_url):
         return gitlab.fetch_commit_emails(
             client, repo_url, gitlab_token, limit=limit

@@ -10,3 +10,5 @@ def test_parse_repo_url_supports_shorthand_and_ssh():
     assert parse_repo_url("ssh://git@github.com/o/r") == "https://github.com/o/r"
     assert parse_repo_url("git@github.com:o/r.git") == "https://github.com/o/r"
     assert parse_repo_url("git+https://github.com/o/r.git") == "https://github.com/o/r"
+    assert parse_repo_url("unjs/std-env") == "https://github.com/unjs/std-env"
+    assert parse_repo_url("moment/moment") == "https://github.com/moment/moment"
