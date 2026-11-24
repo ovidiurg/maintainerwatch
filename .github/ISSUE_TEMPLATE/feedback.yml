@@ -34,6 +34,16 @@ body:
         - Something else
     validations:
       required: true
+  - type: checkboxes
+    id: steps_completed
+    attributes:
+      label: Which steps did you complete?
+      description: Optional, self-reported. This is the only onboarding funnel measurement; there is no hidden telemetry.
+      options:
+        - label: I completed a package lookup
+        - label: I copied or added the CI workflow
+        - label: I saw a PR comment or SARIF result
+        - label: I used MaintainerWatch more than once
   - type: input
     id: time_to_result
     attributes:

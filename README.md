@@ -106,7 +106,8 @@ mw lookup lodash --system npm
 ```
 
 See [how to read a result](docs/interpretation.md) for bands, confidence,
-coverage and high-band caveats.
+coverage and high-band caveats. For full evidence without a full ingest, use
+the [demo database](docs/onboarding.md#demo-database).
 
 ### 1. Install from the repository
 

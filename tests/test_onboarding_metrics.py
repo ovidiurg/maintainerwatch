@@ -11,6 +11,7 @@ def test_summarize_feedback_labels_and_close_time():
             "labels": [{"name": "feedback"}, {"name": "onboarding"}],
             "createdAt": "2026-11-23T10:00:00Z",
             "closedAt": "2026-11-23T14:00:00Z",
+            "body": "### Which steps did you complete?\n\n- [x] I completed a package lookup\n- [ ] I copied or added the CI workflow",
         },
         {
             "title": "[feedback] false positive",
@@ -26,5 +27,6 @@ def test_summarize_feedback_labels_and_close_time():
     assert result["open"] == 1
     assert result["closed"] == 1
     assert result["labels"]["onboarding"] == 1
+    assert result["self_reported_steps"] == {"lookup": 1}
     assert result["median_time_to_close_hours"] == 4.0
     assert "Opt-in only" in format_markdown(result)

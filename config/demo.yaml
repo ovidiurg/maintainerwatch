@@ -1,0 +1,2 @@
+data_dir: data/demo
+db_path: data/demo/maintainerwatch-demo.sqlite
