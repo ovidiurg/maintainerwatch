@@ -7,6 +7,13 @@ MaintainerWatch performs **static analysis of public package metadata and
 bounded package archives**. It is a defensive research tool, not a production
 detector, and it never executes untrusted package code in the analyst process.
 
+<p align="center">
+  <a href="https://xkcd.com/2347/">
+    <img src="https://imgs.xkcd.com/comics/dependency.png" alt="xkcd 2347: Dependency" width="600">
+  </a>
+</p>
+<p align="center"><em>Relevant xkcd: <a href="https://xkcd.com/2347/">Dependency</a>.</em></p>
+
 Current incidents (xz-utils, event-stream, ua-parser-js, colors) were not
 CVE-driven: attackers gained control of package maintainership. Existing tools
 describe packages (`deps.dev`), vulnerabilities (`OSV`) or repository practices
