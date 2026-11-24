@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 import yaml
 
-from . import calibration, db, history, lookup as lookup_mod, pipeline, scan_diff, validation
+from . import calibration, db, history, lookup as lookup_mod, pipeline, scan_diff, team_report, validation
 from .config import load_config
 from .export import export_dataset
 from .report import build_report
@@ -616,6 +616,32 @@ def diff_index_cmd(
         typer.echo(json.dumps({"path": out}))
     else:
         typer.echo(text)
+
+
+@app.command("team-report")
+def team_report_cmd(
+    root: str = typer.Option(".", help="Repository root containing manifests."),
+    index: str = typer.Option("dist/maintainerwatch-index.json", help="Compact risk index JSON."),
+    waivers: Optional[str] = typer.Option(None, "--waivers", help="Optional YAML waiver file."),
+    out: str = typer.Option("data/team-report.html", help="Output path."),
+    format: str = typer.Option("html", help="html or json."),
+) -> None:
+    """Build a static report for dependencies declared in a repository."""
+    if format not in {"html", "json"}:
+        raise typer.BadParameter("format must be html or json")
+    report = team_report.build_report(root, index, waivers)
+    path = Path(out)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if format == "json":
+        path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    else:
+        path.write_text(team_report.render_html(report), encoding="utf-8")
+    typer.echo(json.dumps({
+        "path": str(path),
+        "matched": len(report["findings"]),
+        "waived": report["waived"],
+        "unknown": len(report["unknown"]),
+    }))
 
 
 @app.command("export")

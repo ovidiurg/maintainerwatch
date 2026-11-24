@@ -31,6 +31,7 @@ preview, not a live malware verdict feed.
 - Added opt-in feedback intake through the issue form.
 - Added self-reported onboarding steps, `make onboarding-metrics`, and a
   compressed 2,017-package demo SQLite asset.
+- Added `mw team-report` for static repository/team review.
 - Enriched all new medium/high packages and the remaining new low packages
   with GitHub, deps.dev impact/findings and recent commit context where available.
 
@@ -41,7 +42,7 @@ preview, not a live malware verdict feed.
 - Added score band/system indexes and removed unused/redundant indexes.
 - Version reads now use `idx_versions_pkg` ordering.
 - Local DB is ~1.5 GB after the 20k expansion and context backfills.
-- Tests: **216 passed**, coverage **78.13%**.
+- Tests: **217 passed**, coverage **78.42%**.
 
 ## 2026-11-22
 
