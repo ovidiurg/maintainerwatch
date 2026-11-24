@@ -10,20 +10,20 @@ preview, not a live malware verdict feed.
 - Expanded and republished `snapshot-20261123`: **20,593 scored packages**
   - 9,555 npm, 7,649 PyPI, 2,650 crates, 601 Maven, 138 GitHub
 - Model **0.5.3**; app **0.4.23**
-- 2,540,499 versions, 1,627,165 commits, 42,129 maintainers, 11,277 OSV
+- 2,540,499 versions, 1,634,382 commits, 42,129 maintainers, 11,277 OSV
   records, 73,712 dependency edges
-- Risk bands: **18 high, 7,379 medium, 13,196 low**
+- Risk bands: **18 high, 7,417 medium, 13,158 low**
 - 11 high-band packages are advisory/behaviour-confirmed; seven remain review
   cases
 - deps.dev impact rows: 18,320; deps.dev findings: 20,447; Scorecard scores:
-  13,213
+  13,247
 
 ### Index and CI
 
 - Compact index updated with the top three signals per package.
 - Public index: `maintainerwatch-index.json` (5.2 MB, 20,593 records).
 - Current index checksum:
-  `884015ca42474cec814f7e294ee32c49553a73d11fc09fbedfdcb881661859b3`.
+  `1707299605047102c2d8873e852f5aaf564d3554456604180689282dfc3c208e`.
 - Added the public package lookup and first-10-minutes page on Pages.
 - Added `mw lookup PACKAGE --system SYSTEM` for the public index without ingest.
 - Added expiring waivers for `scan-diff` and the GitHub Action.
@@ -32,12 +32,14 @@ preview, not a live malware verdict feed.
 - Added self-reported onboarding steps, `make onboarding-metrics`, and a
   compressed 2,017-package demo SQLite asset.
 - Added `mw team-report` for static repository/team review.
+- Added Codeberg/Gitea, self-hosted GitLab and Heptapod repository adapters,
+  plus npm shorthand normalization.
 - Enriched all new medium/high packages and the remaining new low packages
   with GitHub, deps.dev impact/findings and recent commit context where available.
 
 ### Database and operations
 
-- `scorecard_history` seeded with 13,213 baseline observations from current
+- `scorecard_history` seeded with 13,247 baseline observations from current
   Scorecard scores.
 - Added score band/system indexes and removed unused/redundant indexes.
 - Version reads now use `idx_versions_pkg` ordering.

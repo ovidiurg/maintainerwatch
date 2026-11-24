@@ -21,6 +21,9 @@ def test_parse_gitlab_repo():
         "https://gitlab.com/group/project/-/tree/main"
     ) == "group/project"
     assert parse_gitlab_repo("https://github.com/a/b") is None
+    assert parse_gitlab_repo("https://gitlab.redox-os.org/redox-os/kernel") == "redox-os/kernel"
+    assert parse_gitlab_repo("https://foss.heptapod.net/openpyxl/openpyxl") == "openpyxl/openpyxl"
+    assert parse_gitlab_repo("https://grpc.io") is None
 
 
 def test_gitlab_repo_stats():
@@ -70,3 +73,25 @@ def test_gitlab_commits():
     assert commits[0]["sha"] == "abc"
     assert commits[0]["author_login"] == "alice@example.org"
     assert commits[0]["author_email"] == "alice@example.org"
+
+
+def test_self_hosted_gitlab_repo_stats():
+    api = "https://gitlab.redox-os.org/api/v4"
+    docs = {
+        f"{api}/projects/redox-os%2Fkernel": {
+            "id": 17,
+            "web_url": "https://gitlab.redox-os.org/redox-os/kernel",
+            "last_activity_at": "2026-01-01",
+            "namespace": {"id": 2, "kind": "group", "full_path": "redox-os", "name": "Redox"},
+        },
+        f"{api}/projects/17/repository/contributors?per_page=100": [{"commits": 3}, {"commits": 1}],
+        f"{api}/groups/2": {"created_at": "2015-01-01"},
+    }
+    stats = fetch_repo_stats(
+        FakeClient(docs), "crates", "redox_syscall",
+        "https://gitlab.redox-os.org/redox-os/kernel", None,
+    )
+    assert stats is not None
+    assert stats.owner == "redox-os"
+    assert stats.contributors_12m == 2
+    assert stats.top_author_share == 0.75

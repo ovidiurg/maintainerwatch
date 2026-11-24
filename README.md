@@ -75,8 +75,8 @@ benignity rules and maintainer exposure.
 ## Scope
 
 - Ecosystems: **npm**, **PyPI**, **crates.io** and **Maven Central** (top or
-  seed lists), plus a **GitHub/GitLab release timeline** for non-package
-  projects.
+  seed lists), plus **GitHub/GitLab release timelines** and repository context
+  from Codeberg/Gitea, self-hosted GitLab and Heptapod.
 - Signals:
   1. `publisher_change` — maintainer/publisher changed between releases
   2. `bus_factor` — concentration of commits in one author
@@ -425,10 +425,10 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 20,593 packages scored: 9,555 npm, 7,649 PyPI, 2,650 crates.io, 601 Maven
   and 138 GitHub repositories. The expansion mixes high-usage packages,
   transitive dependencies and a usage-stratified obscure sample.
-- 2,540,499 versions, 1,627,165 commits, 42,129 maintainers, 17,803 repositories,
+- 2,540,499 versions, 1,634,382 commits, 42,129 maintainers, 17,917 repositories,
   11,277 OSV records, 73,712 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 18 high, 7,379 medium, 13,196 low. OIDC/bot publishers are ignored.
+- Risk bands: 18 high, 7,417 medium, 13,158 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224

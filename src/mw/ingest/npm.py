@@ -44,6 +44,16 @@ def parse_repo_url(value: str | None) -> str | None:
         value = "https://gitlab.com/" + value[len("gitlab:"):]
     if value.startswith("git+"):
         value = value[4:]
+    if (
+        "://" not in value
+        and not value.startswith("git@")
+        and " " not in value
+        and value.count("/") == 1
+        and "@" not in value
+        and not any(token in value for token in ("[", "]", "{", "}"))
+        and all(part and part not in {".", ".."} for part in value.split("/"))
+    ):
+        value = "https://github.com/" + value
     if value.startswith("git://"):
         value = "https://" + value[6:]
     if value.startswith("git+ssh://git@github.com/"):
