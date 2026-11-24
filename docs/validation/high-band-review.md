@@ -1,4 +1,4 @@
-# High-band review — 23 Nov 2026
+# High-band review — 24 Nov 2026
 
 Generate the current review packet with:
 
@@ -15,10 +15,10 @@ The purpose is calibration review, not an accusation against the maintainers.
 
 | Package | Score | Downloads/wk | OSV | Main high-band driver | Review status |
 |---|---:|---:|---|---|---|
-| `@cloudbase/wx-cloud-client-sdk` | 56.9 | 35,669 | none | repeated publisher changes; no repository URL | unverified |
-| `pgpass` | 52.7 | 96,781,575 | none | publisher change; Scorecard available | unverified |
-| `caniuse-api` | 50.3 | 20,465,944 | none | publisher/email change, long release dormancy, signing gap | likely legitimate transfer; unverified |
-| `@apideck/better-ajv-errors` | 50.2 | 11,755,284 | none | publisher change; Scorecard available | unverified |
+| `@cloudbase/wx-cloud-client-sdk` | 56.9 | 35,669 | none | repeated publisher changes; no repository URL | likely first-party SDK; no advisory |
+| `pgpass` | 53.5 | 96,781,575 | none | publisher email change; active repo; Scorecard available | likely legitimate email change; no advisory |
+| `caniuse-api` | 50.5 | 20,465,944 | none | publisher/email change, long release dormancy, signing gap | likely legitimate transfer to MoOx; no advisory |
+| `@apideck/better-ajv-errors` | 50.2 | 11,755,284 | none | publisher change; Scorecard available | likely legitimate first-party transfer; no advisory |
 | `p-shells` | 53.7 | 13 | none | signing gap, commit anomaly, continuity | likely low-impact false-positive candidate; no advisory |
 | `libbz2-rs-sys` | 51.4 | 22,770,231 | none | dependency risk, continuity, commit anomaly | likely legitimate crate; active foundation repo, no advisory |
 | `psycopg-c` | 52.1 | 396,074 | none | commit anomaly, continuity, typosquat | likely legitimate; active psycopg repo, no advisory |
