@@ -1,5 +1,12 @@
 # High-band review — 23 Nov 2026
 
+Generate the current review packet with:
+
+```bash
+make high-band-review
+# writes data/reviews/high-band-YYYYMMDD.{json,md}
+```
+
 Model: `0.5.3`. This is a manual review of the **6 high-band packages that are
 not confirmed by a current-version advisory**. The other 11 high-band packages
 are OSV-confirmed malicious packages.

@@ -39,7 +39,7 @@ preview, not a live malware verdict feed.
 - Added score band/system indexes and removed unused/redundant indexes.
 - Version reads now use `idx_versions_pkg` ordering.
 - Local DB is ~1.5 GB after the 20k expansion and context backfills.
-- Tests: **213 passed**, coverage **77.50%**.
+- Tests: **215 passed**, coverage **77.81%**.
 
 ## 2026-11-22
 
