@@ -10,20 +10,20 @@ preview, not a live malware verdict feed.
 - Expanded and republished `snapshot-20261123`: **20,593 scored packages**
   - 9,555 npm, 7,649 PyPI, 2,650 crates, 601 Maven, 138 GitHub
 - Model **0.5.3**; app **0.4.23**
-- 2,540,499 versions, 428,548 commits, 42,129 maintainers, 11,277 OSV records,
-  73,712 dependency edges
-- Risk bands: **17 high, 4,639 medium, 15,937 low**
-- 11 high-band packages are advisory/behaviour-confirmed; six remain review
+- 2,540,499 versions, 1,627,165 commits, 42,129 maintainers, 11,277 OSV
+  records, 73,712 dependency edges
+- Risk bands: **18 high, 7,379 medium, 13,196 low**
+- 11 high-band packages are advisory/behaviour-confirmed; seven remain review
   cases
-- deps.dev impact rows: 18,289; deps.dev findings: 20,409; Scorecard scores:
-  4,384
+- deps.dev impact rows: 18,320; deps.dev findings: 20,447; Scorecard scores:
+  13,213
 
 ### Index and CI
 
 - Compact index updated with the top three signals per package.
 - Public index: `maintainerwatch-index.json` (5.2 MB, 20,593 records).
 - Current index checksum:
-  `a3f17aa07e69aea524a1683656f7468e88f9f5d7fafa25089337b78553016047`.
+  `884015ca42474cec814f7e294ee32c49553a73d11fc09fbedfdcb881661859b3`.
 - Added the public package lookup and first-10-minutes page on Pages.
 - Added `mw lookup PACKAGE --system SYSTEM` for the public index without ingest.
 - Added expiring waivers for `scan-diff` and the GitHub Action.
@@ -37,7 +37,7 @@ preview, not a live malware verdict feed.
 
 ### Database and operations
 
-- `scorecard_history` seeded with 4,384 baseline observations from current
+- `scorecard_history` seeded with 13,213 baseline observations from current
   Scorecard scores.
 - Added score band/system indexes and removed unused/redundant indexes.
 - Version reads now use `idx_versions_pkg` ordering.
@@ -66,7 +66,7 @@ Public assets:
 ## Known limitations
 
 - The sample is not the full npm/PyPI/crates/Maven/GitHub universe.
-- Six high-band packages are review cases, not malware labels; see
+- Seven high-band packages are review cases, not malware labels; see
   [high-band review](validation/high-band-review.md).
 - v6 is a frozen current-state holdout with no unseen labels yet. Do not compute
   v6 metrics until labels exist.

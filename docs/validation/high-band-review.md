@@ -7,7 +7,7 @@ make high-band-review
 # writes data/reviews/high-band-YYYYMMDD.{json,md}
 ```
 
-Model: `0.5.3`. This is a manual review of the **6 high-band packages that are
+Model: `0.5.3`. This is a manual review of the **7 high-band packages that are
 not confirmed by a current-version advisory**. The other 11 high-band packages
 are OSV-confirmed malicious packages.
 
@@ -21,10 +21,11 @@ The purpose is calibration review, not an accusation against the maintainers.
 | `@apideck/better-ajv-errors` | 50.2 | 11,755,284 | none | publisher change; Scorecard available | unverified |
 | `p-shells` | 53.7 | 13 | none | signing gap, commit anomaly, continuity | likely low-impact false-positive candidate; no advisory |
 | `libbz2-rs-sys` | 51.4 | 22,770,231 | none | dependency risk, continuity, commit anomaly | likely legitimate crate; active foundation repo, no advisory |
+| `psycopg-c` | 52.1 | 396,074 | none | commit anomaly, continuity, typosquat | likely legitimate; active psycopg repo, no advisory |
 
 ## What the evidence says
 
-- None of the six has a current-version advisory.
+- None of the seven has a current-version advisory.
 - The review cases enter the high band through publisher/continuity,
   repository, or dependency evidence rather than an advisory.
 - `@cloudbase` has no repository URL, so repository/commit context is absent.
@@ -35,6 +36,8 @@ The purpose is calibration review, not an accusation against the maintainers.
 - `libbz2-rs-sys` has a large dependency footprint but an active foundation
   repository and recent commits; verify the dependency signal before treating
   it as package risk.
+- `psycopg-c` has an active psycopg repository and no advisory; its typosquat
+  and commit signals need careful review before calling it a package risk.
 - The current high-confidence rules discount some handovers, but not transfers
   where the old publisher is no longer present and the new publisher has not
   published this package before.
