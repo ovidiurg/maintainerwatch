@@ -12,18 +12,17 @@ preview, not a live malware verdict feed.
 - Model **0.5.3**; app **0.4.23**
 - 2,540,499 versions, 1,634,382 commits, 42,129 maintainers, 11,277 OSV
   records, 73,712 dependency edges
-- Risk bands: **18 high, 7,417 medium, 13,158 low**
-- 11 high-band packages are advisory/behaviour-confirmed; seven remain review
-  cases
+- Risk bands: **23 high, 7,407 medium, 13,163 low**
+- 13 high-band packages are MAL/deps.dev-confirmed; ten remain review cases
 - deps.dev impact rows: 18,320; deps.dev findings: 20,447; Scorecard scores:
-  13,247
+  13,247; OSV ranges missing: 0
 
 ### Index and CI
 
 - Compact index updated with the top three signals per package.
 - Public index: `maintainerwatch-index.json` (5.2 MB, 20,593 records).
 - Current index checksum:
-  `1707299605047102c2d8873e852f5aaf564d3554456604180689282dfc3c208e`.
+  `cbb271b619a379fe036b02ddf5956a08a2d3538c1c6a6bb1913926545c97468c`.
 - Added the public package lookup and first-10-minutes page on Pages.
 - Added `mw lookup PACKAGE --system SYSTEM` for the public index without ingest.
 - Added expiring waivers for `scan-diff` and the GitHub Action.
@@ -68,7 +67,7 @@ Public assets:
 ## Known limitations
 
 - The sample is not the full npm/PyPI/crates/Maven/GitHub universe.
-- Seven high-band packages are review cases, not malware labels; see
+- Ten high-band packages are review cases, not malware labels; see
   [high-band review](validation/high-band-review.md).
 - v6 is a frozen current-state holdout with no unseen labels yet. Do not compute
   v6 metrics until labels exist.

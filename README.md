@@ -430,7 +430,7 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
 - 2,540,499 versions, 1,634,382 commits, 42,129 maintainers, 17,917 repositories,
   11,277 OSV records, 73,712 runtime dependency edges (PyPI extras excluded).
 - 2,252 identity links (1,420 high, 162 medium, 670 low confidence).
-- Risk bands: 18 high, 7,417 medium, 13,158 low. OIDC/bot publishers are ignored.
+- Risk bands: 23 high, 7,407 medium, 13,163 low. OIDC/bot publishers are ignored.
 - License metadata is cross-checked across registry, classifier and repository
   sources.
 - Historical snapshots reconstructed from PyPI PEP 658 metadata for 224
@@ -453,9 +453,10 @@ falls back to `gh auth token` automatically. GitLab forges use `GITLAB_TOKEN`
   benign package above 40; the 19-incident sample is still too small to treat
   this as a stable production threshold.
 - External cross-check of the current high band (OSV plus deps.dev) confirms
-  **11 of 18** high-band packages as malicious. The other seven
+  **13 of 23** high-band packages as malicious. The other ten
   (`@cloudbase/wx-cloud-client-sdk`, `pgpass`, `caniuse-api`,
-  `@apideck/better-ajv-errors`, `p-shells`, `libbz2-rs-sys`, `psycopg-c`) are
+  `@apideck/better-ajv-errors`, `p-shells`, `libbz2-rs-sys`, `psycopg-c`,
+  `paste`, `bincode`, `proc-macro-error`) are
   high-band review cases driven by publisher/continuity or repository evidence
   without a current-version advisory; see
   [docs/validation/high-band-review.md](docs/validation/high-band-review.md).
