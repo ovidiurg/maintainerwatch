@@ -79,7 +79,9 @@ benignity rules and maintainer exposure.
   from Codeberg/Gitea, self-hosted GitLab and Heptapod.
 - Signals:
   1. `publisher_change` — maintainer/publisher changed between releases
-  2. `bus_factor` — concentration of commits in one author
+  2. `bus_factor` — concentration of commits in one author; with AI-assisted
+     work this is context, not a measure of release authority. See the
+     [FAQ](docs/faq.md).
   3. `account_age` — young maintainer account on a popular package
   4. `release_anomaly` — dormancy followed by a burst, or sudden release bursts
   5. `signing_gap` — missing provenance / signatures on recent releases
