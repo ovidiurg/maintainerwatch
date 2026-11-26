@@ -7,9 +7,10 @@ make high-band-review
 # writes data/reviews/high-band-YYYYMMDD.{json,md}
 ```
 
-Model: `0.5.3`. This is a manual review of the **7 high-band packages that are
-not confirmed by a current-version advisory**. The other 11 high-band packages
-are OSV-confirmed malicious packages.
+Model: `0.5.3`. This is a manual review of the **10 high-band packages not
+confirmed malicious by MAL/deps.dev**. Thirteen high-band packages are MAL or
+deps.dev confirmed. Three review cases carry a current-version RUSTSEC
+vulnerability advisory, but not a malware label.
 
 The purpose is calibration review, not an accusation against the maintainers.
 
@@ -22,10 +23,13 @@ The purpose is calibration review, not an accusation against the maintainers.
 | `p-shells` | 53.7 | 13 | none | signing gap, commit anomaly, continuity | likely low-impact false-positive candidate; no advisory |
 | `libbz2-rs-sys` | 51.4 | 22,770,231 | none | dependency risk, continuity, commit anomaly | likely legitimate crate; active foundation repo, no advisory |
 | `psycopg-c` | 52.1 | 396,074 | none | commit anomaly, continuity, typosquat | likely legitimate; active psycopg repo, no advisory |
+| `paste` | 53.2 | 131,565,569 | RUSTSEC-2024-0436 | dependency risk, bus factor, release anomaly | vulnerability, not malware; review |
+| `bincode` | 52.9 | 81,557,886 | RUSTSEC-2025-0141 | bus factor, dependency risk, release anomaly | vulnerability, not malware; review |
+| `proc-macro-error` | 51.2 | 48,350,595 | RUSTSEC-2024-0370 | bus factor, release anomaly, vulnerability | vulnerability, not malware; review |
 
 ## What the evidence says
 
-- None of the seven has a current-version advisory.
+- Three review cases have current-version RUSTSEC vulnerability advisories; the other seven have none.
 - The review cases enter the high band through publisher/continuity,
   repository, or dependency evidence rather than an advisory.
 - `@cloudbase` has no repository URL, so repository/commit context is absent.
