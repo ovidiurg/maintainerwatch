@@ -31,6 +31,17 @@ Scorecard și istoricul release-urilor.
 Următorul pas este un semnal separat pentru **release-authority concentration**:
 cine poate publica, semna, aproba advisory-uri și accesa CI/CD.
 
+## Can provenance be valid during an attack?
+
+Yes. Provenance attests the build path — workflow, repository and commit — not
+the legitimacy of the human identity controlling publication. An attacker who
+controls a maintainer account, CI token, release workflow or branch can publish
+a malicious artifact with valid provenance.
+
+Treat provenance as build context, not proof of legitimacy. Interpret it with
+`publisher_change`, `maintainer_continuity`, `release_anomaly`,
+`commit_anomaly` and advisory/provider data.
+
 ## Why are some signals high without an advisory?
 
 Publisher/continuity, commit or dependency evidence can raise a package to high.
