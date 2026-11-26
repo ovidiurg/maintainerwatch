@@ -212,6 +212,19 @@ so crates must be treated as a separate **download-unknown/recent** cohort, not
 with the npm/PyPI weekly thresholds. Maven and GitHub have no download figure
 and are also separate cohorts.
 
+## Provenance and release authority
+
+Provenance is not a benignity signal. A valid attestation can coexist with an
+account takeover, a stolen CI token, a modified release workflow or a malicious
+commit merged into a trusted repository. It proves how the artifact was built,
+not that the publishing identity was legitimate or that the release is safe.
+
+`signing_gap` therefore measures missing release provenance/signatures, not
+whether a present signature belongs to a trustworthy actor. Publisher authority,
+release permissions and signing keys must be assessed separately. Future work
+will add release-authority concentration as context after the v6 holdout is
+labelled.
+
 ## Limitations
 
 - PyPI does not expose a per-release publisher in its JSON API.
